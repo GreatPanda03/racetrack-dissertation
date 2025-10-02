@@ -1,8 +1,13 @@
 # Project Log
 
-The project log tracks progress for the project's writing and research. For development progress, see the change log. Dates are in DD/MM/YY format 
+The project log tracks progress for the project's research, documentation, and writing.
 
-## WED 16/07/25 - MON 29/09/25
+For development progress, please see the [project changelog](./CHANGELOG.md).
+
+All dates are in <code>YYYY/MM/DD DAY</code> format 
+
+
+## 2025/07/16 WED - 2025/09/29 MON
 
 Preliminary research to assess the project's complexity and devise possible approaches, including but not limited to:
 - Researching the "Racetrack game" concept (["Racetrack game"](https://en.wikipedia.org/wiki/Racetrack_(game)))
@@ -16,8 +21,9 @@ Preliminary research to assess the project's complexity and devise possible appr
 Other tasks include preparing this project log, a changelog, and a requirements backlog with Azure DevOps.
 
 
-## 30/09/25
-- ...
+## 2025/10/02 THU
+- More GitLab preparations (changelog, readme, etc.)
+- Refining requirements and categorising into Azure DevOps backlog
 
 ## ...
 - ...
