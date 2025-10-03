@@ -25,6 +25,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - More GitLab preparations (changelog, readme, etc.)
 - Refining requirements and categorising into Azure DevOps backlog
 
-## ...
-- ...
+## 2025/10/03 FRI
+- Documenting expected requirements for the MVP version, will continue to refine, then raise next supervisor meeting
+- Starting screen designs and requirements documentation for subsequent versions
 
