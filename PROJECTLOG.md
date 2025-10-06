@@ -29,3 +29,8 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Documenting expected requirements for the MVP version, will continue to refine, then raise next supervisor meeting
 - Starting screen designs and requirements documentation for subsequent versions
 
+## 2025/10/06 MON
+- Published first Azure DevOps backlog snapshot, which will be done every few weeks 
+    - **NOTE:** future uploads will come with commit messages anyway, but this is the first one
+
+## ...
