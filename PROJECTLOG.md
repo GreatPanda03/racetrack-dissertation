@@ -20,6 +20,9 @@ Preliminary research to assess the project's complexity and devise possible appr
 
 Other tasks include preparing this project log, a changelog, and a requirements backlog with Azure DevOps.
 
+## 2025/09/30 TUE
+- First supervisor meeting - overview of work done prior to meeting over the summer (research, plan, basic designs, etc.)
+
 
 ## 2025/10/02 THU
 - More GitLab preparations (changelog, readme, etc.)
@@ -33,4 +36,23 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Published first Azure DevOps backlog snapshot, which will be done every few weeks 
     - **NOTE:** future uploads will come with commit messages anyway, but this is the first one
 
-## ...
+## 2025/10/07 TUE - 2025/10/17 FRI
+- Researched different technologies to use for aspects of the application (full stack), including:
+    - **Databases:** MongoDB and NoSQL (especially since this is covered in one module, CO4217 Agile Cloud Automation), and MySQL
+    - **Back End:** Node.js (nice pairing with JS for front end), and PHP
+    - **Front End:** React.js (unsure whether this would be overkill)
+    - **Rendering / Drawing:** regular JS, Phaser, Kaboom, and p5.js
+    
+- Held supervisor meeting on **2025/10/14 TUE**:
+    - Showed completed project plan for feedback, will refine and revise current work
+    - Reviewed some written user stories with and received feedback to "abstract" them, will adjust accordingly, **a meeting has been set for the following week**
+    - Discussed technologies and the implementation of the project - rather than specifying web app technologies, will keep it "open" (especially since there may be non-web app tools that serve a better purpose)
+
+- Better to update this log with every supervisor meeting I think (for synchrony)
+
+## 2025/10/21 TUE
+- ...
+
+
+## 2025/10/28 TUE
+- ...
