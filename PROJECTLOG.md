@@ -1,6 +1,6 @@
 # Project Log
 
-The project log tracks progress for the project's research, documentation, and writing.
+The project log tracks progress for the project's research, documentation, and writing. The list also includes feedback from supervisor meetings and the improvements made following it.
 
 For development progress, please see the [project changelog](./CHANGELOG.md).
 
@@ -51,8 +51,29 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Better to update this log with every supervisor meeting I think (for synchrony)
 
 ## 2025/10/21 TUE
-- ...
+- As of the last supervisor meeting...
+    - Refined wording of aims and objectives to fit with the project
+    - Updated time to include work done prior to interim report submission date
 
+- Held supervisor meeting on **2025/10/21 FRI** to discuss user stories
+    - Showed revised user stories, abstracted into featureless tasks (better style than before)
+    - Advised to create a glossary describing broad terms and what they entail, such as "Driver Controls" and "Race Results", to ensure consistency if these definitions change
 
-## 2025/10/28 TUE
-- ...
+## 2025/10/31 FRI
+- No further work done since previous supervisor meeting
+
+- Held supervisor meeting on **2025/10/31 FRI** to review interim report
+    - Discussed Interim Report
+        - Cursorily showed research and structure, discussed future plan and approach
+        - Asked how to tie interlinked topics together, mainly Design and Architecture (as they inform each other) - advised to start with Architecture, then Design (which makes sense)
+        - Discussed what aims and objectives are, and refined my existing aims and objectives
+        - Compared my interim report to the interim report I wrote for my CS project last year, maintained positives and applied improvements (mainly around objectives to keep implementation-free)
+    - Discussed Project Plan feedback
+        - Change title from "An Implementation of the Racetrack Game" to "'[Game Name]': An Implementation of the Racetrack Game" (to make more specific)
+        - Project timeline feedback (specify dates rather than weeks, also include corusework from other modules to work around)
+
+## 2025/11/08 TUE
+- More work on dissertation based on feedback from last supervisor session
+
+- Held supervisor meeting on **2025/11/08 TUE** to review interim report
+    - ...
