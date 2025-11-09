@@ -60,7 +60,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
     - Advised to create a glossary describing broad terms and what they entail, such as "Driver Controls" and "Race Results", to ensure consistency if these definitions change
 
 ## 2025/10/31 FRI
-- No further work done since previous supervisor meeting
+- No further work done since previous supervisor meeting due to illness and focussing on coursework for other modules
 
 - Held supervisor meeting on **2025/10/31 FRI** to review interim report
     - Discussed Interim Report
