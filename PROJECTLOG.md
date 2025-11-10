@@ -52,8 +52,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 
 ## 2025/10/21 TUE
 - As of the last supervisor meeting...
-    - Refined wording of aims and objectives to fit with the project
-    - Updated time to include work done prior to interim report submission date
+    - Focused on rewording user stories to be more abstract rather than implementation-based
 
 - Held supervisor meeting on **2025/10/21 FRI** to discuss user stories
     - Showed revised user stories, abstracted into featureless tasks (better style than before)
@@ -73,7 +72,10 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         - Project timeline feedback (specify dates rather than weeks, also include corusework from other modules to work around)
 
 ## 2025/11/08 TUE
-- More work on dissertation based on feedback from last supervisor session
+- As of the last supervisor meeting:
+    - More work on interim report based on feedback from last supervisor session
+        - Refined wording of aims and objectives to fit with the project
+        - Updated time to include work done prior to interim report submission date
 
 - Held supervisor meeting on **2025/11/08 TUE** to review interim report
     - ...
