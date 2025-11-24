@@ -105,5 +105,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - As of the last supervisor meeting:
     - Created a small prototype using a game development tool I'm more familiar with (Roblox Studio) to find design potholes early
     - The code will be converted to JavaScript once happier with the initial structure to replicate
+    - Published a snapshot of the backlog in preparation for development
+    - Added a link to the glossary Wiki page in the Azure DevOps repository
 
 - Will hold supervisor meeting on **2025/11/25 TUE**
