@@ -61,21 +61,49 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 ## 2025/10/31 FRI
 - No further work done since previous supervisor meeting due to illness and focussing on coursework for other modules
 
-- Held supervisor meeting on **2025/10/31 FRI** to review interim report
+- Held supervisor meeting on **2025/10/31 FRI** to review Interim Report
     - Discussed Interim Report
         - Cursorily showed research and structure, discussed future plan and approach
         - Asked how to tie interlinked topics together, mainly Design and Architecture (as they inform each other) - advised to start with Architecture, then Design (which makes sense)
         - Discussed what aims and objectives are, and refined my existing aims and objectives
-        - Compared my interim report to the interim report I wrote for my CS project last year, maintained positives and applied improvements (mainly around objectives to keep implementation-free)
+        - Compared my Interim Report to the Interim Report I wrote for my CS project last year, maintained positives and applied improvements (mainly around objectives to keep implementation-free)
     - Discussed Project Plan feedback
         - Change title from "An Implementation of the Racetrack Game" to "'[Game Name]': An Implementation of the Racetrack Game" (to make more specific)
         - Project timeline feedback (specify dates rather than weeks, also include corusework from other modules to work around)
 
-## 2025/11/08 TUE
-- As of the last supervisor meeting:
-    - More work on interim report based on feedback from last supervisor session
-        - Refined wording of aims and objectives to fit with the project
-        - Updated time to include work done prior to interim report submission date
+## 2025/11/03 MON - 2025/11/09 SUN
+- Reading week: mostly preoccupied with other assignments, so no significant work was done for the project
 
-- Held supervisor meeting on **2025/11/08 TUE** to review interim report
-    - ...
+## 2025/11/11 TUE
+- As of the last supervisor meeting:
+    - More work on Interim Report based on feedback from last supervisor session
+        - Refined wording of aims and objectives to fit with the project
+        - Updated time to include work done prior to Interim Report submission date
+
+- Held supervisor meeting on **2025/11/11 TUE** to review Interim Report
+    - Discussed updated structure and flow of the Interim Report more
+    - Discussed ways to cut down the Interim Report length to be more succinct
+
+## 2025/11/18 TUE
+- As of the last supervisor meeting:
+    - More Interim Report writing based on the last meeting's feedback
+
+- Held supervisor meeting on **2025/11/18 TUE**
+    - Discussed length of Interim Report and 
+        - Reword game presentation section to suggest they were the ones you found (unless more games are found then you select them)
+        - Elaborate more where "better UX" (and similar phrasing) is used
+        - Ensure concepts flow without having to backtrack to much as a reader
+        - Move key design discussions (eg. leaderboard choices, car types, controls, etc.) from the games to design section
+        - Merge all class diagrams into one diagram: use aggregate & composition arrows for conciseness
+
+## 2025/11/19 WED - 2025/11/20 - THU (submission)
+- Applied feedback discussed in last supervisor meeting
+- Finalised Interim Report's research discussion, architecture & design approaches, class diagrams, and project timelines
+- Submitted Interim Report on **2025/11/20 THU**
+
+## 2025/11/25 TUE
+- As of the last supervisor meeting:
+    - Created a small prototype using a game development tool I'm more familiar with (Roblox Studio) to find design potholes early
+    - The code will be converted to JavaScript once happier with the initial structure to replicate
+
+- Will hold supervisor meeting on **2025/11/25 TUE**
