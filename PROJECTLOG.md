@@ -103,9 +103,31 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 
 ## 2025/11/25 TUE
 - As of the last supervisor meeting:
-    - Created a small prototype using a game development tool I'm more familiar with (Roblox Studio) to find design potholes early
+    - Created a small prototype using a game development tool I'm more familiar with called Roblox Studio
+        - Helps focus more on UX, logic and development than the specifics of how to use whatever the tool is
+        - This helps realise design potholes earlier to reconsider choices 
+        - Features include:
+            - Basic Main Menu with placeholder section buttons
+            - Basic Track Builder UI with placeholder tool buttons
+            - Ability to create nodes representing the track (automatically connected)
+            - Enough nodes (4+) form a placeholder spline representing the true form of the track
     - The code will be converted to JavaScript once happier with the initial structure to replicate
     - Published a snapshot of the backlog in preparation for development
     - Added a link to the glossary Wiki page in the Azure DevOps repository
 
-- Will hold supervisor meeting on **2025/11/25 TUE**
+- Held a supervisor meeting on **2025/11/25 TUE**
+    - Discussed Roblox Studio prototype
+        - Explained the prototype's features, how they relate to the game, and the future plans for it
+        - Explained the purpose of the prototype (to find design potholes): good idea!
+        - Will require work to convert to HTML / JS - leave enough time for this (will move forward with main version only eventually)
+        - UI can seem oversized depending on screen size (planned to consider for the main prototype)
+        - Think about detection logic & material velocity effects (detection factored in when discussing Interim Report, but velocity effects still need to be considered)
+
+# 2025/12/09 TUE
+- As of the last supervisor meeting:
+    - More prototype development:
+        - Implemented rendering the single spline as a track with varying thickness
+        - ...
+
+- Will hold a supervisor meeting on **2025/12/09 TUE**
+    - ...
