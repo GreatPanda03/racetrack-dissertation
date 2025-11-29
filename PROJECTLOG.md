@@ -122,12 +122,15 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         - Will require work to convert to HTML / JS - leave enough time for this (will move forward with main version only eventually)
         - UI can seem oversized depending on screen size (planned to consider for the main prototype)
         - Think about detection logic & material velocity effects (detection factored in when discussing Interim Report, but velocity effects still need to be considered)
+    - **Note:** as this is an *external* prototype, it has not been included in the changelog, but its details are mentioned here
 
 # 2025/12/09 TUE
 - As of the last supervisor meeting:
     - More prototype development:
         - Implemented rendering the single spline as a track with varying thickness
-        - ...
+        - Implemented a basic track list with a single basic track to play
+        - Implemented race car movement controls according to the Racetrack game
+        - Implemented the ability to complete tracks and see the results of the race
 
 - Will hold a supervisor meeting on **2025/12/09 TUE**
     - ...
