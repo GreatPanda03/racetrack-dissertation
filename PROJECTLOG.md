@@ -116,7 +116,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
     - Added a link to the glossary Wiki page in the Azure DevOps repository
 
 - Held a supervisor meeting on **2025/11/25 TUE**
-    - Discussed Roblox Studio prototype
+    - Discussed **Roblox Studio** prototype
         - Explained the prototype's features, how they relate to the game, and the future plans for it
         - Explained the purpose of the prototype (to find design potholes): good idea!
         - Will require work to convert to HTML / JS - leave enough time for this (will move forward with main version only eventually)
@@ -126,11 +126,13 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 
 # 2025/12/09 TUE
 - As of the last supervisor meeting:
-    - More prototype development:
+    - More prototype development (completed V0 with **Roblox Studio**):
         - Implemented rendering the single spline as a track with varying thickness
+        - Implemented the ability to create a track with nodes of varying thickness
         - Implemented a basic track list with a single basic track to play
         - Implemented race car movement controls according to the Racetrack game
         - Implemented the ability to complete tracks and see the results of the race
+    - Will implement V0 with intended web technologies next!
 
 - Will hold a supervisor meeting on **2025/12/09 TUE**
     - ...
