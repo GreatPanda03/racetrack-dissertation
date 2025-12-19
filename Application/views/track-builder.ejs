@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<%- include("./partials/head.ejs") %>
+</head>
+
+<body>
+    <div class="container">
+        <%- include("./partials/nav.ejs") %>
+
+        <div class="content">
+            <!--
+            <h3 id="page-title"><b>Track Builder</b></h3>
+            -->
+
+            <div>
+                <p>
+                    Welcome to the <b>Track Builder</b>. You can use this section to build your own tracks.
+                </p>
+                <p>
+                    Tracks are defined as a series of points, starting from Point 1.
+                    When more than 3 points are placed, a path if formed between all points.
+                    The builder also comes with a grid, showing where race cars can drive to.
+                    Race cars can only drive to a point on top of the track path, otherwise they crash!
+                </p>
+                <p>
+                    There are a few track elements to build with:
+                    <ul>
+                        <li><b>Path:</b> defines the form of the track</li>
+                        <li><b>Materials:</b> a track element which affects racer movement</li>
+                        <li><b>Obstacle:</b> a track element which causes racers to crash when driven into</li>
+                        <li><b>Decoration:</b> a track element which is ornamental and has no effect</li>
+                    </ul>
+                </p>
+            </div>
+            
+            <hr/>
+            
+            <div id="build-bar">
+                <div id="build-options">
+                    <div>
+                        <b>Options</b>
+                    </div>
+                    <div>
+                        <button id="options-details" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Details
+                        </button>
+                        
+                        <button id="options-save" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Save
+                        </button>
+                        
+                        <button id="options-save-as" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Save As
+                        </button>
+
+                        <button id="options-undo" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Undo
+                        </button>
+
+                        <button id="options-redo" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Redo
+                        </button>
+
+                        <button id="options-test" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Test
+                        </button>
+
+                        <button id="options-import" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Import
+                        </button>
+
+                        <button id="options-export" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Export
+                        </button>
+                    </div>
+                </div>
+
+                <div id="build-tools" class="mt-3">
+                    <div>
+                        <b>Tools</b>
+                    </div>
+                    <div>
+                        <button id="tools-path" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Path
+                        </button>
+
+                        <button id="tools-material" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Material
+                        </button>
+
+                        <button id="tools-obstacle" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Obstacle
+                        </button>
+
+                        <button id="tools-decoration" class="btn btn-primary">
+                            <i class="bi bi-house-door-fill"></i>
+                            <br/>Decoration
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="build-container">
+                <h5><b>Builder</b></h5>
+                <canvas id="build-canvas" width="750" height="750" style="border:1px solid #000000;"></canvas>
+
+                <!-- secondary canvas for grid? -->
+            </div>
+        </div>
+
+        <%- include("./partials/footer.ejs") %>
+    </div>
+</body>
+</html>

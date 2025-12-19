@@ -1,0 +1,87 @@
+
+/* universal */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+}
+
+p, h1, h2, h3, a, ul {
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    color: #222;
+}
+
+nav {
+    display: flex;
+    margin-bottom: 20px;
+    padding: 20px 20px 0px 20px;
+    background-color: #eee;
+    justify-content: space-between;
+    text-transform: uppercase;
+}
+
+nav ul {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+nav li {
+    list-style-type: none;
+    margin-left: 20px;
+}
+
+nav h1 {
+    font-size: 3em;
+}
+
+nav p, nav a {
+    color: #777;
+    font-weight: 400;
+    text-decoration: none;
+}
+
+nav p, nav li {
+    font-size: 1.2em;
+}
+
+footer {
+    color: #777;
+    text-align: center;
+    margin: 40px auto 20px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+h2 {
+    margin-bottom: 40px;
+}
+
+h3 {
+    text-transform: capitalize;
+    margin-bottom: 8px;
+}
+
+/* general */
+.content {
+    margin: 0 20px;
+    font-size: 1.2em;
+    text-align: justify;
+}
+
+/* home */
+
+/* building */
+#build-container {
+    margin: 0 auto;
+    text-align: center;
+}
+
+#build-bar {
+    margin-bottom: 40px;
+}
+
+/* track list */
+
+/* settings */
+
