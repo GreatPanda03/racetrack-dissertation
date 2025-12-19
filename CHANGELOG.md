@@ -13,24 +13,30 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
-### Version: 0.2.0
+## Version: 0.2.0
 **Date:** yyyy/mm/dd
+<details>
+<summary>...</summary>
 
 **Additions / Changes:**
 1. ...
 
 **Bugs / Fixes:**
 <br>No bugs found yet.
+</details>
 
 ---
 
-### Version: 0.1.0
+## Version: 0.1.0
 **Date:** 2025/12/19
+<details>
+<summary>App Basis - Node.js & HTML</summary>
 
 **Additions / Changes:**
 <br>Replaced existing application files with a new version which uses Node.js and HTML (as opposed to pure JavaScript) to prepare for client-server operations.
 
 **Bugs / Fixes:**
 <br>No bugs found yet.
+</details>
 
 ---
