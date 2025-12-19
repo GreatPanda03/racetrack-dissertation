@@ -193,6 +193,8 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         1. Easier to set up client-server operations with Roblox Studio (more difficult with Web Sockets)
         2. HTML allows free drawing and overall performs better for rendering (not limited by triangles)
         3. Possibly more difficult to implement UI & interactivity with HTML than with Roblox Studio (no pre-built UI with HTML per se)
+
+- **IMPORTANT NOTE:** while track building is intended for V1, the basis of track building with points was included as it can be seen as a precursor to track rendering, which makes creating a simple track to test easier.
 </details>
 
 ## 2025/12/23 TUE
