@@ -8,6 +8,8 @@ All dates are in <code>YYYY/MM/DD DAY</code> format
 
 
 ## 2025/07/16 WED - 2025/09/29 MON
+<details>
+<summary>Preliminary Research</summary>
 
 Preliminary research to assess the project's complexity and devise possible approaches, including but not limited to:
 - Researching the "Racetrack game" concept (["Racetrack game"](https://en.wikipedia.org/wiki/Racetrack_(game)))
@@ -19,46 +21,74 @@ Preliminary research to assess the project's complexity and devise possible appr
 - Researching frameworks, tools, and libraries to build the application (namely ["p5.js"](https://p5js.org/) and ["openFrameworks"](https://openframeworks.cc/))
 
 Other tasks include preparing this project log, a changelog, and a requirements backlog with Azure DevOps.
+</details>
+
 
 ## 2025/09/30 TUE
-- First supervisor meeting - overview of work done prior to meeting over the summer (research, plan, basic designs, etc.)
+<details>
+<summary>First Supervisor Meeting</summary>
 
+- First supervisor meeting - overview of work done prior to meeting over the summer (research, plan, basic designs, etc.)
+</details>
 
 ## 2025/10/02 THU
+<details>
+<summary>GitLab & Azure DevOps Preparation</summary>
+
 - More GitLab preparations (changelog, readme, etc.)
 - Refining requirements and categorising into Azure DevOps backlog
+</details>
 
 ## 2025/10/03 FRI
+<details>
+<summary>Requirements & Screen Designs</summary>
+
 - Documenting expected requirements for the MVP version, will continue to refine, then raise next supervisor meeting
 - Starting screen designs and requirements documentation for subsequent versions
+</details>
 
 ## 2025/10/06 MON
+<details>
+<summary>Backlog Snapshots</summary>
+
 - Published first Azure DevOps backlog snapshot, which will be done every few weeks 
     - **NOTE:** future uploads will come with commit messages anyway, but this is the first one
+</details>
 
 ## 2025/10/07 TUE - 2025/10/17 FRI
+<details>
+<summary>Technology Research & Planning</summary>
+
 - Researched different technologies to use for aspects of the application (full stack), including:
     - **Databases:** MongoDB and NoSQL (especially since this is covered in one module, CO4217 Agile Cloud Automation), and MySQL
     - **Back End:** Node.js (nice pairing with JS for front end), and PHP
     - **Front End:** React.js (unsure whether this would be overkill)
     - **Rendering / Drawing:** regular JS, Phaser, Kaboom, and p5.js
-    
+
 - Held supervisor meeting on **2025/10/14 TUE**:
     - Showed completed project plan for feedback, will refine and revise current work
     - Reviewed some written user stories with and received feedback to "abstract" them, will adjust accordingly, **a meeting has been set for the following week**
     - Discussed technologies and the implementation of the project - rather than specifying web app technologies, will keep it "open" (especially since there may be non-web app tools that serve a better purpose)
 
 - Better to update this log with every supervisor meeting I think (for synchrony)
+</details>
 
 ## 2025/10/21 TUE
+<details>
+<summary>User Story Refinement</summary>
+
 - As of the last supervisor meeting...
     - Focused on rewording user stories to be more abstract rather than implementation-based
 
 - Held supervisor meeting on **2025/10/21 FRI** to discuss user stories
     - Showed revised user stories, abstracted into featureless tasks (better style than before)
     - Advised to create a glossary describing broad terms and what they entail, such as "Driver Controls" and "Race Results", to ensure consistency if these definitions change
+</details>
 
 ## 2025/10/31 FRI
+<details>
+<summary>Interim Report Review & User Story Refinement</summary>
+
 - No further work done since previous supervisor meeting due to illness and focussing on coursework for other modules
 
 - Held supervisor meeting on **2025/10/31 FRI** to review Interim Report
@@ -70,11 +100,19 @@ Other tasks include preparing this project log, a changelog, and a requirements 
     - Discussed Project Plan feedback
         - Change title from "An Implementation of the Racetrack Game" to "'[Game Name]': An Implementation of the Racetrack Game" (to make more specific)
         - Project timeline feedback (specify dates rather than weeks, also include corusework from other modules to work around)
+</details>
 
 ## 2025/11/03 MON - 2025/11/09 SUN
+<details>
+<summary>Reading Week - Minimal Progress</summary>
+
 - Reading week: mostly preoccupied with other assignments, so no significant work was done for the project
+</details>
 
 ## 2025/11/11 TUE
+<details>
+<summary>Interim Report Refinement (structure)</summary>
+
 - As of the last supervisor meeting:
     - More work on Interim Report based on feedback from last supervisor session
         - Refined wording of aims and objectives to fit with the project
@@ -83,25 +121,37 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Held supervisor meeting on **2025/11/11 TUE** to review Interim Report
     - Discussed updated structure and flow of the Interim Report more
     - Discussed ways to cut down the Interim Report length to be more succinct
+</details>
 
 ## 2025/11/18 TUE
+<details>
+<summary>Interim Report Refinement (conciseness)</summary>
+
 - As of the last supervisor meeting:
     - More Interim Report writing based on the last meeting's feedback
 
 - Held supervisor meeting on **2025/11/18 TUE**
-    - Discussed length of Interim Report and 
+    - Discussed length of Interim Report and where to be more concise
         - Reword game presentation section to suggest they were the ones you found (unless more games are found then you select them)
         - Elaborate more where "better UX" (and similar phrasing) is used
         - Ensure concepts flow without having to backtrack to much as a reader
         - Move key design discussions (eg. leaderboard choices, car types, controls, etc.) from the games to design section
         - Merge all class diagrams into one diagram: use aggregate & composition arrows for conciseness
+</details>
 
 ## 2025/11/19 WED - 2025/11/20 - THU (submission)
+<details>
+<summary>Interim Report Submission</summary>
+
 - Applied feedback discussed in last supervisor meeting
 - Finalised Interim Report's research discussion, architecture & design approaches, class diagrams, and project timelines
 - Submitted Interim Report on **2025/11/20 THU**
+</details>
 
 ## 2025/11/25 TUE
+<details>
+<summary>Partial External Prototype (Version 0 - Roblox Studio)</summary>
+
 - As of the last supervisor meeting:
     - Created a small prototype using a game development tool I'm more familiar with called Roblox Studio
         - Helps focus more on UX, logic and development than the specifics of how to use whatever the tool is
@@ -123,8 +173,12 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         - UI can seem oversized depending on screen size (planned to consider for the main prototype)
         - Think about detection logic & material velocity effects (detection factored in when discussing Interim Report, but velocity effects still need to be considered)
     - **Note:** as this is an *external* prototype, it has not been included in the changelog, but its details are mentioned here
+</details>
 
 ## 2025/12/09 TUE
+<details>
+<summary>Full External Prototype (Version 0 - Roblox Studio)</summary>
+
 - As of the last supervisor meeting:
     - More prototype development (completed V0 with **Roblox Studio**):
         - Implemented rendering the single spline as a track with varying thickness
@@ -139,8 +193,13 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         1. Easier to set up client-server operations with Roblox Studio (more difficult with Web Sockets)
         2. HTML allows free drawing and overall performs better for rendering (not limited by triangles)
         3. Possibly more difficult to implement UI & interactivity with HTML than with Roblox Studio (no pre-built UI with HTML per se)
+</details>
 
 ## 2025/12/23 TUE
+<details>
+<summary>Prototype Transfer (Intended Technologies)</summary>
+
 - Checkpoint entry, as the next supervisor meeting will be on **2026/01/07 WED**
 - As of the last entry:
     - Implemented v0.1.0 (see changelog)
+</details>
