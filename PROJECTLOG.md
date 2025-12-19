@@ -124,7 +124,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         - Think about detection logic & material velocity effects (detection factored in when discussing Interim Report, but velocity effects still need to be considered)
     - **Note:** as this is an *external* prototype, it has not been included in the changelog, but its details are mentioned here
 
-# 2025/12/09 TUE
+## 2025/12/09 TUE
 - As of the last supervisor meeting:
     - More prototype development (completed V0 with **Roblox Studio**):
         - Implemented rendering the single spline as a track with varying thickness
@@ -132,7 +132,15 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         - Implemented a basic track list with a single basic track to play
         - Implemented race car movement controls according to the Racetrack game
         - Implemented the ability to complete tracks and see the results of the race
-    - Will implement V0 with intended web technologies next!
+    - Will implement V0 with the intended web technologies next!
 
-- Will hold a supervisor meeting on **2025/12/09 TUE**
-    - ...
+- Held a supervisor meeting on **2025/12/09 TUE**
+    - Demonstrated V0: discussed underlying functionality, algorithms, and differences between the prototype and main version
+        1. Easier to set up client-server operations with Roblox Studio (more difficult with Web Sockets)
+        2. HTML allows free drawing and overall performs better for rendering (not limited by triangles)
+        3. Possibly more difficult to implement UI & interactivity with HTML than with Roblox Studio (no pre-built UI with HTML per se)
+
+## 2025/12/23 TUE
+- Checkpoint entry, as the next supervisor meeting will be on **2026/01/07 WED**
+- As of the last entry:
+    - Implemented v0.1.0 (see changelog)
