@@ -13,21 +13,37 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
-## Version: 0.2.0
-**Date:** yyyy/mm/dd
+### Version: 0.3.0
+**Date:** yyyy/mm/DD
 <details>
 <summary>...</summary>
-
-**Additions / Changes:**
-1. ...
-
-**Bugs / Fixes:**
-<br>No bugs found yet.
 </details>
 
 ---
 
-## Version: 0.1.0
+### Version: 0.2.0
+**Date:** 2025/12/20
+<details>
+<summary>Node Placement & File Changes</summary>
+
+**Additions / Changes:**
+1. Set up basic Track Builder functionality (classes, buttons, etc.)
+2. Reworked code for EJS partials (no longer in fixed "head", "nav", "footer" tags)
+3. Implemented the ability to place nodes on the canvas
+    * Select "Path" and click the canvas to place a new node
+    * Nodes are numbered according to their placement order
+    * Adjust nodes by selecting them and moving the mouse
+    * A straight line is drawn between each node
+4. Replaced Bootstrap icons with Lucide icons (higher variety)
+5. Added <code>.gitignore</code> file (to lower commit / deployment size)
+
+**Bugs / Fixes:**
+1. Track Builder button icons now appear (replaced with Lucide, didn't show with Bootstrap)
+</details>
+
+---
+
+### Version: 0.1.0
 **Date:** 2025/12/19
 <details>
 <summary>App Basis - Node.js & HTML</summary>
