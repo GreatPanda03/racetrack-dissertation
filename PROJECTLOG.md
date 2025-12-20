@@ -6,8 +6,9 @@ For development progress, please see the [project changelog](./CHANGELOG.md).
 
 All dates are in <code>YYYY/MM/DD DAY</code> format 
 
+---
 
-## 2025/07/16 WED - 2025/09/29 MON
+### 2025/07/16 WED - 2025/09/29 MON
 <details>
 <summary>Preliminary Research</summary>
 
@@ -23,15 +24,18 @@ Preliminary research to assess the project's complexity and devise possible appr
 Other tasks include preparing this project log, a changelog, and a requirements backlog with Azure DevOps.
 </details>
 
+---
 
-## 2025/09/30 TUE
+### 2025/09/30 TUE
 <details>
 <summary>First Supervisor Meeting</summary>
 
 - First supervisor meeting - overview of work done prior to meeting over the summer (research, plan, basic designs, etc.)
 </details>
 
-## 2025/10/02 THU
+---
+
+### 2025/10/02 THU
 <details>
 <summary>GitLab & Azure DevOps Preparation</summary>
 
@@ -39,7 +43,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Refining requirements and categorising into Azure DevOps backlog
 </details>
 
-## 2025/10/03 FRI
+---
+
+### 2025/10/03 FRI
 <details>
 <summary>Requirements & Screen Designs</summary>
 
@@ -47,7 +53,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Starting screen designs and requirements documentation for subsequent versions
 </details>
 
-## 2025/10/06 MON
+---
+
+### 2025/10/06 MON
 <details>
 <summary>Backlog Snapshots</summary>
 
@@ -55,7 +63,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
     - **NOTE:** future uploads will come with commit messages anyway, but this is the first one
 </details>
 
-## 2025/10/07 TUE - 2025/10/17 FRI
+---
+
+### 2025/10/07 TUE - 2025/10/17 FRI
 <details>
 <summary>Technology Research & Planning</summary>
 
@@ -73,7 +83,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Better to update this log with every supervisor meeting I think (for synchrony)
 </details>
 
-## 2025/10/21 TUE
+---
+
+### 2025/10/21 TUE
 <details>
 <summary>User Story Refinement</summary>
 
@@ -85,7 +97,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
     - Advised to create a glossary describing broad terms and what they entail, such as "Driver Controls" and "Race Results", to ensure consistency if these definitions change
 </details>
 
-## 2025/10/31 FRI
+---
+
+### 2025/10/31 FRI
 <details>
 <summary>Interim Report Review & User Story Refinement</summary>
 
@@ -102,14 +116,18 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         - Project timeline feedback (specify dates rather than weeks, also include corusework from other modules to work around)
 </details>
 
-## 2025/11/03 MON - 2025/11/09 SUN
+---
+
+### 2025/11/03 MON - 2025/11/09 SUN
 <details>
 <summary>Reading Week - Minimal Progress</summary>
 
 - Reading week: mostly preoccupied with other assignments, so no significant work was done for the project
 </details>
 
-## 2025/11/11 TUE
+---
+
+### 2025/11/11 TUE
 <details>
 <summary>Interim Report Refinement (structure)</summary>
 
@@ -123,7 +141,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
     - Discussed ways to cut down the Interim Report length to be more succinct
 </details>
 
-## 2025/11/18 TUE
+---
+
+### 2025/11/18 TUE
 <details>
 <summary>Interim Report Refinement (conciseness)</summary>
 
@@ -139,7 +159,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
         - Merge all class diagrams into one diagram: use aggregate & composition arrows for conciseness
 </details>
 
-## 2025/11/19 WED - 2025/11/20 - THU (submission)
+---
+
+### 2025/11/19 WED - 2025/11/20 - THU (submission)
 <details>
 <summary>Interim Report Submission</summary>
 
@@ -148,7 +170,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Submitted Interim Report on **2025/11/20 THU**
 </details>
 
-## 2025/11/25 TUE
+---
+
+### 2025/11/25 TUE
 <details>
 <summary>Partial External Prototype (Version 0 - Roblox Studio)</summary>
 
@@ -175,7 +199,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
     - **Note:** as this is an *external* prototype, it has not been included in the changelog, but its details are mentioned here
 </details>
 
-## 2025/12/09 TUE
+---
+
+### 2025/12/09 TUE
 <details>
 <summary>Full External Prototype (Version 0 - Roblox Studio)</summary>
 
@@ -197,11 +223,13 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - **IMPORTANT NOTE:** while track building is intended for V1, the basis of track building with points was included as it can be seen as a precursor to track rendering, which makes creating a simple track to test easier.
 </details>
 
-## 2025/12/23 TUE
+---
+
+### 2025/12/23 TUE
 <details>
 <summary>Prototype Transfer (Intended Technologies)</summary>
 
 - Checkpoint entry, as the next supervisor meeting will be on **2026/01/07 WED**
 - As of the last entry:
-    - Implemented v0.1.0 (see changelog)
+    - Implemented v0.1.0 - v0.2.0 (see changelog)
 </details>
