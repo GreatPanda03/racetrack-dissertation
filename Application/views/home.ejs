@@ -2,12 +2,13 @@
 
 <html lang="en">
 <head>
-<%- include("./partials/head.ejs") %>
+    <%- include("./partials/head.ejs") %>
 </head>
-
 <body>
     <div class="container">
-        <%- include("./partials/nav.ejs") %>
+        <nav>
+            <%- include("./partials/nav.ejs") %>
+        </nav>
 
         <div class="content">
             <p>
@@ -23,7 +24,9 @@
             </p>
         </div>
 
-        <%- include("./partials/footer.ejs") %>
+        <footer>
+            <%- include("./partials/footer.ejs") %>
+        </footer>
     </div>
 </body>
 </html>

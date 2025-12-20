@@ -2,18 +2,21 @@
 
 <html lang="en">
 <head>
-<%- include("./partials/head.ejs") %>
-</head>
+    <%- include("./partials/head.ejs") %>
 
+    <script src="/track-builder.js" defer></script>
+
+    <script src="/classes/vector2.js"></script>
+    <script src="/classes/node.js"></script>
+    <script src="/classes/track.js"></script>
+</head>
 <body>
     <div class="container">
-        <%- include("./partials/nav.ejs") %>
+        <nav>
+            <%- include("./partials/nav.ejs") %>
+        </nav>
 
         <div class="content">
-            <!--
-            <h3 id="page-title"><b>Track Builder</b></h3>
-            -->
-
             <div>
                 <p>
                     Welcome to the <b>Track Builder</b>. You can use this section to build your own tracks.
@@ -39,89 +42,96 @@
             
             <div id="build-bar">
                 <div id="build-options">
-                    <div>
+                    <div class="mb-2">
+                        <i data-lucide="square-mouse-pointer"></i>
                         <b>Options</b>
                     </div>
                     <div>
                         <button id="options-details" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="notebook-pen"></i>
                             <br/>Details
                         </button>
                         
                         <button id="options-save" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="save"></i>
                             <br/>Save
                         </button>
                         
                         <button id="options-save-as" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="save-all"></i>
                             <br/>Save As
                         </button>
 
                         <button id="options-undo" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="undo"></i>
                             <br/>Undo
                         </button>
 
                         <button id="options-redo" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="redo"></i>
                             <br/>Redo
                         </button>
 
                         <button id="options-test" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="play"></i>
                             <br/>Test
                         </button>
 
                         <button id="options-import" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="download"></i>
                             <br/>Import
                         </button>
 
                         <button id="options-export" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="share"></i>
                             <br/>Export
                         </button>
                     </div>
                 </div>
 
                 <div id="build-tools" class="mt-3">
-                    <div>
+                    <div class="mb-2">
+                        <i data-lucide="brush"></i>
                         <b>Tools</b>
                     </div>
                     <div>
                         <button id="tools-path" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="route"></i>
                             <br/>Path
                         </button>
 
                         <button id="tools-material" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="box"></i>
                             <br/>Material
                         </button>
 
                         <button id="tools-obstacle" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
+                            <i data-lucide="brick-wall"></i>
                             <br/>Obstacle
                         </button>
 
                         <button id="tools-decoration" class="btn btn-primary">
-                            <i class="bi bi-house-door-fill"></i>
-                            <br/>Decoration
+                            <i data-lucide="sprout"></i>
+                            <br/>Decor
                         </button>
                     </div>
                 </div>
             </div>
 
             <div id="build-container">
-                <h5><b>Builder</b></h5>
+                <h5>
+                    <i data-lucide="hammer"></i>
+                    <b>Builder</b>
+                </h5>
                 <canvas id="build-canvas" width="750" height="750" style="border:1px solid #000000;"></canvas>
 
                 <!-- secondary canvas for grid? -->
             </div>
         </div>
 
-        <%- include("./partials/footer.ejs") %>
+        <footer>
+            <%- include("./partials/footer.ejs") %>
+        </footer>
     </div>
 </body>
 </html>
