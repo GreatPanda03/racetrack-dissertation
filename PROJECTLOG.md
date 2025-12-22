@@ -231,5 +231,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 
 - Checkpoint entry, as the next supervisor meeting will be on **2026/01/07 WED**
 - As of the last entry:
-    - Implemented v0.1.0 - v0.2.0 (see changelog)
+    - Implemented v0.1.0 - v0.3.0 (see changelog)
 </details>
+
+---

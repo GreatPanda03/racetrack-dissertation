@@ -1,6 +1,14 @@
 // manages the track builder on the client
 
 
+// [[ Imports ]] //
+import Node from "./classes/node.js";
+import Vector2 from "./classes/vector2.js";
+import Track from "./classes/track.js";
+import TrackRenderer from "./classes/track-renderer.js";
+
+
+
 // [[ Variables ]] //
 var canvas = document.getElementById("build-canvas");
 var ctx = canvas.getContext("2d");
@@ -11,16 +19,15 @@ var offset = new Vector2(0, 0);
 var last = null
 var selection = null;
 
-var track = new Track();
-var leftSide = [];
-var rightSide = [];
+var track;
+var renderer;
 
 
 
-// [[ Tool Selection ]] //
+// [[ Canvas Tools & Options ]] //
 
 // selects the corresponding track element
-function initialiseTools() {
+function initialiseCanvasTools() {
     let path = document.getElementById("tools-path");
     let material = document.getElementById("tools-material"); 
     let obstacle = document.getElementById("tools-obstacle");
@@ -28,22 +35,55 @@ function initialiseTools() {
     
     path.addEventListener("click", (e) => {
         toolType = "path";
-        console.log(toolType);
     });
 
     material.addEventListener("click", (e) => {
         toolType = "material";
-        console.log(toolType);
     });
 
     obstacle.addEventListener("click", (e) => {
         toolType = "obstacle";
-        console.log(toolType);
     });
 
     decoration.addEventListener("click", (e) => {
         toolType = "decoration";
-        console.log(toolType);
+    });
+}
+
+
+// toggle the visibility of different track components
+function initialiseVisualToggles() {
+    let nodes = document.getElementById("visuals-nodes");
+    let edges = document.getElementById("visuals-edges");
+    let path = document.getElementById("visuals-track");
+
+    function toggleButton(button, state) {
+        button.querySelector(".button-on")
+            .classList.toggle("hidden", !state);
+
+        button.querySelector(".button-off")
+            .classList.toggle("hidden", state);
+    }
+
+    nodes.addEventListener("click", (e) => {
+        let state = !renderer.getNodesVisible()
+        renderer.setNodesVisible(state);
+        toggleButton(nodes, state);
+        renderer.redrawTrack();
+    });
+
+    edges.addEventListener("click", (e) => {
+        let state = !renderer.getEdgesVisible()
+        renderer.setEdgesVisible(state);
+        toggleButton(edges, state);
+        renderer.redrawTrack();
+    });
+
+    path.addEventListener("click", (e) => {
+        let state = !renderer.getTrackVisible()
+        renderer.setTrackVisible(state);
+        toggleButton(path, state);
+        renderer.redrawTrack();
     });
 }
 
@@ -81,8 +121,11 @@ function onDrawStart(x, y) {
     // if no selection, assume canvas placement
     if (!selection) {
         if (toolType == "path") {
-            let node = new Node(last, 25, false);
+            let node = new Node(last, 100, false);
             track.addNode(node);
+            renderer.addSegment(node);
+            
+            renderer.redrawTrack();
         }
     }
 }
@@ -106,7 +149,7 @@ function onDrawMove(x, y) {
             new Vector2(pos.x(), pos.y()));
     }
 
-    redrawTrack();
+    renderer.redrawTrack();
 }
 
 // when drawing ends on the canvas
@@ -121,55 +164,7 @@ function onDrawEnd(x, y) {
             new Vector2(pos.x(), pos.y()));
     }
 
-    redrawTrack();
-}
-
-
-
-// [[ Drawing Functions ]] //
-
-// redraws the track onto the canvas
-function redrawTrack() {
-    clearCanvas();
-    
-    let path = track.getPath();
-    let size = track.getSize();
-
-    // edges
-    for (let n = 0; n < track.getSize(); n++) {
-        let pos1 = path[n].getPosition();
-        let pos2 = path[(n + 1) % size].getPosition();
-
-        ctx.strokeStyle = "#AAA";
-        ctx.beginPath();
-        ctx.lineWidth = 5;
-        ctx.moveTo(pos1.x(), pos1.y());
-        ctx.lineTo(pos2.x(), pos2.y());
-        ctx.stroke();
-
-    }
-
-    // nodes
-    for (let n = 0; n < track.getSize(); n++) {
-        let node = path[n];
-        let pos = node.getPosition();
-        let text = (n + 1).toString();
-
-        ctx.fillStyle = "#5AF";
-        ctx.beginPath();
-        ctx.ellipse(pos.x(), pos.y(), 15, 15, 0, 2 * Math.PI, 0);
-        ctx.fill();
-
-        ctx.font = "16px Segoe UI";
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = "#FFF";
-        ctx.strokeText(text, pos.x() - 4, pos.y() + 5);
-    }
-}
-
-// clears the entire canvas
-function clearCanvas() {
-    ctx.clearRect(-offset.x(), -offset.y(), canvas.width, canvas.height);
+    renderer.redrawTrack();
 }
 
 
@@ -190,7 +185,11 @@ function initialiseCanvas() {
 
 // [[ Set Up ]] //
 
+track = new Track();
+renderer = new TrackRenderer(track, canvas);
+
 lucide.createIcons();
 
-initialiseTools();
+initialiseCanvasTools();
+initialiseVisualToggles();
 initialiseCanvas();

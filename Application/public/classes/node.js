@@ -1,7 +1,10 @@
-// nodes are points representing a track path
+// manages instances of Node objects
+// * nodes are points representing a track path
 
-class Node {
-    #position; #width; #checkpoint;
+export default class Node {
+    #position;      // Vector2
+    #width;         // number
+    #checkpoint;    // boolean
 
     constructor(position, width, checkpoint) {
         this.#position = position;

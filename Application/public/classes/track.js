@@ -1,9 +1,21 @@
-// tracks are a collection of nodes, data, and other objects which define it
+// manages instances of Track objects
+// * tracks are a collection of nodes, data, and other objects which define it
 
-class Track {
-    #trackId;
-    #name; #description; #authorId; #author; #tags;
-    #path; #materials; #obstacles; #decorations; #looped;
+export default class Track {
+    #trackId;       // int
+
+    #name;          // string
+    #description;   // string
+    #authorId;      // int
+    #author;        // string
+    #tags;          // string[]
+    
+    #path;          // Node[]
+    #materials;     // Polygon[]
+    #obstacles;     // Polygon[]
+    #decorations;   // Polygon[]
+    
+    #looped;        // boolean
 
     constructor() {
         this.#trackId = 0;
@@ -18,7 +30,7 @@ class Track {
         this.#materials = [];
         this.#obstacles = [];
         this.#decorations = [];
-        this.#looped = false;
+        this.#looped = true;
     }
 
     // getters / setters

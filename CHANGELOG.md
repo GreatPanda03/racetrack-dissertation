@@ -14,9 +14,18 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 ---
 
 ### Version: 0.3.0
-**Date:** yyyy/mm/DD
+**Date:** 2025/12/22
 <details>
-<summary>...</summary>
+<summary>Splines & Track Visuals</summary>
+
+**Additions / Changes:**
+1. Implemented splines
+2. Tracks are now drawn using splines with a width for each node
+3. Track visuals (nodes, edges, path) can be toggled
+
+**Bugs / Fixes:**
+<br>No bugs found yet.
+
 </details>
 
 ---

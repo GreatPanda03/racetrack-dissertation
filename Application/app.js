@@ -1,8 +1,9 @@
 // * source: Net Ninja, (Jun 23, 2020). "Node.js Crash Course Tutorial #8 - Middleware", [Online Video]. Available at: https://www.youtube.com/watch?v=_GJKAs7A0_4. Accessed: Dec. 18, 2025.
 
 
-// [[ Libraries ]] //
+// [[ Imports ]] //
 const express = require("express");
+const { version } = require("./package.json");
 
 
 
@@ -11,8 +12,6 @@ const app = express();
 app.set("view engine", "ejs");
 app.listen(3000); 
 app.use(express.static("public"));
-
-const { version } = require("./package.json");
 
 
 

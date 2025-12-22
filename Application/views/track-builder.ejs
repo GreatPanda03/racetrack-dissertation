@@ -3,12 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
-
-    <script src="/track-builder.js" defer></script>
-
-    <script src="/classes/vector2.js"></script>
-    <script src="/classes/node.js"></script>
-    <script src="/classes/track.js"></script>
+    <script type="module" src="/track-builder.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -118,11 +113,31 @@
                 </div>
             </div>
 
-            <div id="build-container">
-                <h5>
-                    <i data-lucide="hammer"></i>
-                    <b>Builder</b>
-                </h5>
+            <div>
+                <div class="d-flex align-items-end gap-3 mb-2">
+                    <h5>
+                        <i data-lucide="hammer"></i>
+                        <b>Builder</b>
+                    </h5>
+                    
+                    <div>
+                        <button id="visuals-nodes" class="btn btn-primary">
+                            <i class="button-on" data-lucide="circle"></i>
+                            <i class="button-off hidden" data-lucide="circle-off"></i>
+                        </button>
+
+                        <button id="visuals-edges" class="btn btn-primary">
+                            <i class="button-on" data-lucide="pen"></i>
+                            <i class="button-off hidden" data-lucide="pen-off"></i>
+                        </button>
+                        
+                        <button id="visuals-track" class="btn btn-primary">
+                            <i class="button-on" data-lucide="route"></i>
+                            <i class="button-off hidden" data-lucide="route-off"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <canvas id="build-canvas" width="750" height="750" style="border:1px solid #000000;"></canvas>
 
                 <!-- secondary canvas for grid? -->
