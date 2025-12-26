@@ -24,7 +24,17 @@ var renderer;
 
 
 
-// [[ Canvas Tools & Options ]] //
+// [[ Canvas Options & Tools ]] //
+
+// prepares the functionality for each option button
+function initialiseOptions() {
+    let share = document.getElementById("options-export");
+
+    share.addEventListener("click", (e) => {
+        console.log(track);
+        console.log(track.toJson(true));
+    })
+}
 
 // selects the corresponding track element
 function initialiseCanvasTools() {
@@ -112,7 +122,7 @@ function onDrawStart(x, y) {
     for (let node of track.getPath()) {
         let pos = node.getPosition();
 
-        if (last.subtract(pos).magnitude() <= 10) {
+        if (last.sub(pos).mag() <= 10) {
             selection = node;
             break;
         }
@@ -138,7 +148,7 @@ function onDrawMove(x, y) {
 
     // pans the canvas
     if (toolType == "pan") {
-        offset = offset.add(pos.subtract(last));
+        offset = offset.add(pos.sub(last));
         last = pos;
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -190,6 +200,9 @@ renderer = new TrackRenderer(track, canvas);
 
 lucide.createIcons();
 
+initialiseOptions();
 initialiseCanvasTools();
 initialiseVisualToggles();
 initialiseCanvas();
+
+renderer.redrawTrack();

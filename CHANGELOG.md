@@ -13,10 +13,34 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 0.4.0
+**Date:** 2025/12/26
+<details>
+<summary>Basic Track Racing (Part 1)</summary>
+<br>
+
+**Additions / Changes:**
+1. Tracks can be exported as JSON with the "Export" option (displayed in console, not directly user-facing)
+2. Added a basic tracks called "The Oval"
+3. Implemented a basic "Tracks List" to display available tracks
+4. Implemented a gameplay screen to start and play tracks
+5. Tracks now include grid lines and can be raced around with vectors, with velocity options indicated by circles around the race car
+
+**Note:** win conditions, crashing, and results will be included in v0.5.0
+
+**Bugs / Fixes:**
+1. Amended missing styling for 404 page
+
+</details>
+
+
+---
+
 ### Version: 0.3.0
 **Date:** 2025/12/22
 <details>
 <summary>Splines & Track Visuals</summary>
+<br>
 
 **Additions / Changes:**
 1. Implemented splines
@@ -34,6 +58,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 **Date:** 2025/12/20
 <details>
 <summary>Node Placement & File Changes</summary>
+<br>
 
 **Additions / Changes:**
 1. Set up basic Track Builder functionality (classes, buttons, etc.)
@@ -56,6 +81,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 **Date:** 2025/12/19
 <details>
 <summary>App Basis - Node.js & HTML</summary>
+<br>
 
 **Additions / Changes:**
 <br>Replaced existing application files with a new version which uses Node.js and HTML (as opposed to pure JavaScript) to prepare for client-server operations.

@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
+    <script type="module" src="/tracks-list.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -12,11 +13,19 @@
 
         <div class="content">
             Welcome to the <b>Track List</b> section. Here you can view all game tracks as well as player-made tracks and tracks made by you!
+            
+            <div class="mt-3">
+                <ul id="game-tracks"></ul>
+            </div>
         </div>
 
         <footer>
             <%- include("./partials/footer.ejs") %>
         </footer>
     </div>
+
+    <script>
+        window.gameTracks = <%- JSON.stringify(gameTracks) %>;
+    </script>
 </body>
 </html>

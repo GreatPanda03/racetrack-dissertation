@@ -227,7 +227,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 
 ### 2025/12/23 TUE
 <details>
-<summary>Prototype Transfer (Intended Technologies)</summary>
+<summary>Prototype Transfer - Intended Technologies (Part 1)</summary>
 
 - Checkpoint entry, as the next supervisor meeting will be on **2026/01/07 WED**
 - As of the last entry:
@@ -235,3 +235,13 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 </details>
 
 ---
+
+### 2026/01/07 WED
+<details>
+<summary>Prototype Transfer - Intended Technologies (Part 2)</summary>
+
+- As of the last entry:
+    - Implemented v0.4.0 (see changelog)
+
+- Supervisor meeting will be held on **2026/01/07 WED**
+

@@ -6,8 +6,8 @@ export default class Vector2 {
     #y;     // float
     
     constructor(x, y) {
-        this.#x = x;
-        this.#y = y;
+        this.#x = x ?? 0;
+        this.#y = y ?? 0;
     }
 
     // getters / setters
@@ -21,7 +21,7 @@ export default class Vector2 {
             a.x() + b.x(), a.y() + b.y());
     }
 
-    subtract(b) {
+    sub(b) {
         let a = this;
         return new Vector2(
             a.x() - b.x(), a.y() - b.y());
@@ -32,13 +32,29 @@ export default class Vector2 {
         return new Vector2(v.x() * s, v.y() * s);
     }
 
-    magnitude() {
+    mag() {
         return ((this.#x ** 2) + (this.#y ** 2)) ** 0.5;
     }
 
     unit() {
         let v = this;
-        let m = this.magnitude();
+        let m = this.mag();
         return this.scale(1 / (m == 0 ? 1 : m));
+    }
+
+    // serialisation
+    toObject() {
+        return {
+            x: this.#x,
+            y: this.#y
+        }
+    }
+
+    static toVector(object) {
+        return new Vector2(object.x, object.y);
+    }
+
+    toJson(pretty) {
+        return JSON.stringify(this.toObject(), null, pretty)
     }
 }
