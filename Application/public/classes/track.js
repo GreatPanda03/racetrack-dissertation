@@ -1,6 +1,8 @@
 // manages instances of Track objects
 // * tracks are a collection of nodes, data, and other objects which define it
 
+import Node from "./node.js";
+
 export default class Track {
     #trackId;       // int
 
@@ -30,6 +32,7 @@ export default class Track {
         this.#materials = [];
         this.#obstacles = [];
         this.#decorations = [];
+        
         this.#looped = true;
     }
 
@@ -102,5 +105,50 @@ export default class Track {
 
     getSize() {
         return this.#path.length;
+    }
+
+    // serialisation
+    toObject() {
+        return {
+            trackId: this.#trackId,
+
+            name: this.#name,
+            description: this.#description,
+            authorId: this.#authorId,
+            author: this.#author,
+            tags: this.#tags,
+
+            path: this.#path?.map(n => n.toObject()) ?? [],
+            materials: this.#materials?.map(m => m.toObject()) ?? [],
+            obstacles: this.#obstacles?.map(o => o.toObject()) ?? [],
+            decorations: this.#decorations?.map(d => d.toObject()) ?? [],
+            
+            looped: this.#looped
+        }
+    }
+
+    static toTrack(object) {
+        let track = new Track();
+
+        track.#trackId = object.trackId;
+
+        track.#name = object.name;
+        track.#description = object.description;
+        track.#authorId = object.authorId;
+        track.#author = object.author;
+        track.#tags = object.tags;
+
+        track.#path = object.path.map(n => Node.toNode(n));
+        track.#materials = object.materials; // TODO: object.path.map(p => Polygon.toPolygon(p));
+        track.#obstacles = object.obstacles; // ditto
+        track.#decorations = object.decorations; // ditto
+
+        track.#looped = object.looped;
+
+        return track;
+    }
+
+    toJson(pretty) {
+        return JSON.stringify(this.toObject(), null, pretty)
     }
 }

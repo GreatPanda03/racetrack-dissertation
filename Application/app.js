@@ -4,7 +4,7 @@
 // [[ Imports ]] //
 const express = require("express");
 const { version } = require("./package.json");
-
+const { gameTracks } = require("./track-repository");
 
 
 // [[ App Set Up ]] //
@@ -33,8 +33,15 @@ app.get("/tracks/build", (request, response) => {
 });
 
 app.get("/tracks/list", (request, response) => {
-    response.render("tracks-list", { title: "Tracks List" });
+    response.render("tracks-list", { title: "Tracks List", gameTracks });
 });
+
+app.get("/tracks/play/:trackId", (request, response) => {
+    let trackId = request.params.trackId;
+    let track = gameTracks.find(t => JSON.parse(t).trackId == trackId);
+    
+    response.render("track-play", { title: "Racing", track })
+})
 
 app.get("/settings", (request, response) => {
     response.render("settings", { title: "Settings" } );

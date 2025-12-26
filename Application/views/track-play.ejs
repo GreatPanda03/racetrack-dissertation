@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <%- include("./partials/head.ejs") %>
+    <script type="module" src="/track-play.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <%- include("./partials/nav.ejs") %>
+        </nav>
+
+        <div class="content">
+            <div>
+                <p>
+                    Welcome to the <b>Racetrack</b>! Start your engine...
+                </p>
+                <p>
+                    Your race car moves using <b>vectors</b>. This vector affects your current velocity, determining where you can move.
+                    Each turn, you can only change your velocity by at most 1 unit horizontally, 1 unit vertically, or both.
+                </p>
+            </div>
+            
+            <hr/>
+            
+            <div>
+                <!-- TODO: display track details -->
+            </div>
+
+            <canvas id="play-canvas" width="750" height="750" style="border:1px solid #000000;"></canvas>
+        </div>
+            
+        <footer>
+            <%- include("./partials/footer.ejs") %>
+        </footer>
+    </div>
+
+    <script>
+        window.track = <%- JSON.stringify(track) %>;
+    </script>
+</body>
+</html>

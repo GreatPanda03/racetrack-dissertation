@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 
 <html>
-<%- include("./partials/head.ejs") %>
+<head>
+    <%- include("./partials/head.ejs") %>        
+</head>
 <body>
-    <%- include("./partials/nav.ejs") %>
+    <nav>
+        <%- include("./partials/nav.ejs") %>
+    </nav>
     
     <div class="content">
-        Oops... that page doesn't exist.
+        <h4>Error 404</h4>
+        <p>
+            Sorry, the page you tried to visit doesn't exist!
+            <br>You can return to the Home section with the navigation bar above.
+        </p>
     </div>
 
-    <%- include("./partials/footer.ejs") %>
+    <footer>
+        <%- include("./partials/footer.ejs") %>
+    </footer>
 </body>
 </html>
