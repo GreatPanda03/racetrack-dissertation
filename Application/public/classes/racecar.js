@@ -8,9 +8,9 @@ export default class RaceCar {
     #style;
 
     constructor() {
-        this.#position = new Vector2()
-        this.#velocity = new Vector2()
-        this.style = null
+        this.#position = new Vector2();
+        this.#velocity = new Vector2();
+        this.style = null;
     }
 
     // getters / setters
@@ -18,7 +18,7 @@ export default class RaceCar {
     setPosition(position) { this.#position = position; }
 
     getVelocity() { return this.#velocity; }
-    setVelocity(velocity) { this.#velocity = velocity }
+    setVelocity(velocity) { this.#velocity = velocity; }
 
     getStyle() { return this.#style; }
     setStyle(style) { this.#style = style; }

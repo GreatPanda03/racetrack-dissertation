@@ -11,7 +11,7 @@ export default class Node {
     constructor(position, width, checkpoint) {
         this.#position = position;
         this.#width = width;
-        this.#checkpoint = checkpoint
+        this.#checkpoint = checkpoint;
     }
 
     // getters / setters
@@ -30,7 +30,7 @@ export default class Node {
             position: this.#position.toObject(),
             width: this.#width,
             checkpoint: this.#checkpoint
-        }
+        };
     }
 
     static toNode(object) {
@@ -44,6 +44,6 @@ export default class Node {
     }
 
     toJson(pretty) {
-        return JSON.stringify(this.toObject(), null, pretty)
+        return JSON.stringify(this.toObject(), null, pretty);
     }
 }

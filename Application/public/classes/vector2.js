@@ -55,6 +55,6 @@ export default class Vector2 {
     }
 
     toJson(pretty) {
-        return JSON.stringify(this.toObject(), null, pretty)
+        return JSON.stringify(this.toObject(), null, pretty);
     }
 }

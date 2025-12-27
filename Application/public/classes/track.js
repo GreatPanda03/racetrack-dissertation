@@ -24,7 +24,7 @@ export default class Track {
 
         this.#name = "New Track";
         this.#description = "This is a new track";
-        this.#authorId = 0
+        this.#authorId = 0;
         this.#author = "n/a";
         this.#tags = ["Track"];
 
@@ -124,7 +124,7 @@ export default class Track {
             decorations: this.#decorations?.map(d => d.toObject()) ?? [],
             
             looped: this.#looped
-        }
+        };
     }
 
     static toTrack(object) {
@@ -149,6 +149,6 @@ export default class Track {
     }
 
     toJson(pretty) {
-        return JSON.stringify(this.toObject(), null, pretty)
+        return JSON.stringify(this.toObject(), null, pretty);
     }
 }

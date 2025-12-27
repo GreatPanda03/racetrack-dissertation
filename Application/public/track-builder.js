@@ -66,6 +66,8 @@ function initialiseVisualToggles() {
     let nodes = document.getElementById("visuals-nodes");
     let edges = document.getElementById("visuals-edges");
     let path = document.getElementById("visuals-track");
+    let nodes_acw = document.getElementById("nodes-anticlockwise");
+    let nodes_cw = document.getElementById("nodes-clockwise");
 
     function toggleButton(button, state) {
         button.querySelector(".button-on")
@@ -76,25 +78,55 @@ function initialiseVisualToggles() {
     }
 
     nodes.addEventListener("click", (e) => {
-        let state = !renderer.getNodesVisible()
+        let state = !renderer.getNodesVisible();
         renderer.setNodesVisible(state);
         toggleButton(nodes, state);
         renderer.redrawTrack();
     });
 
     edges.addEventListener("click", (e) => {
-        let state = !renderer.getEdgesVisible()
+        let state = !renderer.getEdgesVisible();
         renderer.setEdgesVisible(state);
         toggleButton(edges, state);
         renderer.redrawTrack();
     });
 
     path.addEventListener("click", (e) => {
-        let state = !renderer.getTrackVisible()
+        let state = !renderer.getTrackVisible();
         renderer.setTrackVisible(state);
         toggleButton(path, state);
         renderer.redrawTrack();
     });
+
+    nodes_acw.addEventListener("click", (e) => {
+        let path = track.getPath();
+        let size = track.getSize();
+        if (size < 1) return;
+
+        let lastPos = path[size - 1].getPosition();
+
+        for (let n = size - 1; n > 0; n--) {
+            path[n].setPosition(path[n - 1].getPosition());
+        }
+
+        path[0].setPosition(lastPos);
+        renderer.redrawTrack();
+    });
+
+    nodes_cw.addEventListener("click", (e) => {
+        let path = track.getPath();
+        let size = track.getSize();
+        if (size < 1) return;
+
+        let firstPos = path[0].getPosition();
+
+        for (let n = 0; n < size - 1; n++) {
+            path[n].setPosition(path[n + 1].getPosition());
+        }
+
+        path[size - 1].setPosition(firstPos);
+        renderer.redrawTrack();
+    })
 }
 
 
@@ -102,7 +134,7 @@ function initialiseVisualToggles() {
 // [[ "On Draw" Functions ]] //
 
 // returns the position of the mouse relative to the canvas
-function getRelativePositionOnCanvas(x, y) {
+function getRelativePositionOnCanvas(canvas, x, y) {
     let rect = canvas.getBoundingClientRect();
 
     return new Vector2(
@@ -114,7 +146,7 @@ function getRelativePositionOnCanvas(x, y) {
 // when drawing starts on the canvas
 function onDrawStart(x, y) {
     moving = true;
-    last = getRelativePositionOnCanvas(x, y);
+    last = getRelativePositionOnCanvas(canvas, x, y);
 
     // first, check for a (new) element selection
     selection = null;
@@ -122,8 +154,9 @@ function onDrawStart(x, y) {
     for (let node of track.getPath()) {
         let pos = node.getPosition();
 
-        if (last.sub(pos).mag() <= 10) {
+        if (last.sub(pos).mag() <= 15) {
             selection = node;
+            showSelectionDetails();
             break;
         }
     }
@@ -144,7 +177,7 @@ function onDrawStart(x, y) {
 function onDrawMove(x, y) {
     if (!moving) return;
 
-    let pos = getRelativePositionOnCanvas(x, y);
+    let pos = getRelativePositionOnCanvas(canvas, x, y);
 
     // pans the canvas
     if (toolType == "pan") {
@@ -167,7 +200,7 @@ function onDrawEnd(x, y) {
     if (!moving) return;
     moving = false;
 
-    let pos = getRelativePositionOnCanvas(x, y);
+    let pos = getRelativePositionOnCanvas(canvas, x, y);
     
     if (selection) {
         selection.setPosition(
@@ -193,16 +226,73 @@ function initialiseCanvas() {
 
 
 
+// [[ Selection Details ]] //
+
+// displays details according to the current selection
+function showSelectionDetails() {
+    let nodeDetails = document.getElementById("details-node");
+
+    if (selection instanceof Node) {
+        nodeDetails.classList.remove("hidden");
+        updateNodeDetails(selection);
+        
+    } else {
+        nodeDetails.classList.add("hidden");
+    }
+}
+
+
+// updates the node details area with the given node
+function updateNodeDetails(node) {
+    let nodeTitle = document.getElementById("details-node-title");
+    let widthInput = document.getElementById("node-width-input");
+    let checkpointInput = document.getElementById("node-checkpoint-input");
+
+    let index = track.getNodeIndex(node) + 1;
+
+    nodeTitle.innerHTML = `<b>Node ${index}</b>`;
+    widthInput.value = node.getWidth();
+
+    // Node 1 is always the starting line
+    checkpointInput.checked = node.isCheckpoint() || (index == 1);
+    checkpointInput.disabled = (index == 1);
+}   
+
+
+// applies node details to the current selected node (if any)
+function initialiseNodeDetails() {
+    let widthInput = document.getElementById("node-width-input");
+    let checkpointInput = document.getElementById("node-checkpoint-input");
+
+    widthInput.addEventListener("change", (e) => {
+        if (selection instanceof Node) {
+            selection.setWidth(Number(widthInput.value));
+            renderer.redrawTrack();
+        }
+    });
+
+    checkpointInput.addEventListener("change", (e) => {
+        if (selection instanceof Node) {
+            selection.setCheckpoint(checkpointInput.checked);
+            renderer.redrawTrack();
+        }
+    });
+}
+
+
+
 // [[ Set Up ]] //
 
 track = new Track();
 renderer = new TrackRenderer(track, canvas);
 
-lucide.createIcons();
-
 initialiseOptions();
 initialiseCanvasTools();
 initialiseVisualToggles();
+
 initialiseCanvas();
 
+initialiseNodeDetails();
+
+lucide.createIcons();
 renderer.redrawTrack();

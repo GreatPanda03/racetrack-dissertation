@@ -1,8 +1,10 @@
 // manages the tracks list section
 
 
-// [[ Variables ]] //
+
+// [[ Imports ]] //
 import Track from "./classes/track.js";
+
 
 
 // [[ Functions ]] //
@@ -15,7 +17,10 @@ function loadAllTracks(tracks) {
 
     for (let track of tracks) {
         let item = document.createElement("li");
-        item.innerHTML = `<a href='javascript:void(0)'>${track.getName()}</a>`;
+        let content = ``;
+
+        item.innerHTML = `<a href='javascript:void(0)'>
+            <b>${track.getName()}</b></a> - ${track.getDescription()}.`;
         
         item.addEventListener("click", (e) => {
             loadTrack(track);
