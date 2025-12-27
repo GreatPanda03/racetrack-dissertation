@@ -232,6 +232,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - Checkpoint entry, as the next supervisor meeting will be on **2026/01/07 WED**
 - As of the last entry:
     - Implemented v0.1.0 - v0.3.0 (see changelog)
+    - Removed tasks from backlog for brevity and to reduce excessive "admin"
 </details>
 
 ---
@@ -241,7 +242,8 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 <summary>Prototype Transfer - Intended Technologies (Part 2)</summary>
 
 - As of the last entry:
-    - Implemented v0.4.0 (see changelog)
+    - Implemented v0.4.0 - v0.5.0 (see changelog)
+    - Updated Backlog Snapshot naming convention to go by version (vX.Y) rather than date
 
 - Supervisor meeting will be held on **2026/01/07 WED**
 

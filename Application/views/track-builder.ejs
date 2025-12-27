@@ -121,26 +121,50 @@
                     </h5>
                     
                     <div>
-                        <button id="visuals-nodes" class="btn btn-primary">
+                        <button id="visuals-nodes" class="btn btn-primary" title="Toggle Nodes">
                             <i class="button-on" data-lucide="circle"></i>
                             <i class="button-off hidden" data-lucide="circle-off"></i>
                         </button>
 
-                        <button id="visuals-edges" class="btn btn-primary">
+                        <button id="visuals-edges" class="btn btn-primary" title="Toggle Edges">
                             <i class="button-on" data-lucide="pen"></i>
                             <i class="button-off hidden" data-lucide="pen-off"></i>
                         </button>
                         
-                        <button id="visuals-track" class="btn btn-primary">
+                        <button id="visuals-track" class="btn btn-primary" title="Toggle Path">
                             <i class="button-on" data-lucide="route"></i>
                             <i class="button-off hidden" data-lucide="route-off"></i>
+                        </button>
+
+                        <button id="nodes-anticlockwise" class="btn btn-primary" title="Shift Nodes Anticlockwise">
+                            <i data-lucide="rotate-ccw-square"></i>
+                        </button>
+
+                        <button id="nodes-clockwise" class="btn btn-primary" title="Shift Nodes Clockwise">
+                            <i data-lucide="rotate-cw-square"></i>
                         </button>
                     </div>
                 </div>
 
-                <canvas id="build-canvas" width="750" height="750" style="border:1px solid #000000;"></canvas>
+                <div class="canvas-wrapper">
+                    <canvas id="build-canvas" width="750" height="750"></canvas>
+                </div>
 
-                <!-- secondary canvas for grid? -->
+                <div class="d-flex">
+                    <div id="details-node" class="hidden">
+                        <div id="details-node-title">
+                            <b>Node X</b>
+                        </div>
+                        <div id="details-node-width">    
+                            <label>Width:</label>
+                            <input id="node-width-input" type="number" min=5 max=250 value=25>
+                        </div>
+                        <div id="details-node-checkpoint">
+                            <label>Checkpoint:</label>
+                            <input id="node-checkpoint-input" type="checkbox">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

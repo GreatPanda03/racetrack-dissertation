@@ -13,6 +13,31 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 0.5.0
+**Date:** 2025/12/27
+<details>
+<summary>Basic Track Racing (Part 2)</summary>
+<br>
+
+**Additions / Changes:**
+1. Added an option to set a node's "width", defining the thickness of the track around it
+2. Added an option to set nodes as checkpoints, indicated by a coloured strip
+3. The first node of a track is the starting line by default, indicated by a black strip
+4. Added "shift nodes anti-clockwise / clockwise" buttons to swap nodes around for convenience (like a conveyor belt)
+5. Added a dot visual to indicate the track direction (Node 1 -> Node 2)
+6. Added a line visual to track race car movement around racetracks
+7. Added collisions: driving off a track causes the race car to crash
+8. Added checkpoint and finish line conditions: race cars must cross all checkpoints in order and end with the finish line
+9. Added a popup to display the results of a finished race ("total moves", "distance", "time", "average speed", and "top speed")
+
+**Bugs / Fixes:**
+1. Aware that crashes sometimes happen when very close to the track edge
+2. Final time should end sooner when making the final move across the finish line
+
+</details>
+
+---
+
 ### Version: 0.4.0
 **Date:** 2025/12/26
 <details>
@@ -30,6 +55,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 **Bugs / Fixes:**
 1. Amended missing styling for 404 page
+2. Aware of node number misalignment for double-digit figures (and higher)
 
 </details>
 
@@ -48,7 +74,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 3. Track visuals (nodes, edges, path) can be toggled
 
 **Bugs / Fixes:**
-<br>No bugs found yet.
+<br>No new bugs found or existing bugs fixed.
 
 </details>
 
@@ -73,6 +99,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 **Bugs / Fixes:**
 1. Track Builder button icons now appear (replaced with Lucide, didn't show with Bootstrap)
+2. Aware of "looped" option not working (causes track to disappear entirely when disabled)
 </details>
 
 ---
@@ -87,7 +114,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 <br>Replaced existing application files with a new version which uses Node.js and HTML (as opposed to pure JavaScript) to prepare for client-server operations.
 
 **Bugs / Fixes:**
-<br>No bugs found yet.
+<br>No new bugs found or existing bugs fixed.
 </details>
 
 ---

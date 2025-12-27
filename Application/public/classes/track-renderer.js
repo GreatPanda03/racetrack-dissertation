@@ -18,8 +18,8 @@ export default class TrackRenderer {
     #nodesVisible;  // boolean
     #edgesVisible;  // boolean
     #trackVisible;  // boolean
-    #offset;        // Vector2
-    #spacing;       // int (pixels)
+    #offset;        // Vector2 (pixels, for panning)
+    #spacing;       // int (pixels, for grid lines)
 
     #leftSide;      // Node[]
     #rightSide;     // Node[]
@@ -46,14 +46,14 @@ export default class TrackRenderer {
     getLeftSide() { return this.#leftSide; }
     getRightSide() { return this.#rightSide; }
 
-    getNodesVisible() { return this.#nodesVisible }
-    setNodesVisible(visible) { this.#nodesVisible = visible }
+    getNodesVisible() { return this.#nodesVisible; }
+    setNodesVisible(visible) { this.#nodesVisible = visible; }
 
-    getEdgesVisible() { return this.#edgesVisible }
-    setEdgesVisible(visible) { this.#edgesVisible = visible }
+    getEdgesVisible() { return this.#edgesVisible; }
+    setEdgesVisible(visible) { this.#edgesVisible = visible; }
 
-    getTrackVisible() { return this.#trackVisible }
-    setTrackVisible(visible) { this.#trackVisible = visible }
+    getTrackVisible() { return this.#trackVisible; }
+    setTrackVisible(visible) { this.#trackVisible = visible; }
 
     getOffset() { return this.#offset; }
     setOffset(offset) { this.#offset = offset; }
@@ -152,7 +152,23 @@ export default class TrackRenderer {
         }
 
         // checkpoints
-        // ...
+        if (size > 0) {
+            ctx.strokeStyle = "#000"; // Node 1 is the starting line
+
+            let left = leftSide[0].getPosition();
+            let right = rightSide[0].getPosition()
+            this.#drawLine(left, right, 10);
+
+            ctx.strokeStyle = "#FC5"; // every other node
+
+            for (let n = 1; n < size; n++) {
+                if (path[n].isCheckpoint()) {
+                    let left = leftSide[n].getPosition();
+                    let right = rightSide[n].getPosition();
+                    this.#drawLine(left, right, 10);
+                }
+            }
+        }
 
         // edges
         if (this.#edgesVisible) {
@@ -204,17 +220,29 @@ export default class TrackRenderer {
             }
         }
 
+        // directional dot
+        if (size >= 2) {
+            let start = path[0].getPosition();
+            let end = path[1].getPosition();
+            let unit = end.sub(start).unit();
+            let pos = start.add(unit.scale(50));
+
+            this.#drawCircle(pos, 5, "#5AF");
+        }
         
         // grid lines
         ctx.strokeStyle = "#0005"; // transluscent
 
-        for (let r = 1; r < Math.floor(canvas.height / spacing); r += 1) {
+        let gridR = Math.floor(canvas.height / spacing)
+        let gridC = Math.floor(canvas.width / spacing)
+
+        for (let r = 1; r < gridR; r += 1) {
             let start = new Vector2(0, r * spacing);
             let end = new Vector2(canvas.width, r * spacing);
             this.#drawLine(start, end, 1);
         }
 
-        for (let c = 1; c < Math.floor(canvas.width / spacing); c += 1) {
+        for (let c = 1; c < gridC; c += 1) {
             let start = new Vector2(c * spacing, 0);
             let end = new Vector2(c * spacing, canvas.height);
             this.#drawLine(start, end, 1);

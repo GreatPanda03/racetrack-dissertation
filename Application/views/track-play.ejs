@@ -28,8 +28,26 @@
                 <!-- TODO: display track details -->
             </div>
 
-            <canvas id="play-canvas" width="750" height="750" style="border:1px solid #000000;"></canvas>
+            <div class="canvas-wrapper">
+                <canvas id="track-canvas" width="750" height="750" style="z-index: 0;"></canvas>
+                <canvas id="play-canvas" width="750" height="750" style="z-index: 1;"></canvas>
+            </div>
         </div>
+
+        <!-- NOTE: must used "data-bs", NOT just "data"-->
+        <div id="modal-race-results" class="modal fade" tabindes="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">You Win!</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body results">
+                        <p></p>
+                    </div>
+                </div>
+            </div>
+        </div>  
             
         <footer>
             <%- include("./partials/footer.ejs") %>
