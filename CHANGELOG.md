@@ -13,6 +13,31 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 0.6.0
+**Date:** 2026/01/07
+<details>
+<summary>Looped Tracks & V0 Cleanup</summary>
+
+**Additions / Changes:**
+1. Significant class rework to expose methods for unit testing (and separate functionality from UI)
+2. Introduced tests to cover most Version 0 features
+3. Added "Loop" option in Track Builder to toggle whether the track is looped
+4. Added a new open-ended track, "The Spiral"
+5. Added win and crash logic for looped tracks
+
+**Bugs Fixed:**
+1. Amended misaligned node numbers for double-digit figures
+2. Amended "unlooped" tracks not working or rendering at all
+3. Amended crashing for spots close to but within track limits
+
+**Discovered Bugs:**
+1. Aware that race cars can start behind starting lines for unlooped tracks which makes them unplayable due to instant crashing (not an issue for existing tracks yet)
+2. Aware that race car's dont crash / finish at the track boundary / finish line (linked to longer race time when crossing the finish line)
+
+</details>
+
+---
+
 ### Version: 0.5.0
 **Date:** 2025/12/27
 <details>
@@ -30,7 +55,10 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 8. Added checkpoint and finish line conditions: race cars must cross all checkpoints in order and end with the finish line
 9. Added a popup to display the results of a finished race ("total moves", "distance", "time", "average speed", and "top speed")
 
-**Bugs / Fixes:**
+**Bugs Fixed:**
+<br>No existing bugs fixed.
+
+**Bugs Discovered:**
 1. Aware that crashes sometimes happen when very close to the track edge
 2. Final time should end sooner when making the final move across the finish line
 
@@ -53,9 +81,11 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 **Note:** win conditions, crashing, and results will be included in v0.5.0
 
-**Bugs / Fixes:**
+**Bugs Fixed:**
 1. Amended missing styling for 404 page
-2. Aware of node number misalignment for double-digit figures (and higher)
+
+**Bugs Discovered:**
+1. Aware of node number misalignment for double-digit figures (and higher)
 
 </details>
 
@@ -73,8 +103,11 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 2. Tracks are now drawn using splines with a width for each node
 3. Track visuals (nodes, edges, path) can be toggled
 
-**Bugs / Fixes:**
-<br>No new bugs found or existing bugs fixed.
+**Bugs Fixed:**
+<br>No existing bugs fixed.
+
+**Bugs Discovered:**
+1. Aware of small gaps between path triangles
 
 </details>
 
@@ -97,9 +130,11 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 4. Replaced Bootstrap icons with Lucide icons (higher variety)
 5. Added <code>.gitignore</code> file (to lower commit / deployment size)
 
-**Bugs / Fixes:**
+**Bugs Fixed:**
 1. Track Builder button icons now appear (replaced with Lucide, didn't show with Bootstrap)
-2. Aware of "looped" option not working (causes track to disappear entirely when disabled)
+
+**Bugs Discovered:**
+1. Aware of the "looped" option not working (causes tracks to disappear entirely when disabled)
 </details>
 
 ---
@@ -114,7 +149,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 <br>Replaced existing application files with a new version which uses Node.js and HTML (as opposed to pure JavaScript) to prepare for client-server operations.
 
 **Bugs / Fixes:**
-<br>No new bugs found or existing bugs fixed.
+<br>No existing bugs fixed.
 </details>
 
 ---

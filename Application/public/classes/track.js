@@ -1,8 +1,13 @@
 // manages instances of Track objects
-// * tracks are a collection of nodes, data, and other objects which define it
+// * Track is a collection of nodes, data, and other objects which define it
 
-import Node from "./node.js";
 
+// [[ Imports ]] //
+import TrackNode from "./track-node.js";
+
+
+
+// [[ Main Class ]] //
 export default class Track {
     #trackId;       // int
 
@@ -12,7 +17,7 @@ export default class Track {
     #author;        // string
     #tags;          // string[]
     
-    #path;          // Node[]
+    #path;          // TrackNode[]
     #materials;     // Polygon[]
     #obstacles;     // Polygon[]
     #decorations;   // Polygon[]
@@ -26,7 +31,7 @@ export default class Track {
         this.#description = "This is a new track";
         this.#authorId = 0;
         this.#author = "n/a";
-        this.#tags = ["Track"];
+        this.#tags = [];
 
         this.#path = [];
         this.#materials = [];
@@ -84,15 +89,13 @@ export default class Track {
     }
 
     getNodeBefore(node) {
-        let index = getNodeIndex(node);
-        let before = (index - 1 == -1) ? this.#path.length : index - 1;
-        return this.#path[before];
+        let index = this.getNodeIndex(node);
+        return this.#path[(index - 1) < 0 ? this.#path.length - 1 : index - 1];
     }
 
     getNodeAfter(node) {
-        let index = getNodeIndex(node);
-        let after = (index + 1 == this.#path.length) ? 0 : index + 1;
-        return this.#path[after];
+        let index = this.getNodeIndex(node);
+        return this.#path[(index + 1) % this.#path.length];
     }
 
     addNode(node) {
@@ -100,6 +103,10 @@ export default class Track {
     }
 
     addNodeAtIndex(node, index) {
+        if (index < 0 || this.getSize() <= index) { 
+            throw new Error(`[Track] Add index "${index}" out of bounds`);
+        }
+
         this.#path = this.#path.toSpliced(index, 0, node);
     }
 
@@ -138,7 +145,7 @@ export default class Track {
         track.#author = object.author;
         track.#tags = object.tags;
 
-        track.#path = object.path.map(n => Node.toNode(n));
+        track.#path = object.path.map(n => TrackNode.toNode(n));
         track.#materials = object.materials; // TODO: object.path.map(p => Polygon.toPolygon(p));
         track.#obstacles = object.obstacles; // ditto
         track.#decorations = object.decorations; // ditto

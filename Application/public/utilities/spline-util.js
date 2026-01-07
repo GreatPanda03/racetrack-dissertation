@@ -9,16 +9,25 @@ import Vector2 from "../classes/vector2.js";
 // [[ Main Class ]] // 
 export default class SplineUtil {
 
-    // returns the points influencing the spline's curvature at t
+    // returns the indexes of nodes influencing the spline's curvature at t
     static getInfluencersAtT(nodes, t, looped) {
         let p0, p1, p2, p3;
         let size = nodes.length;
 
+        if (size == 0) {
+            throw new Error("[SplineUtils] An empty path was provided");
+        }
+
+        t %= size; // in case of overflow
+
         if (!looped) {
+            let min = 0, max = size - 1; // path indexes
+
             p1 = Math.floor(t);
-            p2 = p1 + 1;
-            p3 = p2 + 1;
-            p0 = p1 - 1;
+            p2 = Math.max(min, Math.min(p1 + 1, max));
+            p3 = Math.max(min, Math.min(p2 + 1, max));
+            p0 = Math.max(min, Math.min(p1 - 1, max));
+            
         } else {
             p1 = Math.floor(t);
             p1 = (p1 == nodes.length) ? 0 : p1;
