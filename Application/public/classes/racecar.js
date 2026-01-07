@@ -1,10 +1,15 @@
 // class to manage RaceCar instances
 
+
+// [[ Imports ]] //
 import Vector2 from "./vector2.js";
 
+
+
+// [[ Main Class ]] //
 export default class RaceCar {
-    #position;  // grid units
-    #velocity;  // grid units
+    #position;  // GRID units (NOT pixels)
+    #velocity;  // GRID units (NOT pixels)
     #style;
 
     constructor() {
@@ -25,6 +30,10 @@ export default class RaceCar {
 
     // methods
     accelerate(speedup) {
+        if ( !(speedup instanceof Vector2) ) {
+            throw new Error(`[RaceCar] "${speedup}" is not a valid Vector2`);
+        }
+
         this.#velocity = this.#velocity.add(speedup);
     }
 

@@ -1,14 +1,35 @@
-// manages instances of Node objects
-// * nodes are points representing a track path
+// manages instances of TrackNode objects
+// * TrackNodes are points representing a track path
 
+
+// [[ Imports ]] //
 import Vector2 from "./vector2.js";
 
-export default class Node {
+
+
+// [[ Main Class ]] //
+export default class TrackNode {
     #position;      // Vector2
     #width;         // number
     #checkpoint;    // boolean
 
     constructor(position, width, checkpoint) {
+        position = position ?? new Vector2();
+        width = width ?? 50;
+        checkpoint = checkpoint ?? false;
+
+        if ( !(position instanceof Vector2) ) {
+            throw new Error(`[TrackNode] "${position}" is not a valid position`);
+        }
+
+        if (typeof width !== "number" || Number.isNaN(width)) {
+            throw new Error(`[TrackNode] "${width}" is not a number`);
+        }
+
+        if (typeof checkpoint !== "boolean") {
+            throw new Error(`[TrackNode] "${checkpoint}" is not a boolean`);
+        }
+
         this.#position = position;
         this.#width = width;
         this.#checkpoint = checkpoint;
@@ -34,7 +55,7 @@ export default class Node {
     }
 
     static toNode(object) {
-        let node = new Node();
+        let node = new TrackNode();
 
         node.#position = Vector2.toVector(object.position);
         node.#width = object.width;

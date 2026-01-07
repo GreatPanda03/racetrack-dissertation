@@ -2,8 +2,8 @@
 
 
 // [[ Imports ]] //
-import Node from "./classes/node.js";
 import Vector2 from "./classes/vector2.js";
+import TrackNode from "./classes/track-node.js";
 import Track from "./classes/track.js";
 import TrackRenderer from "./classes/track-renderer.js";
 
@@ -68,6 +68,7 @@ function initialiseVisualToggles() {
     let path = document.getElementById("visuals-track");
     let nodes_acw = document.getElementById("nodes-anticlockwise");
     let nodes_cw = document.getElementById("nodes-clockwise");
+    let looped = document.getElementById("track-looped");
 
     function toggleButton(button, state) {
         button.querySelector(".button-on")
@@ -127,6 +128,13 @@ function initialiseVisualToggles() {
         path[size - 1].setPosition(firstPos);
         renderer.redrawTrack();
     })
+
+    looped.addEventListener("click", () => {
+        let state = !track.isLooped();
+        track.setLooped(state);
+        toggleButton(looped, state);
+        renderer.redrawTrack();
+    });
 }
 
 
@@ -157,6 +165,7 @@ function onDrawStart(x, y) {
         if (last.sub(pos).mag() <= 15) {
             selection = node;
             showSelectionDetails();
+            console.log("selected!");
             break;
         }
     }
@@ -164,7 +173,7 @@ function onDrawStart(x, y) {
     // if no selection, assume canvas placement
     if (!selection) {
         if (toolType == "path") {
-            let node = new Node(last, 100, false);
+            let node = new TrackNode(last, 100, false);
             track.addNode(node);
             renderer.addSegment(node);
             
@@ -232,7 +241,7 @@ function initialiseCanvas() {
 function showSelectionDetails() {
     let nodeDetails = document.getElementById("details-node");
 
-    if (selection instanceof Node) {
+    if (selection instanceof TrackNode) {
         nodeDetails.classList.remove("hidden");
         updateNodeDetails(selection);
         
@@ -265,14 +274,14 @@ function initialiseNodeDetails() {
     let checkpointInput = document.getElementById("node-checkpoint-input");
 
     widthInput.addEventListener("change", (e) => {
-        if (selection instanceof Node) {
+        if (selection instanceof TrackNode) {
             selection.setWidth(Number(widthInput.value));
             renderer.redrawTrack();
         }
     });
 
     checkpointInput.addEventListener("change", (e) => {
-        if (selection instanceof Node) {
+        if (selection instanceof TrackNode) {
             selection.setCheckpoint(checkpointInput.checked);
             renderer.redrawTrack();
         }

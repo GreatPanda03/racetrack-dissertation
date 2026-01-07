@@ -3,144 +3,88 @@
 
 
 // [[ Imports ]] //
-import Node from "./node.js";
 import Vector2 from "./vector2.js";
+import Track from "./track.js";
+import TrackForm from "./track-form.js";
 import SplineUtil from "../utilities/spline-util.js";
 
 
 
 // [[ Main Class ]] //
-export default class TrackRenderer {
-    #track;         // Track
-    #canvas;        // HTML canvas element
-    #ctx;           // Context (never exposed)
+export default class TrackRenderer extends TrackForm {
+    _canvas;        // HTML canvas element
+    _ctx;           // Context (never exposed)
     
-    #nodesVisible;  // boolean
-    #edgesVisible;  // boolean
-    #trackVisible;  // boolean
-    #offset;        // Vector2 (pixels, for panning)
-    #spacing;       // int (pixels, for grid lines)
-
-    #leftSide;      // Node[]
-    #rightSide;     // Node[]
+    _nodesVisible;  // boolean
+    _edgesVisible;  // boolean
+    _trackVisible;  // boolean
+    _offset;        // Vector2 (pixels, for panning)
+    _spacing;       // int (pixels, for grid lines)
 
     constructor(track, canvas) {
-        this.#track = track;
-        this.#canvas = canvas;
-        this.#ctx = canvas.getContext("2d");
+        if (track == null || !(track instanceof Track)) {
+            throw new Error(`[TrackRenderer] "${track}" is not a valid Track`);
+        }
 
-        this.#nodesVisible = true;
-        this.#edgesVisible = true;
-        this.#trackVisible = true;
-        this.#offset = new Vector2(0, 0);
-        this.#spacing = 25;
+        if (canvas == null || canvas.tagName != "CANVAS") {
+            throw new Error(`[TrackRenderer] "${canvas}" is not a valid Canvas`)
+        }
 
-        this.#leftSide = [];
-        this.#rightSide = [];
+        super(track);
+
+        this._canvas = canvas;
+        this._ctx = canvas.getContext("2d");
+
+        this._nodesVisible = true;
+        this._edgesVisible = true;
+        this._trackVisible = true;
+        this._offset = new Vector2(0, 0);
+        this._spacing = 25;
     }
 
     // getters / setters
-    getCanvas() { return this.#canvas; }
+    getCanvas() { return this._canvas; }
 
-    getTrack() { return this.#track; }
-    getLeftSide() { return this.#leftSide; }
-    getRightSide() { return this.#rightSide; }
+    getNodesVisible() { return this._nodesVisible; }
+    setNodesVisible(visible) { this._nodesVisible = visible; }
 
-    getNodesVisible() { return this.#nodesVisible; }
-    setNodesVisible(visible) { this.#nodesVisible = visible; }
+    getEdgesVisible() { return this._edgesVisible; }
+    setEdgesVisible(visible) { this._edgesVisible = visible; }
 
-    getEdgesVisible() { return this.#edgesVisible; }
-    setEdgesVisible(visible) { this.#edgesVisible = visible; }
+    getTrackVisible() { return this._trackVisible; }
+    setTrackVisible(visible) { this._trackVisible = visible; }
 
-    getTrackVisible() { return this.#trackVisible; }
-    setTrackVisible(visible) { this.#trackVisible = visible; }
-
-    getOffset() { return this.#offset; }
-    setOffset(offset) { this.#offset = offset; }
+    getOffset() { return this._offset; }
+    setOffset(offset) { this._offset = offset; }
 
     // methods
-
-    // adds a left / right side around the given node
-    addSegment(node) {
-        let track = this.#track;
-        let leftSide = this.#leftSide;
-        let rightSide = this.#rightSide;
-
-        let index = track.getNodeIndex(node);
-        let [leftPos, rightPos] = this.getSegmentExtents(node);
-
-        this.#leftSide = leftSide.toSpliced(index, 0, new Node(leftPos, 25, false));
-        this.#rightSide = rightSide.toSpliced(index, 0, new Node(rightPos, 25, false));
-    }
-
-    // returns the extents of a node based on its width
-    getSegmentExtents(node) {
-        let track = this.#track;
-
-        let path = track.getPath();
-        let index = track.getNodeIndex(node);
-        let midPos = node.getPosition();
-        let width = node.getWidth();
-        let looped = track.isLooped();
-
-        let w2 = width / 2;
-
-        let t = index;
-        let gradient = SplineUtil.getGradientAtT(path, t, looped);
-        let unit = gradient.unit();
-
-        let leftPos = new Vector2(
-            midPos.x() + w2 * -unit.y(),
-            midPos.y() + w2 *  unit.x());
-
-        let rightPos = new Vector2(
-            midPos.x() - w2 * -unit.y(),
-            midPos.y() - w2 *  unit.x());
-
-        return [leftPos, rightPos];
-    }
-
-    // updates the extents of all nodes
-    updateNodeExtents() {
-        let track = this.#track;
-        let leftSide = this.#leftSide;
-        let rightSide = this.#rightSide;
-        let path = track.getPath();
-
-        for (let n = 0; n < path.length; n++) {
-            let node = path[n];
-            let [leftPos, rightPos] = this.getSegmentExtents(node);
-
-            leftSide[n].setPosition(leftPos);
-            rightSide[n].setPosition(rightPos);
-        }
-    }
 
     // draws all components of the track to the canvas
     redrawTrack() {
         this.clearCanvas();
 
-        let track = this.#track;
-        let canvas = this.#canvas;
-        let ctx = this.#ctx;
-        let spacing = this.#spacing;
+        let track = this._track;
+        let canvas = this._canvas;
+        let ctx = this._ctx;
+        let spacing = this._spacing;
 
         let path = track.getPath();
-        let leftSide = this.#leftSide;
-        let rightSide = this.#rightSide;
+        let leftSide = this.getLeftSide();
+        let rightSide = this.getRightSide();
         let size = track.getSize();
         let looped = track.isLooped();
 
         this.updateNodeExtents();
 
         // triangles
-        if (this.#trackVisible) {
+        if (this._trackVisible) {
             let res = 0.1;
+            let tmax = looped ? size : size - 1;
 
-            for (let t = 0; t < size; t += res) {
-                let left1 = SplineUtil.getPointAtT(leftSide, t, looped);
-                let left2 = SplineUtil.getPointAtT(leftSide, t + res, looped);
-                let right1 = SplineUtil.getPointAtT(rightSide, t, looped);
+            for (let t = 0; t < tmax; t += res) {
+                let left1  = SplineUtil.getPointAtT(leftSide , t      , looped);
+                let left2  = SplineUtil.getPointAtT(leftSide , t + res, looped);
+                let right1 = SplineUtil.getPointAtT(rightSide, t      , looped);
                 let right2 = SplineUtil.getPointAtT(rightSide, t + res, looped);
 
                 // [left1, left2, right1] = this.#inflateTriangle(left1, left2, right1);
@@ -159,6 +103,12 @@ export default class TrackRenderer {
             let right = rightSide[0].getPosition()
             this.#drawLine(left, right, 10);
 
+            if (!looped) {
+                let left = leftSide[size - 1].getPosition();
+                let right = rightSide[size - 1].getPosition()
+                this.#drawLine(left, right, 10);
+            }
+
             ctx.strokeStyle = "#FC5"; // every other node
 
             for (let n = 1; n < size; n++) {
@@ -171,10 +121,12 @@ export default class TrackRenderer {
         }
 
         // edges
-        if (this.#edgesVisible) {
+        if (this._edgesVisible) {
             ctx.strokeStyle = "#999";
 
-            for (let n = 0; n < size; n++) {
+            let nmax = looped ? size : size - 1;
+
+            for (let n = 0; n < nmax; n++) {
 
                 // central edge
                 let mid1 = path[n].getPosition();
@@ -197,18 +149,19 @@ export default class TrackRenderer {
         }
 
         // nodes
-        if (this.#nodesVisible) {
-            let ctx = this.#ctx;
+        if (this._nodesVisible) {
+            let ctx = this._ctx;
             ctx.font = "16px Segoe UI";
             ctx.strokeStyle = "#FFF";
             ctx.lineWidth = 1;
+            ctx.textAlign = "center";
 
             for (let n = 0; n < size; n++) {
 
                 // central node
                 let mid = path[n].getPosition();
                 this.#drawCircle(mid, 15, path[n].isCheckpoint() ? "#A5F" : "#5AF");
-                ctx.strokeText((n + 1).toString(), mid.x() - 4, mid.y() + 5);
+                ctx.strokeText((n + 1).toString(), mid.x(), mid.y() + 5);
 
                 // left extent
                 let left = leftSide[n].getPosition();
@@ -251,7 +204,7 @@ export default class TrackRenderer {
 
     // auxiliary: draws a line between two points
     #drawLine(p1, p2, width) {
-        let ctx = this.#ctx;
+        let ctx = this._ctx;
         ctx.lineWidth = width;
         ctx.beginPath();
         ctx.moveTo(p1.x(), p1.y());
@@ -261,7 +214,7 @@ export default class TrackRenderer {
 
     // auxiliary: draws a circle with the given properties
     #drawCircle(centre, radius, colour) {
-        let ctx = this.#ctx;
+        let ctx = this._ctx;
         ctx.fillStyle = colour;
         ctx.beginPath();
         ctx.ellipse(centre.x(), centre.y(), radius, radius, 0, 2 * Math.PI, 0);
@@ -271,7 +224,7 @@ export default class TrackRenderer {
     // auxiliary: draws a filled triangle between the given points
     //   with the given properties
     #drawTriangle(a, b, c, colour) {
-        let ctx = this.#ctx;
+        let ctx = this._ctx;
 
         let triangle = new Path2D();
         triangle.moveTo(a.x(), a.y());
@@ -298,9 +251,9 @@ export default class TrackRenderer {
 
     // clears the canvas
     clearCanvas() {
-        let canvas = this.#canvas;
-        let ctx = this.#ctx;
-        let offset = this.#offset;
+        let canvas = this._canvas;
+        let ctx = this._ctx;
+        let offset = this._offset;
 
         ctx.clearRect(-offset.x(), -offset.y(), canvas.width, canvas.height);
     }

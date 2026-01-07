@@ -1,13 +1,26 @@
 // manages instances of Vector2 objects
 // * vector2s are simple (x, y) vectors with simple maths operations
 
+
+// [[ Main Class ]] //
 export default class Vector2 {
     #x;     // float
     #y;     // float
     
     constructor(x, y) {
-        this.#x = x ?? 0;
-        this.#y = y ?? 0;
+        x = x ?? 0;
+        y = y ?? 0;
+
+        if (typeof x !== "number" || Number.isNaN(x)) { 
+            throw new Error(`[Vector2] "${x}" is not a number`);
+        }
+        
+        if (typeof y !== "number" || Number.isNaN(y)) {
+            throw new Error(`[Vector2] "${y}" is not a number`);
+        }
+
+        this.#x = x;
+        this.#y = y;
     }
 
     // getters / setters
