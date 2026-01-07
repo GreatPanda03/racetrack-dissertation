@@ -242,8 +242,9 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 <summary>Prototype Transfer - Intended Technologies (Part 2)</summary>
 
 - As of the last entry:
-    - Implemented v0.4.0 - v0.5.1 (see changelog)
+    - Implemented v0.4.0 - v0.6.0 (see changelog)
     - Updated Backlog Snapshot naming convention to go by version (vX.Y) rather than date
+    - Separated "Bugs / Fixes" header in changelog into "Bugs Fixed" and "Bugs Discovered"
 
 - Supervisor meeting will be held on **2026/01/07 WED**
 
