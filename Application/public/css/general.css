@@ -76,6 +76,12 @@ h3 {
     display: none;
 }
 
+.options-list {
+    background-color: #EEE;
+    padding: 5px;
+    display: inline-block;
+}
+
 /* stacked canvas source: https://stackoverflow.com/questions/10037649/ */
 .canvas-wrapper {
     position: relative;
@@ -101,8 +107,8 @@ canvas {
     text-align: center;
 }
 
-#build-bar {
-    margin-bottom: 40px;
+#builder-options {
+    margin-bottom: 20px;
 }
 
 h5 {

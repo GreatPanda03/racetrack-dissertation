@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
-    <script type="module" src="/track-builder.js" defer></script>
+    <script type="module" src="/js/track-builder.js"></script>
 </head>
 <body>
     <div class="container">
@@ -18,7 +18,7 @@
                 </p>
                 <p>
                     Tracks are defined as a series of points, starting from Point 1.
-                    When more than 3 points are placed, a path if formed between all points.
+                    When 3+ points are placed, a path is formed between all points.
                     The builder also comes with a grid, showing where race cars can drive to.
                     Race cars can only drive to a point on top of the track path, otherwise they crash!
                 </p>
@@ -34,146 +34,155 @@
             </div>
             
             <hr/>
-            
-            <div id="build-bar">
-                <div id="build-options">
-                    <div class="mb-2">
-                        <i data-lucide="square-mouse-pointer"></i>
-                        <b>Options</b>
-                    </div>
-                    <div>
-                        <button id="options-details" class="btn btn-primary">
-                            <i data-lucide="notebook-pen"></i>
-                            <br/>Details
-                        </button>
-                        
-                        <button id="options-save" class="btn btn-primary">
-                            <i data-lucide="save"></i>
-                            <br/>Save
-                        </button>
-                        
-                        <button id="options-save-as" class="btn btn-primary">
-                            <i data-lucide="save-all"></i>
-                            <br/>Save As
-                        </button>
 
-                        <button id="options-undo" class="btn btn-primary">
-                            <i data-lucide="undo"></i>
-                            <br/>Undo
-                        </button>
-
-                        <button id="options-redo" class="btn btn-primary">
-                            <i data-lucide="redo"></i>
-                            <br/>Redo
-                        </button>
-
-                        <button id="options-test" class="btn btn-primary">
-                            <i data-lucide="play"></i>
-                            <br/>Test
-                        </button>
-
-                        <button id="options-import" class="btn btn-primary">
-                            <i data-lucide="download"></i>
-                            <br/>Import
-                        </button>
-
-                        <button id="options-export" class="btn btn-primary">
-                            <i data-lucide="share"></i>
-                            <br/>Export
-                        </button>
-                    </div>
-                </div>
-
-                <div id="build-tools" class="mt-3">
-                    <div class="mb-2">
-                        <i data-lucide="brush"></i>
-                        <b>Tools</b>
-                    </div>
-                    <div>
-                        <button id="tools-path" class="btn btn-primary">
-                            <i data-lucide="route"></i>
-                            <br/>Path
-                        </button>
-
-                        <button id="tools-material" class="btn btn-primary">
-                            <i data-lucide="box"></i>
-                            <br/>Material
-                        </button>
-
-                        <button id="tools-obstacle" class="btn btn-primary">
-                            <i data-lucide="brick-wall"></i>
-                            <br/>Obstacle
-                        </button>
-
-                        <button id="tools-decoration" class="btn btn-primary">
-                            <i data-lucide="sprout"></i>
-                            <br/>Decor
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <div class="d-flex align-items-end gap-3 mb-2">
-                    <h5>
-                        <i data-lucide="hammer"></i>
-                        <b>Builder</b>
-                    </h5>
+            <div id="main-builder">
+                
+                <!-- builder options -->
+                <div id="builder-options" class="d-flex gap-2">
+                    <button id="options-details" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Track Details">
+                        <i data-lucide="notebook-pen"></i>
+                    </button>
                     
+                    <button id="options-save" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save Track">
+                        <i data-lucide="save"></i>
+                    </button>
+                    
+                    <button id="options-save-as" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save Track As">
+                        <i data-lucide="save-all"></i>
+                    </button>
+
+                    <button id="options-undo" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Undo">
+                        <i data-lucide="undo"></i>
+                    </button>
+
+                    <button id="options-redo" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Redo">
+                        <i data-lucide="redo"></i>
+                    </button>
+
+                    <button id="options-test" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Test Track">
+                        <i data-lucide="play"></i>
+                    </button>
+
+                    <button id="options-import" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Import Track">
+                        <i data-lucide="download"></i>
+                    </button>
+
+                    <button id="options-export" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Export Track">
+                        <i data-lucide="share"></i>
+                    </button>
+                </div>
+
+                <div class="d-flex gap-2">
                     <div>
-                        <button id="visuals-nodes" class="btn btn-primary" title="Toggle Nodes">
-                            <i class="button-on" data-lucide="circle"></i>
-                            <i class="button-off hidden" data-lucide="circle-off"></i>
-                            <br/>Nodes
-                        </button>
+                        <div class="d-flex gap-2">
 
-                        <button id="visuals-edges" class="btn btn-primary" title="Toggle Edges">
-                            <i class="button-on" data-lucide="pen"></i>
-                            <i class="button-off hidden" data-lucide="pen-off"></i>
-                            <br/>Edges
-                        </button>
-                        
-                        <button id="visuals-track" class="btn btn-primary" title="Toggle Path">
-                            <i class="button-on" data-lucide="route"></i>
-                            <i class="button-off hidden" data-lucide="route-off"></i>
-                            <br/>Path
-                        </button>
+                            <!-- track visuals -->
+                            <div id="visual-tools" class="options-list d-flex flex-column align-items-center gap-3">
+                                <i data-lucide="eye"></i>
 
-                        <button id="nodes-anticlockwise" class="btn btn-primary" title="Shift Nodes Anticlockwise">
-                            <i data-lucide="rotate-ccw-square"></i>
-                            <br/>Left
-                        </button>
+                                <button id="visuals-nodes" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Nodes">
+                                    <i class="button-on" data-lucide="circle"></i>
+                                    <i class="button-off hidden" data-lucide="circle-off"></i>
+                                </button>
 
-                        <button id="nodes-clockwise" class="btn btn-primary" title="Shift Nodes Clockwise">
-                            <i data-lucide="rotate-cw-square"></i>
-                            <br/>Right
-                        </button>
+                                <button id="visuals-edges" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Edges">
+                                    <i class="button-on" data-lucide="pen"></i>
+                                    <i class="button-off hidden" data-lucide="pen-off"></i>
+                                </button>
+                                
+                                <button id="visuals-track" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Track">
+                                    <i class="button-on" data-lucide="route"></i>
+                                    <i class="button-off hidden" data-lucide="route-off"></i>
+                                </button>
+                            </div>
 
-                        <button id="track-looped" class="btn btn-primary" title="Toggle Path">
-                            <i class="button-on" data-lucide="link-2"></i>
-                            <i class="button-off hidden" data-lucide="link-2-off"></i>
-                            <br/>Loop
-                        </button>
+                            <!-- track manipulation -->
+                            <div id="manipulation-tools" class="options-list d-flex flex-column align-items-center gap-3">
+                                <i data-lucide="move"></i>
+
+                                <button id="nodes-anticlockwise" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Shift Nodes Backwards">
+                                    <i data-lucide="rotate-ccw-square"></i>
+                                </button>
+
+                                <button id="nodes-clockwise" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Shift Nodes Forwards">
+                                    <i data-lucide="rotate-cw-square"></i>
+                                </button>
+
+                                <button id="track-reverse" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Flip Track Direction">
+                                    <i data-lucide="repeat"></i>
+                                </button>
+
+                                <button id="track-looped" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Track Looping">
+                                    <i class="button-on" data-lucide="link-2"></i>
+                                    <i class="button-off hidden" data-lucide="link-2-off"></i>
+                                </button>
+
+                                <button id="track-centre" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Recentre Track">
+                                    <i data-lucide="locate"></i>
+                                </button>
+                            </div>
+
+                            <!-- build tools -->
+                            <div id="build-tools" class="options-list d-flex flex-column align-items-center gap-3">
+                                <i data-lucide="hammer"></i>
+
+                                <button id="tools-select-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Select">
+                                    <i data-lucide="mouse-pointer-2"></i>
+                                </button>
+                                
+                                <button id="tools-path-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Path">
+                                    <i data-lucide="route"></i>
+                                </button>
+                                
+                                <div class="btn-group dropend" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Materials">
+                                    <button id="tools-materials-btn" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i data-lucide="box"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item">Curb</a></li>
+                                        <li><a class="dropdown-item">Gravel</a></li>
+                                        <li><a class="dropdown-item">Water</a></li>
+                                        <li><a class="dropdown-item">Booster</a></li>
+                                    </ul>
+                                </div>
+                            
+                                <button id="tools-obstacles-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Obstacles">
+                                    <i data-lucide="brick-wall"></i>
+                                </button>
+                                
+                                <button id="tools-decoration-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Decorations">
+                                    <i data-lucide="sprout"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <hr>
+
+                            <!-- node details -->
+                            <div id="details-node" class="hidden">
+                                <div id="details-node-title">
+                                    <b>Node X</b>
+                                </div>
+                                <div id="details-node-width">    
+                                    <label>Width:</label>
+                                    <input id="node-width-input" type="number" min=5 max=250 value=25>
+                                </div>
+                                <div id="details-node-checkpoint">
+                                    <label>Checkpoint:</label>
+                                    <input id="node-checkpoint-input" type="checkbox">
+                                </div>
+
+                                <button id="details-node-delete" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete Node">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="canvas-wrapper">
-                    <canvas id="build-canvas" width="750" height="750"></canvas>
-                </div>
-
-                <div class="d-flex">
-                    <div id="details-node" class="hidden">
-                        <div id="details-node-title">
-                            <b>Node X</b>
-                        </div>
-                        <div id="details-node-width">    
-                            <label>Width:</label>
-                            <input id="node-width-input" type="number" min=5 max=250 value=25>
-                        </div>
-                        <div id="details-node-checkpoint">
-                            <label>Checkpoint:</label>
-                            <input id="node-checkpoint-input" type="checkbox">
-                        </div>
+                    <!-- canvas -->
+                    <div class="canvas-wrapped">
+                        <canvas id="build-canvas" width="750" height="750"></canvas>
                     </div>
                 </div>
             </div>

@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import Vector2 from "../../public/classes/vector2.js";
-import TrackNode from "../../public/classes/track-node.js";
-import SplineUtil from "../../public/utilities/spline-util.js";
+import {
+    Vector2,
+    TrackNode,
+    SplineUtil
+} from "../../src/core";
 
 
 // desmos visualiser (created by Muhammad Mogra):

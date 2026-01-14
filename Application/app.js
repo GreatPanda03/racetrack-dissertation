@@ -4,14 +4,16 @@
 // [[ Imports ]] //
 const express = require("express");
 const { version } = require("./package.json");
-const { gameTracks } = require("./track-repository");
+const { gameTracks } = require("./src/track-repository");
 
 
 // [[ App Set Up ]] //
 const app = express();
 app.set("view engine", "ejs");
 app.listen(3000); 
-app.use(express.static("public"));
+
+app.use(express.static("public")); // static resources
+app.use("/core", express.static("src/core")); // core classes etc.
 
 
 
