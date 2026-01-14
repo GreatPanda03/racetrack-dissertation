@@ -13,14 +13,49 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.0.0
+**Date:** 2026/01/14
+<details>
+<summary>Transition to V1</summary>
+
+**Additions / Changes:**
+1. Expanded and adjusted the track builder's options
+    * Adjusted the layout of the options into smaller lists with tooltips
+    * Separated "Track Visual" options from "Track Manipulation" options
+    * Added a "Flip" option to reverse the direction of the track
+    * Added a "Centre" option to centre the entire track on the canvas
+2. Amended track builder typos
+3. Nodes can now be removed from tracks being built
+4. Added "Materials" to the track builder (non-placeable, non-functional)
+    * The current materials are: "Gravel"; "Curb"; "Water"; and "Booster"
+    * Materials are planned to be implemented in v1.1.0
+5. Slightly adjusted the track "The Spiral" (better centring)
+6. Added a new track, "Downhill"
+7. (DEV) File organisation
+    * Classes / tests grouped into categories
+    * Core code moved to `src/core` folder
+    * Barrel file under `src/core` for test imports
+
+**Bugs Fixed:**
+1. Fixed "left" and "right" of track being visually opposite ("left" was technically drawn on the right)
+2. Tracks are now drawn as a whole polygon rather than with triangle segments (resolves thin visual gaps in the track)
+3. Final node of unlooped tracks has a locked checkpoint value (forced to be `true`)
+
+**Bugs Discovered:**
+1. Aware that builder button tooltips persist after selection until clicking elsewhere
+
+</details>
+
+---
+
 ### Version: 0.6.0
 **Date:** 2026/01/07
 <details>
 <summary>Looped Tracks & V0 Cleanup</summary>
 
 **Additions / Changes:**
-1. Significant class rework to expose methods for unit testing (and separate functionality from UI)
-2. Introduced tests to cover most Version 0 features
+1. (DEV) Significant class rework to expose methods for unit testing (and separate functionality from UI)
+2. (DEV) Introduced tests to cover most Version 0 features
 3. Added "Loop" option in Track Builder to toggle whether the track is looped
 4. Added a new open-ended track, "The Spiral"
 5. Added win and crash logic for looped tracks
@@ -30,7 +65,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 2. Amended "unlooped" tracks not working or rendering at all
 3. Amended crashing for spots close to but within track limits
 
-**Discovered Bugs:**
+**Bugs Discovered:**
 1. Aware that race cars can start behind starting lines for unlooped tracks which makes them unplayable due to instant crashing (not an issue for existing tracks yet)
 2. Aware that race car's dont crash / finish at the track boundary / finish line (linked to longer race time when crossing the finish line)
 
@@ -121,7 +156,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 **Additions / Changes:**
 1. Set up basic Track Builder functionality (classes, buttons, etc.)
-2. Reworked code for EJS partials (no longer in fixed "head", "nav", "footer" tags)
+2. (DEV) Reworked code for EJS partials (no longer in fixed "head", "nav", "footer" tags)
 3. Implemented the ability to place nodes on the canvas
     * Select "Path" and click the canvas to place a new node
     * Nodes are numbered according to their placement order
@@ -146,7 +181,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 <br>
 
 **Additions / Changes:**
-<br>Replaced existing application files with a new version which uses Node.js and HTML (as opposed to pure JavaScript) to prepare for client-server operations.
+1. (DEV) Replaced existing application files with a new version which uses Node.js and HTML (as opposed to pure JavaScript) to prepare for client-server operations.
 
 **Bugs / Fixes:**
 <br>No existing bugs fixed.

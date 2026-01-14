@@ -1,0 +1,430 @@
+// manages the track builder on the client
+
+
+// [[ Imports ]] //
+import Vector2          from "/core/classes/geometry/vector2.js";
+import PathNode         from "/core/classes/geometry/path-node.js";
+import TrackNode        from "/core/classes/track/components/track-node.js";
+import Material         from "/core/classes/track/components/material.js";
+import Track            from "/core/classes/track/track.js";
+import TrackRenderer    from "/core/classes/track/track-renderer.js";
+import TOOL_TYPE        from "/core/enums/tool-type.js";
+
+
+
+// [[ Variables ]] //
+var canvas = document.getElementById("build-canvas");
+var ctx = canvas.getContext("2d");
+
+var toolType = null;
+var moving = false;
+var last = null;
+
+var selection = null;
+var affected = null;
+
+var track;
+var renderer;
+
+
+
+// [[ Canvas Options & Tools ]] //
+
+// auxiliary: toggles the buttons icon between enabled / disabled
+// * MUST have an "on" and "off" icon!
+function toggleButton(button, state) {
+    button.querySelector(".button-on")
+        .classList.toggle("hidden", !state);
+
+    button.querySelector(".button-off")
+        .classList.toggle("hidden", state);
+}
+
+
+// builder options
+function initialiseBuilderOptions() {
+    let share = document.getElementById("options-export");
+
+    share.addEventListener("click", (e) => {
+        console.log(track);
+        console.log(track.toJson(true));
+    })
+}
+
+// selects the corresponding track element
+function initialiseCanvasTools() {
+    let select = document.getElementById("tools-select-btn");
+    let path = document.getElementById("tools-path-btn");
+    let material = document.getElementById("tools-materials-btn"); 
+    let obstacle = document.getElementById("tools-obstacles-btn");
+    let decoration = document.getElementById("tools-decoration-btn");
+    
+    let options = [select, path, material, obstacle, decoration];
+
+    // auxiliary: mark / unmark buttons as selected
+    function deselectAllTools() {
+        for (let option of options) {
+            option.classList.remove("active");
+        }
+    }
+
+    function selectTool(type, button) {
+        deselectAllTools();
+        toolType = type;
+        button.classList.add("active");
+    }
+
+    select.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Select, select);
+    });
+
+    path.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Path, path);
+    });
+
+    material.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Material, material);
+    });
+
+    obstacle.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Obstacle, obstacle);
+    });
+
+    decoration.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Decoration, decoration);
+    });
+}
+
+
+// toggle the visibility of different track components
+function initialiseVisualToggles() {
+    let nodes = document.getElementById("visuals-nodes");
+    let edges = document.getElementById("visuals-edges");
+    let path = document.getElementById("visuals-track");
+
+    nodes.addEventListener("click", (e) => {
+        let state = !renderer.getNodesVisible();
+        toggleButton(nodes, state);
+        renderer.setNodesVisible(state);
+        renderer.redrawTrack();
+    });
+
+    edges.addEventListener("click", (e) => {
+        let state = !renderer.getEdgesVisible();
+        toggleButton(edges, state);
+        renderer.setEdgesVisible(state);
+        renderer.redrawTrack();
+    });
+
+    path.addEventListener("click", (e) => {
+        let state = !renderer.getTrackVisible();
+        toggleButton(path, state);
+        renderer.setTrackVisible(state);
+        renderer.redrawTrack();
+    });    
+}
+
+
+// manipulate the track's underlying structure
+function initialiseManipulationOptions() {
+    let nodes_acw = document.getElementById("nodes-anticlockwise");
+    let nodes_cw = document.getElementById("nodes-clockwise");
+    let reverse = document.getElementById("track-reverse");
+    let looped = document.getElementById("track-looped");
+    let centre = document.getElementById("track-centre");
+
+    // for both "reverse" and "nodes_acw"
+    function shiftNodesAnticlockwise() {
+        let path = track.getPath();
+        let size = track.getSize();
+        if (size < 1) return;
+
+        let lastPos = path[size - 1].getPosition();
+
+        for (let n = size - 1; n > 0; n--) {
+            path[n].setPosition(path[n - 1].getPosition());
+        }
+
+        path[0].setPosition(lastPos);
+        renderer.redrawTrack();
+    }
+
+    nodes_acw.addEventListener("click", shiftNodesAnticlockwise);
+
+    nodes_cw.addEventListener("click", (e) => {
+        let path = track.getPath();
+        let size = track.getSize();
+        if (size < 1) return;
+
+        let firstPos = path[0].getPosition();
+
+        for (let n = 0; n < size - 1; n++) {
+            path[n].setPosition(path[n + 1].getPosition());
+        }
+
+        path[size - 1].setPosition(firstPos);
+        renderer.redrawTrack();
+    });
+
+    reverse.addEventListener("click", (e) => {
+        track.setPath( track.getPath().reverse() );
+        shiftNodesAnticlockwise(); // moves "first" node back to being first
+        renderer.redrawTrack();
+    });
+
+    looped.addEventListener("click", (e) => {
+        let state = !track.isLooped();
+        toggleButton(looped, state);
+        track.setLooped(state);
+        renderer.redrawTrack();
+
+        if (selection == track.getPath()[track.getSize() - 1]) {
+            updateNodeDetails(selection);
+        }
+    });
+
+    centre.addEventListener("click", (e) => {
+        let path = track.getPath();
+
+        let minX = canvas.width, maxX = 0;
+        let minY = canvas.height, maxY = 0;
+
+        for (let node of path) { // calculating the track's centre
+            let pos = node.getPosition();
+
+            minX = pos.x() < minX ? pos.x() : minX;
+            maxX = maxX < pos.x() ? pos.x() : maxX;
+
+            minY = pos.y() < minY ? pos.y() : minY;
+            maxY = maxY < pos.y() ? pos.y() : maxY;
+        }
+
+        let oldCentre = new Vector2(minX + (maxX - minX) / 2, minY + (maxY - minY) / 2);
+        let newCentre = new Vector2(canvas.width / 2, canvas.height / 2);
+
+        for (let node of path) { // repositioning relative to canvas centre
+            let oldPos = node.getPosition();
+            let newPos = newCentre.add( oldPos.sub(oldCentre) );
+            node.setPosition(newPos);
+        }
+
+        renderer.redrawTrack();
+    })
+}
+
+
+
+// [[ "On Draw" Functions ]] //
+
+// returns the position of the mouse relative to the canvas
+function getRelativePositionOnCanvas(canvas, x, y) {
+    let rect = canvas.getBoundingClientRect();
+
+    let relPos = new Vector2(x - rect.left, y - rect.top);
+    let offset = renderer.getOffset();
+
+    return relPos.sub(offset);
+}
+
+
+// when drawing starts on the canvas
+function onDrawStart(x, y) {
+    moving = true;
+    
+    let mousePos = getRelativePositionOnCanvas(canvas, x, y);
+
+    // select the element clicked over
+    if (toolType == TOOL_TYPE.Select) {
+        for (let node of track.getPath()) {
+            let pos = node.getPosition();
+            if (mousePos.sub(pos).mag() <= 15) {
+                selection = node;
+                break;
+            }
+        }
+
+        for (let material of track.getMaterials()) {
+            for (let point of material.getPoints()) {
+                if (mousePos.sub(point).mag() <= 10) {
+                    selection = point;
+                    affected = material;
+                    break;
+                }
+            }
+        }
+    
+    // place a node to add to the track
+    } else if (toolType == TOOL_TYPE.Path) {
+        let node = new TrackNode(mousePos, 100, false);
+        
+        selection = node;
+        track.addNode(node);
+        renderer.redrawTrack();
+    
+    // place a new material / node in a selected material
+    } else if (toolType == TOOL_TYPE.Material) {
+        if (!selection) {
+            let material = new Material();
+            let node = new PathNode(mousePos);
+            material.addPoint(node);
+
+            selection = node;
+            affected = material;
+            track.addMaterial(material);
+            renderer.redrawTrack();
+
+        } else if (affected instanceof Material) {
+            let node = new PathNode(mousePos);
+
+            selection = node;
+            affected.addPoint(selection);
+            renderer.redrawTrack();
+        }
+    } 
+
+    if (selection) showSelectionDetails();
+
+    last = mousePos;
+}
+
+
+// when the mouse is being moved over the canvas
+function onDrawMove(x, y) {
+    if (!moving) return;
+
+    let pos = getRelativePositionOnCanvas(canvas, x, y);
+
+    // pans across the canvas
+    if (toolType == TOOL_TYPE.Pan) {
+        renderer.shiftOffset(pos.sub(last));
+        last = pos;
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.translate(offset.x(), offset.y());
+    
+    } else if (selection) {
+        selection.setPosition(pos);
+    }
+
+    renderer.redrawTrack();
+}
+
+// when drawing ends on the canvas
+function onDrawEnd(x, y) {
+    if (!moving) return;
+    moving = false;
+
+    if (selection) {
+        let pos = getRelativePositionOnCanvas(canvas, x, y);
+        selection.setPosition(pos);
+    }
+
+    renderer.redrawTrack();
+}
+
+
+
+// [[ Canvas Events ]]//
+
+// prepares all canvas drawing events
+function initialiseCanvas() {
+    let canvas = document.getElementById("build-canvas");
+
+    canvas.addEventListener("pointerdown",  (e) => onDrawStart(e.clientX, e.clientY) );
+    canvas.addEventListener("pointermove",  (e) => onDrawMove(e.clientX, e.clientY));
+    canvas.addEventListener("pointerup",    (e) => onDrawEnd(e.clientX, e.clientY) );
+    canvas.addEventListener("pointerleave", (e) => onDrawEnd(e.clientX, e.clientY) );
+}
+
+
+
+// [[ Selection Details ]] //
+
+// displays details according to the current selection
+function showSelectionDetails() {
+    let nodeDetails = document.getElementById("details-node");
+
+    if (selection instanceof TrackNode) {
+        nodeDetails.classList.remove("hidden");
+        updateNodeDetails(selection);
+        
+    } else {
+        nodeDetails.classList.add("hidden");
+    }
+}
+
+
+// updates the node details area with the given node
+function updateNodeDetails(node) {
+    if ( !(node instanceof TrackNode) ) return;
+
+    let nodeTitle = document.getElementById("details-node-title");
+    let widthInput = document.getElementById("node-width-input");
+    let checkpointInput = document.getElementById("node-checkpoint-input");
+
+    let order = track.getNodeIndex(node) + 1;
+    let isFirst = order == 1;
+    let isLast = !track.isLooped() && order == track.getSize();
+    
+    nodeTitle.innerHTML = `<b>Node ${order}</b>`;
+    widthInput.value = node.getWidth();
+
+    checkpointInput.checked = node.isCheckpoint() || isFirst || isLast
+    checkpointInput.disabled = isFirst || isLast;
+}   
+
+
+// applies node details to the current selected node (if any)
+function initialiseNodeDetails() {
+    let widthInput = document.getElementById("node-width-input");
+    let checkpointInput = document.getElementById("node-checkpoint-input");
+    let deleteBtn = document.getElementById("details-node-delete");
+
+    widthInput.addEventListener("change", (e) => {
+        if (selection instanceof TrackNode) {
+            selection.setWidth(Number(widthInput.value));
+            renderer.redrawTrack();
+        }
+    });
+
+    checkpointInput.addEventListener("change", (e) => {
+        if (selection instanceof TrackNode) {
+            selection.setCheckpoint(checkpointInput.checked);
+            renderer.redrawTrack();
+        }
+    });
+
+    deleteBtn.addEventListener("click", (e) => {
+        if (selection instanceof TrackNode) {
+            track.removeNode(selection);
+            renderer.redrawTrack();
+        }
+    });
+}
+
+
+
+// [[ Set Up ]] //
+
+track = new Track();
+renderer = new TrackRenderer(track, canvas);
+
+initialiseBuilderOptions();
+initialiseCanvasTools();
+initialiseVisualToggles();
+initialiseManipulationOptions();
+
+initialiseCanvas();
+
+initialiseNodeDetails();
+
+lucide.createIcons();
+renderer.redrawTrack();
+
+
+// enables all tooltips on the page
+// * source: https://getbootstrap.com/docs/5.3/components/tooltips/
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+})
