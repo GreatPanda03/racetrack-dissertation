@@ -245,5 +245,26 @@ Other tasks include preparing this project log, a changelog, and a requirements 
     - Implemented v0.4.0 - v0.5.1 (see changelog)
     - Updated Backlog Snapshot naming convention to go by version (vX.Y) rather than date
 
-- Supervisor meeting will be held on **2026/01/07 WED**
+- Supervisor meeting held on **2026/01/07 WED**
+    - Overview of current progress (transition from Roblox version to version with intended technologies)
+    - Similarities & differences between versions (mainly rendering with HTML canvas rather than GUI elements)
+    - Review of unit tests (covers most V0 features)
+    - Overview of plan for V1 (see Backlog Snapshots for V1 requirements)
+
+</details>
+
+---
+
+### WC 2026/01/19 MON
+<details>
+<summary>V1 - Transition from V0, and Materials</summary>
+
+- As of the last entry:
+    - Implemented v1.0.0 (see changelog)
+
+- Supervisor meeting will be held around during WB **2026/01/19 MON**
+    - ...
+
+</details>
+
 
