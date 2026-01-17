@@ -25,8 +25,6 @@ export default class Polygon {
 
 
     // methods
-
-    // adds the given point to the polygon
     addPoint(point) {
         let points = this._points;
 
@@ -37,7 +35,6 @@ export default class Polygon {
         points.push(point);
     }
 
-    // removes the given point from the polygon
     removePoint(point) {
         let points = this._points;
         let index = points.indexOf(point);
@@ -47,6 +44,24 @@ export default class Polygon {
         }
 
         points.splice(index, 1);
+    }
+
+    getEdges() {
+        let edges = [];
+        let points = this.getPoints();
+
+        for (let p = 0; p < points.length - 1; p++) {
+            let p1 = points[p].getPosition();
+            let p2 = points[p + 1].getPosition();
+
+            edges.push([p1, p2]);
+        }
+
+        let p1 = points[points.length - 1].getPosition();
+        let p2 = points[0].getPosition();
+        edges.push([p1, p2]);
+
+        return edges;
     }
 
 

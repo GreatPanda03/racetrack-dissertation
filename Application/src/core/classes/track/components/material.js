@@ -4,7 +4,9 @@
 
 
 // [[ Imports ]] //
+import PathNode from "../../geometry/path-node.js";
 import Polygon from "../../geometry/polygon.js";
+
 
 
 // [[ Main Class ]] //
@@ -18,6 +20,11 @@ export default class Material extends Polygon {
     }
 
 
+    // methods
+    getType() { return this._type; }
+    setType(type) { this._type = type; }
+
+
     // serialisation
     toObject() {
         return {
@@ -27,9 +34,9 @@ export default class Material extends Polygon {
     }
 
     static toInstance(object) {
-        let material = new Polygon();
+        let material = new Material();
 
-        material._points = object.points.map(p => Node.toInstance(p));
+        material._points = object.points.map(p => PathNode.toInstance(p));
         material._type = object.type;
 
         return material;

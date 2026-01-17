@@ -2,13 +2,13 @@
 
 
 // [[ Imports ]] //
-import Vector2          from "/core/classes/geometry/vector2.js";
-import PathNode         from "/core/classes/geometry/path-node.js";
-import TrackNode        from "/core/classes/track/components/track-node.js";
-import Material         from "/core/classes/track/components/material.js";
-import Track            from "/core/classes/track/track.js";
-import TrackRenderer    from "/core/classes/track/track-renderer.js";
-import TOOL_TYPE        from "/core/enums/tool-type.js";
+import {
+    Vector2, PathNode,
+    TrackNode, Material,
+    Track, TrackRenderer,
+    TOOL_TYPE, MATERIAL_INFO,
+    SplineUtil
+} from "/core/index.js";
 
 
 
@@ -16,15 +16,15 @@ import TOOL_TYPE        from "/core/enums/tool-type.js";
 var canvas = document.getElementById("build-canvas");
 var ctx = canvas.getContext("2d");
 
-var toolType = null;
+var tool = {Primary: null, Secondary: null};
+var selection = {Primary: null, Secondary: null};
+
 var moving = false;
-var last = null;
+var selectionDiff = new Vector2();
+var last = new Vector2();
 
-var selection = null;
-var affected = null;
-
-var track;
-var renderer;
+var track;          // Track
+var renderer;       // TrackRenderer
 
 
 
@@ -53,16 +53,21 @@ function initialiseBuilderOptions() {
 
 // selects the corresponding track element
 function initialiseCanvasTools() {
-    let select = document.getElementById("tools-select-btn");
-    let path = document.getElementById("tools-path-btn");
-    let material = document.getElementById("tools-materials-btn"); 
-    let obstacle = document.getElementById("tools-obstacles-btn");
-    let decoration = document.getElementById("tools-decoration-btn");
+    let selectBtn = document.getElementById("tools-select-btn");
+    let pathBtn = document.getElementById("tools-path-btn");
+    let materialBtn = document.getElementById("tools-materials-btn");
+    let obstacleBtn = document.getElementById("tools-obstacles-btn");
+    let decorationBtn = document.getElementById("tools-decoration-btn");
     
-    let options = [select, path, material, obstacle, decoration];
+    let options = [
+        selectBtn, pathBtn, materialBtn, obstacleBtn, decorationBtn];
 
     // auxiliary: mark / unmark buttons as selected
     function deselectAllTools() {
+        tool = {};
+
+        showSelectionDetails();
+
         for (let option of options) {
             option.classList.remove("active");
         }
@@ -70,29 +75,54 @@ function initialiseCanvasTools() {
 
     function selectTool(type, button) {
         deselectAllTools();
-        toolType = type;
+        tool.Primary = type;
         button.classList.add("active");
     }
 
-    select.addEventListener("click", (e) => {
-        selectTool(TOOL_TYPE.Select, select);
+    selectBtn.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Select, selectBtn);
     });
 
-    path.addEventListener("click", (e) => {
-        selectTool(TOOL_TYPE.Path, path);
+    pathBtn.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Path, pathBtn);
     });
 
-    material.addEventListener("click", (e) => {
-        selectTool(TOOL_TYPE.Material, material);
+    obstacleBtn.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Obstacle, obstacleBtn);
     });
 
-    obstacle.addEventListener("click", (e) => {
-        selectTool(TOOL_TYPE.Obstacle, obstacle);
+    decorationBtn.addEventListener("click", (e) => {
+        selectTool(TOOL_TYPE.Decoration, decorationBtn);
     });
 
-    decoration.addEventListener("click", (e) => {
-        selectTool(TOOL_TYPE.Decoration, decoration);
-    });
+    // material options
+    let materialsDropdown = document.getElementById("tools-material-div")
+        .getElementsByClassName("dropdown-menu")[0];
+
+    for (let [material, values] of Object.entries(MATERIAL_INFO)) {
+        let description = values.Description;
+
+        let item = document.createElement("li");
+        item.innerHTML = `
+            <li class="dropdown-item">
+                <div class="d-flex justify-content-between">
+                    <span>
+                        <i data-lucide="droplet"></i> ${material}
+                    </span>
+                    <i data-lucide="info" data-bs-toggle="tooltip" data-bs-placement="bottom" 
+                        title="${description}">
+                    </i>
+                </div>
+            </li>
+        `;
+
+        materialsDropdown.appendChild(item);
+
+        item.addEventListener("click", (e) => {
+            selectTool(TOOL_TYPE.Material, materialBtn);
+            tool.Secondary = material;
+        });
+    }
 }
 
 
@@ -101,6 +131,7 @@ function initialiseVisualToggles() {
     let nodes = document.getElementById("visuals-nodes");
     let edges = document.getElementById("visuals-edges");
     let path = document.getElementById("visuals-track");
+    let materials = document.getElementById("visuals-materials");
 
     nodes.addEventListener("click", (e) => {
         let state = !renderer.getNodesVisible();
@@ -122,6 +153,13 @@ function initialiseVisualToggles() {
         renderer.setTrackVisible(state);
         renderer.redrawTrack();
     });    
+
+    materials.addEventListener("click", (e) => {
+        let state = !renderer.getMaterialsVisible();
+        toggleButton(materials, state);
+        renderer.setMaterialsVisible(state);
+        renderer.redrawTrack();
+    });   
 }
 
 
@@ -167,7 +205,20 @@ function initialiseManipulationOptions() {
     });
 
     reverse.addEventListener("click", (e) => {
-        track.setPath( track.getPath().reverse() );
+        let path = track.getPath();
+        track.setPath( path.reverse() );
+        let newPath = track.getPath();
+
+        let checkpoints = path.map(node => node.isCheckpoint());
+        let widths = path.map(node => node.getWidth());
+        checkpoints.unshift( checkpoints.pop() ); // shift all forward by 1
+        widths.unshift( widths.pop() );
+
+        for (let n = 0; n < track.getSize(); n++) {
+            newPath[n].setCheckpoint(checkpoints[n]);
+            newPath[n].setWidth(widths[n]);
+        }
+
         shiftNodesAnticlockwise(); // moves "first" node back to being first
         renderer.redrawTrack();
     });
@@ -229,60 +280,73 @@ function getRelativePositionOnCanvas(canvas, x, y) {
 
 // when drawing starts on the canvas
 function onDrawStart(x, y) {
-    moving = true;
-    
     let mousePos = getRelativePositionOnCanvas(canvas, x, y);
 
     // select the element clicked over
-    if (toolType == TOOL_TYPE.Select) {
+    if (tool.Primary == TOOL_TYPE.Select) {
+        selection = {};
+
         for (let node of track.getPath()) {
             let pos = node.getPosition();
+
             if (mousePos.sub(pos).mag() <= 15) {
-                selection = node;
+                selection.Primary = node;
                 break;
             }
         }
 
         for (let material of track.getMaterials()) {
             for (let point of material.getPoints()) {
-                if (mousePos.sub(point).mag() <= 10) {
-                    selection = point;
-                    affected = material;
+                let pos = point.getPosition();
+
+                if (mousePos.sub(pos).mag() <= 10) {
+                    selection.Primary = point;
+                    selection.Secondary = material;
                     break;
                 }
             }
         }
+
+        if (selection.Primary) {
+            let pos = selection.Primary.getPosition();
+            selectionDiff = pos.sub(mousePos);
+            moving = true;
+        }
+
+        showSelectionDetails();
     
     // place a node to add to the track
-    } else if (toolType == TOOL_TYPE.Path) {
+    } else if (tool.Primary == TOOL_TYPE.Path) {
         let node = new TrackNode(mousePos, 100, false);
         
-        selection = node;
+        selection.Primary = node;
         track.addNode(node);
         renderer.redrawTrack();
     
     // place a new material / node in a selected material
-    } else if (toolType == TOOL_TYPE.Material) {
-        if (!selection) {
-            let material = new Material();
-            let node = new PathNode(mousePos);
-            material.addPoint(node);
+    } else if (tool.Primary == TOOL_TYPE.Material) {
+        
+        // * TODO: make this more reliable
+        if ( !(selection.Secondary instanceof Material) ) {
+            let material = new Material(null, tool.Secondary);
+            let point = new PathNode(mousePos);
+            material.addPoint(point);
 
-            selection = node;
-            affected = material;
+            selection.Primary = point;
+            selection.Secondary = material;
             track.addMaterial(material);
             renderer.redrawTrack();
 
-        } else if (affected instanceof Material) {
-            let node = new PathNode(mousePos);
+        } else {
+            let point = new PathNode(mousePos);
 
-            selection = node;
-            affected.addPoint(selection);
+            selection.Primary = point;
+            selection.Secondary.addPoint(point);
             renderer.redrawTrack();
         }
-    } 
-
-    if (selection) showSelectionDetails();
+    }
+        
+    if (selection.Primary) showSelectionDetails();
 
     last = mousePos;
 }
@@ -295,15 +359,16 @@ function onDrawMove(x, y) {
     let pos = getRelativePositionOnCanvas(canvas, x, y);
 
     // pans across the canvas
-    if (toolType == TOOL_TYPE.Pan) {
+    if (tool.Primary == TOOL_TYPE.Pan) {
         renderer.shiftOffset(pos.sub(last));
         last = pos;
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.translate(offset.x(), offset.y());
     
-    } else if (selection) {
-        selection.setPosition(pos);
+    } else if (selection.Primary) {
+        selection.Primary.setPosition(
+            pos.add(selectionDiff));
     }
 
     renderer.redrawTrack();
@@ -313,13 +378,6 @@ function onDrawMove(x, y) {
 function onDrawEnd(x, y) {
     if (!moving) return;
     moving = false;
-
-    if (selection) {
-        let pos = getRelativePositionOnCanvas(canvas, x, y);
-        selection.setPosition(pos);
-    }
-
-    renderer.redrawTrack();
 }
 
 
@@ -343,13 +401,27 @@ function initialiseCanvas() {
 // displays details according to the current selection
 function showSelectionDetails() {
     let nodeDetails = document.getElementById("details-node");
+    let materialDetails = document.getElementById("details-material");
+    let pointDetails = document.getElementById("details-point");
 
-    if (selection instanceof TrackNode) {
+    let sections = [nodeDetails, materialDetails, pointDetails];
+
+    for (let section of sections) {
+        section.classList.add("hidden");
+    }
+
+    if (selection.Primary instanceof TrackNode) {
+        updateNodeDetails(selection.Primary);
         nodeDetails.classList.remove("hidden");
-        updateNodeDetails(selection);
         
-    } else {
-        nodeDetails.classList.add("hidden");
+    } else if (selection.Secondary instanceof Material) {
+        updateMaterialDetails(selection.Secondary, selection.Primary);
+        materialDetails.classList.remove("hidden");
+
+        if (selection.Primary instanceof PathNode) {
+            updatePointDetails(selection.Primary);
+            pointDetails.classList.remove("hidden");
+        }
     }
 }
 
@@ -371,32 +443,176 @@ function updateNodeDetails(node) {
 
     checkpointInput.checked = node.isCheckpoint() || isFirst || isLast
     checkpointInput.disabled = isFirst || isLast;
-}   
+}
 
 
-// applies node details to the current selected node (if any)
+// updates the material details area with the given material
+function updateMaterialDetails(material) {
+    if ( !(material instanceof Material) ) return;
+
+    let materialTitle = document.getElementById("details-material-title");
+    let typeInput = document.getElementById("material-type-input");
+
+    let index = track.getMaterials().findIndex((e) => e == material);
+
+    materialTitle.innerHTML = `<b>Material ${index + 1}</b>`;
+    typeInput.value = material.getType();
+}
+
+
+// updates the point details area with the given point
+function updatePointDetails(point) {
+    if ( !(point instanceof PathNode) ) return;
+
+    let pointTitle = document.getElementById("details-point-title");
+    let index;
+
+    for (let material of track.getMaterials()) {
+        let points = material.getPoints();
+        let i = points.findIndex((p) => p == point);
+        
+        if (i > -1) {
+            index = i;
+            break;
+        }
+    }
+
+    pointTitle.innerHTML = `<b>Point ${index + 1}</b>`;
+}
+
+
+// inputs to apply operations / details to the current
+//   selected node (if any)
 function initialiseNodeDetails() {
     let widthInput = document.getElementById("node-width-input");
     let checkpointInput = document.getElementById("node-checkpoint-input");
+    let addBefore = document.getElementById("details-node-addBefore");
+    let addAfter = document.getElementById("details-node-addAfter");
     let deleteBtn = document.getElementById("details-node-delete");
 
     widthInput.addEventListener("change", (e) => {
-        if (selection instanceof TrackNode) {
-            selection.setWidth(Number(widthInput.value));
+        let node = selection.Primary;
+
+        if (node instanceof TrackNode) {
+            node.setWidth(Number(widthInput.value));
             renderer.redrawTrack();
         }
     });
 
     checkpointInput.addEventListener("change", (e) => {
-        if (selection instanceof TrackNode) {
-            selection.setCheckpoint(checkpointInput.checked);
+        let node = selection.Primary;
+
+        if (node instanceof TrackNode) {
+            node.setCheckpoint(checkpointInput.checked);
+            renderer.redrawTrack();
+        }
+    });
+
+    addBefore.addEventListener("click", (e) => {
+        let node = selection.Primary;
+
+        if (node instanceof TrackNode) {
+            let index = track.getNodeIndex(node);
+            index = (index == 0 ? track.getSize() : index);
+
+            let t = index - 0.5;
+            let newPos = SplineUtil.getPointAtT(track.getPath(), t, true);
+
+            let newNode = new TrackNode(newPos, 100, false);
+            track.addNodeAtIndex(newNode, index);
+
+            renderer.redrawTrack();
+            updateNodeDetails(node);
+        }
+    });
+
+    addAfter.addEventListener("click", (e) => {
+        let node = selection.Primary;
+
+        if (node instanceof TrackNode) {
+            let index = track.getNodeIndex(node);
+            index = index + 1;
+
+            let t = index - 0.5
+            let newPos = SplineUtil.getPointAtT(track.getPath(), t, true);
+
+            let newNode = new TrackNode(newPos, 100, false);
+            track.addNodeAtIndex(newNode, index);
+
+            renderer.redrawTrack();
+            updateNodeDetails(node);
+        }
+    });
+
+    deleteBtn.addEventListener("click", (e) => {
+        let node = selection.Primary;
+
+        if (node instanceof TrackNode) {
+            track.removeNode(node);
+            node.Primary = null;
+            showSelectionDetails();
+            renderer.redrawTrack();
+        }
+    });
+}
+
+
+// inputs to apply operations / details to the current
+//   selected material (if any)
+function initialiseMaterialDetails() {
+    let typeInput = document.getElementById("material-type-input");
+    let deleteBtn = document.getElementById("details-material-delete");
+
+    // material details
+    for (let [material, _] of Object.entries(MATERIAL_INFO)) {
+        let option = document.createElement("option");
+        option.value = material;
+        option.innerHTML = material;
+        typeInput.appendChild(option);
+    }
+
+    typeInput.addEventListener("change", (e) => {
+        let material = selection.Secondary;
+
+        if (material instanceof Material) {
+            material.setType(typeInput.value);
             renderer.redrawTrack();
         }
     });
 
     deleteBtn.addEventListener("click", (e) => {
-        if (selection instanceof TrackNode) {
-            track.removeNode(selection);
+        let material = selection.Secondary;
+
+        if (material instanceof Material) {
+            track.removeMaterial(material);
+            selection.Primary = null;
+            selection.Secondary = null;
+        }
+
+        showSelectionDetails();
+        renderer.redrawTrack();
+    });
+}
+
+
+// inputs to apply operations to the selected point (if any)
+function initialisePointDetails() {
+    let deleteBtn = document.getElementById("details-point-delete");
+
+    deleteBtn.addEventListener("click", (e) => {
+        let point = selection.Primary;
+        let material = selection.Secondary;
+
+        if (material instanceof Material) {
+            track.removeMaterialPoint(material, point);
+            selection.Primary = null;
+
+            if (material.getPoints().length == 0) {
+                track.removeMaterial(material);
+                selection.Secondary = null;
+            }
+
+            showSelectionDetails();
             renderer.redrawTrack();
         }
     });
@@ -417,6 +633,8 @@ initialiseManipulationOptions();
 initialiseCanvas();
 
 initialiseNodeDetails();
+initialiseMaterialDetails();
+initialisePointDetails();
 
 lucide.createIcons();
 renderer.redrawTrack();
@@ -426,5 +644,5 @@ renderer.redrawTrack();
 // * source: https://getbootstrap.com/docs/5.3/components/tooltips/
 var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
 var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  return new bootstrap.Tooltip(tooltipTriggerEl)
-})
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+});

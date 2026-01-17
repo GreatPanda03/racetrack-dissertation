@@ -2,12 +2,12 @@
 
 
 // [[ Imports ]] //
-import Vector2          from "/core/classes/geometry/vector2.js";
-import Track            from "/core/classes/track/track.js";
-import TrackRenderer    from "/core/classes/track/track-renderer.js";
-import RaceCar          from "/core/classes/gameplay/racecar.js";
-import RaceInstance     from "/core/classes/gameplay/race-instance.js";
-import RACECAR_STATE    from "/core/enums/racecar-state.js";
+import {
+    Vector2,
+    Track, TrackRenderer,
+    RaceCar, RaceInstance,
+    RACECAR_STATE
+} from "/core/index.js";
 
 
 
@@ -45,7 +45,11 @@ function loadTrack(t) {
     raceInstance.prepareRacecars();
 
     renderRacecars();
-    displayMoves(raceInstance.getRacecars()[0]);
+    
+    let racecar = raceInstance.getRacecars()[0];
+
+    displayMoves(
+        racecar, raceInstance.getPossibleMoves(racecar));
 }
 
 
@@ -59,15 +63,15 @@ function initialisePlayCanvas() {
         let target;
 
         // retrieves the selected point (if any)
-        for (let x = -1; x <= 1; x++) {
-            for (let y = -1; y <= 1; y++) {
-                let gridPos = centre.add(new Vector2(x, y));
-                let newPos = gridPos.scale(spacing);
-                let direction = mousePos.sub(newPos);
+        let moves = raceInstance.getPossibleMoves(racecar);
 
-                if (direction.mag() <= spotRadius) {
-                    target = new Vector2(x, y);
-                }
+        for (let move of moves) {
+            let gridPos = centre.add(move.Offset);
+            let newPos = gridPos.scale(spacing);
+            let direction = mousePos.sub(newPos);
+
+            if (direction.mag() <= spotRadius && move.Active) {
+                target = move.Offset;
             }
         }
 
@@ -81,7 +85,9 @@ function initialisePlayCanvas() {
         let state = raceInstance.getRacecarStats(racecar).getState();
 
         if (state == RACECAR_STATE.Racing) {
-            displayMoves(racecar);
+            displayMoves(
+                racecar, raceInstance.getPossibleMoves(racecar));
+        
         } else {
             let stats = raceInstance.getRacecarStats(racecar);
             endRace(stats, state)
@@ -174,20 +180,18 @@ function renderRacecars() {
 
 
 // displays the available subsequent velocities for the player
-function displayMoves(racecar) {
+function displayMoves(racecar, moves) {
     let centre = racecar.getPosition().add(racecar.getVelocity());
 
-    for (let x = -1; x <= 1; x++) {
-        for (let y = -1; y <= 1; y++) {
-            let gridPos = centre.add(new Vector2(x, y));
-            let pos = gridPos.scale(spacing);
+    for (let move of moves) {
+        let gridPos = centre.add(move.Offset);
+        let pos = gridPos.scale(spacing);
 
-            let ctx = playCanvas.getContext("2d");
-            ctx.strokeStyle = "#A00";
-            ctx.beginPath();
-            ctx.ellipse(pos.x(), pos.y(), spotRadius, spotRadius, 0, 2 * Math.PI, 0);
-            ctx.stroke();
-        }
+        let ctx = playCanvas.getContext("2d");
+        ctx.strokeStyle = move.Active ? "#A00" : "#999";
+        ctx.beginPath();
+        ctx.ellipse(pos.x(), pos.y(), spotRadius, spotRadius, 0, 2 * Math.PI, 0);
+        ctx.stroke();
     }
 }
 

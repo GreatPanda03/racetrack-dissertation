@@ -12,6 +12,7 @@ import TrackBoundaries from "../track/track-boundaries.js";
 import RaceCar from "../gameplay/racecar.js";
 import RaceStats from "../gameplay/race-stats.js";
 import RACECAR_STATE from "../../enums/racecar-state.js";
+import MATERIAL_INFO from "../../enums/material-info.js";
 
 
 
@@ -163,38 +164,141 @@ export default class RaceInstance {
             }
         }
 
-        // [source 2] collision detection
+        // [source 2] track boundary collision detection
         // * check for crashes last, in case crossing the finish line
-
-        // originally used the commented section [source 2]
-        // * won't work if a car "jumps over" a wall and lands on the track again
-        // * the current version is more reliable and works for those cases
-        // * will still have to use [source 2] for materials, obstacles, etc.
-        //     so bring it back for that
-
         for (let boundary of boundaries.getBoundaries()) {
             let crossed = TrackBoundaries.doLinesIntersect(oldPos, newPos, boundary[0], boundary[1]);
             if (crossed) stats.setState(RACECAR_STATE.Crashed);
         }
 
-        // * TODO: repurpose this code for materials
-        // * TODO: just add obstacle polygon sides as boundary lines
-
-        /*
-        let ray = new Vector2(10000, 0);
-        let crosses = 0;
-
-        for (let boundary of boundaries.getBoundaries()) {
-            let crossed = TrackBoundaries.doLinesIntersect(newPos, ray, boundary[0], boundary[1]);
-            if (crossed) crosses += 1;
-        }
-
-        if (crosses % 2 == 0) {
-            stats.setState(RACECAR_STATE.Crashed);
-            return;
-        }
-        */
+        // * TODO: add obstacle polygon sides as boundary lines
 
         // TODO: if the finished line is crossed, adjust time accordingly
+    }
+
+    // returns the given racecar's moveset based on the 
+    //   material it's on (if any)
+    getPossibleMoves(racecar) {
+
+        /*
+            * TODO: rework this so that ALL INDIVIDUAL MOVE LINES are considered
+            * for example - if a car's line to the CENTRAL dot crosses the material,
+                then it's acceleration relative to THAT move is affected
+            * ... but if the player picks a point which doesn't cross the material,
+                then the car's speed shouldn't be affected at all (and they should still be able to go there)
+            * basically - the edge points shouldn't be determined by the central
+                point if they can be travelled to without crossing the material
+
+            * ALSO: not sure if race car should be affected at all
+                if it entirely crosses the material...
+            * Vector Racer ONLY affects the car if it's IN the material
+        */
+
+        // determining current material (if any)
+        let pos = racecar.getPosition().scale(25);
+        let ray = new Vector2(10000, 0);
+
+        let track = this.#track; 
+        let materials = track.getMaterials();
+        let onMaterial = null;
+
+        for (let material of materials) {
+            let crosses = 0;
+            let edges = material.getEdges();
+            
+            for (let edge of edges) {
+                let crossed = TrackBoundaries.doLinesIntersect(pos, ray, edge[0], edge[1]);
+                if (crossed) crosses += 1;
+            }
+
+            if (crosses % 2 == 1) {
+                onMaterial = material;
+                break;
+            }
+        }
+
+        // gathering possible moves
+        let moves = [];
+        let acc = racecar.getMaxAcceleration();
+
+        if (onMaterial) {
+            let type = onMaterial.getType();
+
+            if (type == MATERIAL_INFO.Curb.Name) {
+                for (let x = -acc; x <= acc; x++) {
+                    for (let y = -acc; y <= acc; y++) {
+                        let move = {
+                            Offset: new Vector2(x, y),
+                            Active: (x == 0 || y == 0) // TODO
+                        };
+
+                        moves.push(move);
+                    }
+                }
+
+            } else if (type == MATERIAL_INFO.Gravel.Name) {
+                let velocity = racecar.getVelocity();
+
+                for (let x = -acc; x <= acc; x++) {
+                    for (let y = -acc; y <= acc; y++) {
+                        let offset = new Vector2(x, y);
+
+                        let move = {
+                            Offset: offset,
+                            Active: (velocity.add(offset)).mag() < velocity.mag()
+                        };
+
+                        moves.push(move);
+                    }
+                }
+
+            } else if (type == MATERIAL_INFO.Water.Name) {
+                for (let x = -acc; x <= acc; x++) {
+                    for (let y = -acc; y <= acc; y++) {
+                        let move = {
+                            Offset: new Vector2(x, y),
+                            Active: (x == 0 && y == 0)
+                        };
+
+                        moves.push(move);
+                    }
+                }
+
+            } else if (type == MATERIAL_INFO.Booster.Name) {
+                let velocity = racecar.getVelocity();
+
+                let X = Math.sign(velocity.x());
+                let Y = Math.sign(velocity.y());
+
+                for (let x = -acc; x <= acc; x++) {
+                    for (let y = -acc; y <= acc; y++) {
+                        let move = {
+                            Offset: new Vector2(X + x, Y + y),
+                            Active: true
+                        };
+
+                        moves.push(move);
+                    }
+                }
+
+            } else {
+                throw new Error(`[RaceInstance] "${type}" is an unrecognised material`);
+            }
+
+        // not on any material - use normal moveset
+        } else {
+            for (let x = -acc; x <= acc; x++) {
+                for (let y = -acc; y <= acc; y++) {
+                    let move = {
+                        Offset: new Vector2(x, y),
+                        Active: true
+                    };
+
+                    moves.push(move);
+                }
+            }
+        }
+
+        return moves;
     }
 }

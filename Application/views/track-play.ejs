@@ -14,11 +14,12 @@
         <div class="content">
             <div>
                 <p>
-                    Welcome to the <b>Racetrack</b>! Start your engine...
+                    Welcome to <b><%= JSON.parse(track).name %></b>! Start your engines...
                 </p>
                 <p>
                     Your race car moves using <b>vectors</b>. This vector affects your current velocity, determining where you can move.
                     Each turn, you can only change your velocity by at most 1 unit horizontally, 1 unit vertically, or both.
+                    Watch out for materials: if you're in them, they can affect your next move!
                 </p>
             </div>
             
