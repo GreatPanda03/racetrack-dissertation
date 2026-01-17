@@ -41,6 +41,9 @@ export default class TrackRenderer extends TrackForm {
         this._edgesVisible = true;
         this._trackVisible = true;
         this._materialsVisible = true;
+        this._obstaclesVisible = true;
+        this._decorationsVisible = true;
+
         this._offset = new Vector2(0, 0);
         this._spacing = 25;
     }
@@ -59,6 +62,12 @@ export default class TrackRenderer extends TrackForm {
 
     getMaterialsVisible() { return this._materialsVisible; }
     setMaterialsVisible(visible) { this._materialsVisible = visible; }
+
+    getObstaclesVisible() { return this._obstaclesVisible; }
+    setObstaclesVisible(visible) { this._obstaclesVisible = visible; }
+
+    getDecorationsVisible() { return this._decorationsVisible; }
+    setDecorationsVisible(visible) { this._decorationsVisible = visible; }
 
     getOffset() { return this._offset; }
     setOffset(offset) { this._offset = offset; }
@@ -83,6 +92,8 @@ export default class TrackRenderer extends TrackForm {
         let looped = track.isLooped();
 
         let materials = track.getMaterials();
+        let obstacles = track.getObstacles();
+        let decorations = track.getDecorations();
 
         // track path (a polygon with a hole)
         if (this._trackVisible && size > 0) {
@@ -138,6 +149,47 @@ export default class TrackRenderer extends TrackForm {
             ctx.closePath();
         }
 
+        // decorations
+        if (this._decorationsVisible && decorations.length > 0) {
+            for (let decoration of decorations) {
+                let colour = decoration.getColour();
+                ctx.strokeStyle = colour;
+                ctx.fillStyle = colour;
+
+                let points = decoration.getPoints();
+                let sides = points.length;
+
+                // edges first
+                ctx.beginPath();
+
+                let start = points[0].getPosition();
+                ctx.moveTo(start.x(), start.y());
+
+                for (let p = 1; p <= sides; p++) {
+                    let pos = points[p % sides].getPosition();
+                    ctx.lineTo(pos.x(), pos.y());
+                }
+
+                ctx.fill();
+                ctx.closePath();
+                
+                // point on top
+                if (this._nodesVisible) {
+                    let ctx = this._ctx;
+                    ctx.font = "10px Segoe UI";
+                    ctx.strokeStyle = "#FFF";
+                    ctx.lineWidth = 1;
+                    ctx.textAlign = "center";
+
+                    for (let p = 0; p < sides; p++) {
+                        let pos = points[p].getPosition();
+                        this.#drawCircle(pos, 7.5, colour);
+                        ctx.strokeText((p + 1).toString(), pos.x(), pos.y() + 3);
+                    }   
+                }
+            }
+        }
+
         // materials
         if (this._materialsVisible && materials.length > 0) {
             for (let material of materials) {
@@ -146,6 +198,47 @@ export default class TrackRenderer extends TrackForm {
                 ctx.fillStyle = colour;
 
                 let points = material.getPoints();
+                let sides = points.length;
+
+                // edges first
+                ctx.beginPath();
+
+                let start = points[0].getPosition();
+                ctx.moveTo(start.x(), start.y());
+
+                for (let p = 1; p <= sides; p++) {
+                    let pos = points[p % sides].getPosition();
+                    ctx.lineTo(pos.x(), pos.y());
+                }
+
+                ctx.fill();
+                ctx.closePath();
+                
+                // point on top
+                if (this._nodesVisible) {
+                    let ctx = this._ctx;
+                    ctx.font = "10px Segoe UI";
+                    ctx.strokeStyle = "#FFF";
+                    ctx.lineWidth = 1;
+                    ctx.textAlign = "center";
+
+                    for (let p = 0; p < sides; p++) {
+                        let pos = points[p].getPosition();
+                        this.#drawCircle(pos, 7.5, colour);
+                        ctx.strokeText((p + 1).toString(), pos.x(), pos.y() + 3);
+                    }   
+                }
+            }
+        }
+
+        // obstacles
+        if (this._obstaclesVisible && obstacles.length > 0) {
+            for (let obstacle of obstacles) {
+                let colour = "#F90";
+                ctx.strokeStyle = colour;
+                ctx.fillStyle = colour;
+
+                let points = obstacle.getPoints();
                 let sides = points.length;
 
                 // edges first

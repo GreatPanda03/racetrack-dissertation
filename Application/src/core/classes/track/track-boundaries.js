@@ -41,10 +41,13 @@ export default class TrackBoundaries extends TrackForm {
         let size = track.getSize();
         if (size == 0) return;
         
+        let obstacles = track.getObstacles();
+        let looped = track.isLooped();
+
         let left = this._leftSide;
         let right = this._rightSide;
-        let looped = track.isLooped();
         
+
         // track edges (same idea as drawing track path)
         let res = 0.1;
         let tmax = looped ? size : size - 1
@@ -67,6 +70,10 @@ export default class TrackBoundaries extends TrackForm {
             this._boundaries.unshift(start);
             this._boundaries.push(end);
         }
+
+        // obstacles
+        let obstacleEdges = obstacles.map((o) => o.getEdges()).flat();
+        this._boundaries = this._boundaries.concat( obstacleEdges );
     }
 
     // [source 2] returns whether the two given lines intersect (Vector2 points)

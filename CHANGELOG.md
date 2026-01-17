@@ -13,6 +13,39 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.2.0
+**Date:** 2026/01/17
+<details>
+<summary>Track Building - Obstacles & Decorations</summary>
+
+**Additions / Changes:**
+1. Implemented "Obstacles" for the track builder
+    * Obstacles are generic polygons which cause players to crash when driven into
+    * Points can be added to a obstacle to define its shape
+    * Select a point and drag to move it around
+    * The entire obstacle, or points within it, can be removed
+2. Implemented "Obstacles" for gameplay
+    * Driving into an obstacle causes players to
+3. Implemented "Decorations" for the track builder
+    * Decorations are generic polygons which are purely ornamental with no effect
+    * Points can be added to a decoration to define its shape
+    * Select a point and drag to move it around
+    * The entire decoration, or points within it, can be removed
+4. Implemented "Decorations" for gameplay
+    * Simply act as visuals
+5. New tracks: "The Slalom" and "Just Floor It"
+* **NOTE:** Obstacles appear above Materials, and Materials appear above Decorations
+
+**Bugs Fixed:**
+<br>No existing bugs fixed.
+
+**Bugs Discovered:**
+1. Aware of rendering issue at the end of the final node for 2-node unlooped tracks
+
+</details>
+
+---
+
 ### Version: 1.1.0
 **Date:** 2026/01/17
 <details>
@@ -42,12 +75,13 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 5. Small info changes to gameplay screen
     * Gameplay area now displays "Welcome to (track name)!"
     * Added a note about materials
+6. New tracks: "The Canal" and "A Bumpy Ride"
 
 **Bugs Fixed:**
 1. Fixed deleted node details still showing after deletion
 
 **Bugs Discovered:**
-<br/>No additional bugs discovered.
+1. Aware that SplineUtil unit tests fail due to Vector2 rounding for nodes (< 0.1 inaccuracy in all cases, so not a big issue)
 
 </details>
 
