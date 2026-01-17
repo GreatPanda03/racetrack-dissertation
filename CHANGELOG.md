@@ -13,6 +13,46 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.1.0
+**Date:** 2026/01/17
+<details>
+<summary>Track Building - Materials</summary>
+
+**Additions / Changes:**
+1. Adjusted node details when selecting a node
+    * Added options to insert a node before / after a selected node
+    * Slightly adjusted the look of the UI
+2. Adjusted building controls
+    * Changed the icon of materials from "Cube" to "Droplet"
+    * Flipping a track's direction no longer flips checkpoints and widths too
+    * Selecting a track element no longer slightly shifts it to align with the mouse
+    * Node-related coordinates (of any kind) are now rounded to the nearest integer (less memory takeup + uses pixels anyway)
+3. Adjusted track rendering
+    * Hiding the track now hides checkpoints and the directional dot
+    * Tracks now have an outline to see through materials - must still stay within the track itself
+3. Implemented "Materials" for the track builder
+    * The current materials are: "Gravel"; "Curb"; "Water"; and "Booster"
+    * Materials are made up of a collection of points
+    * Points can be added to a material to define its shape
+    * Select a point and drag to move it around
+    * Each material has its own appearance & effect
+    * The entire material, or points within it, can be removed
+4. Implemented "Materials" for gameplay
+    * Driving over a material affects the race car's subsequent possible moves
+5. Small info changes to gameplay screen
+    * Gameplay area now displays "Welcome to (track name)!"
+    * Added a note about materials
+
+**Bugs Fixed:**
+1. Fixed deleted node details still showing after deletion
+
+**Bugs Discovered:**
+<br/>No additional bugs discovered.
+
+</details>
+
+---
+
 ### Version: 1.0.0
 **Date:** 2026/01/14
 <details>
@@ -22,6 +62,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 1. Expanded and adjusted the track builder's options
     * Adjusted the layout of the options into smaller lists with tooltips
     * Separated "Track Visual" options from "Track Manipulation" options
+    * Added a "Select" option to distinctly select track elements
     * Added a "Flip" option to reverse the direction of the track
     * Added a "Centre" option to centre the entire track on the canvas
 2. Amended track builder typos
@@ -67,7 +108,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 **Bugs Discovered:**
 1. Aware that race cars can start behind starting lines for unlooped tracks which makes them unplayable due to instant crashing (not an issue for existing tracks yet)
-2. Aware that race car's dont crash / finish at the track boundary / finish line (linked to longer race time when crossing the finish line)
+2. Aware that race car's dont crash/finish at the track boundary/finish line (linked to longer race time when crossing the finish line)
 
 </details>
 
@@ -94,7 +135,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 <br>No existing bugs fixed.
 
 **Bugs Discovered:**
-1. Aware that crashes sometimes happen when very close to the track edge
+1. (FIXED 0.6.0) Aware that crashes sometimes happen when very close to the track edge
 2. Final time should end sooner when making the final move across the finish line
 
 </details>
@@ -120,7 +161,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 1. Amended missing styling for 404 page
 
 **Bugs Discovered:**
-1. Aware of node number misalignment for double-digit figures (and higher)
+1. (FIXED 0.6.0) Aware of node number misalignment for double-digit figures (and higher)
 
 </details>
 
@@ -142,7 +183,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 <br>No existing bugs fixed.
 
 **Bugs Discovered:**
-1. Aware of small gaps between path triangles
+1. (FIXED 1.0.0) Aware of small gaps between path triangles
 
 </details>
 
@@ -169,7 +210,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 1. Track Builder button icons now appear (replaced with Lucide, didn't show with Bootstrap)
 
 **Bugs Discovered:**
-1. Aware of the "looped" option not working (causes tracks to disappear entirely when disabled)
+1. (FIXED 0.6.0) Aware of the "looped" option not working (causes tracks to disappear entirely when disabled)
 </details>
 
 ---

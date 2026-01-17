@@ -16,14 +16,14 @@ export default class PathNode {
             throw new Error(`[PathNode] "${position}" is not a valid Vector2`);
         }
 
-        this._position = position;
+        this._position = position.round();
 
     }
 
 
     // getters / setters
     getPosition() { return this._position; }
-    setPosition(position) { this._position = position; }
+    setPosition(position) { this._position = position.round(); }
 
 
     // serialisation

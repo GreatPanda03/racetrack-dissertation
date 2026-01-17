@@ -3,7 +3,9 @@
 
 
 // [[ Imports ]] //
-import Track from "/core/classes/track/track.js";
+import {
+    Track
+} from "/core/index.js";
 
 
 
@@ -19,7 +21,7 @@ function loadAllTracks(tracks) {
         let item = document.createElement("li");
 
         item.innerHTML = `<a href='javascript:void(0)'>
-            <b>${track.getName()}</b></a> - ${track.getDescription()}.`;
+            <b>${track.getName()}</b></a> - ${track.getDescription()}`;
         
         item.addEventListener("click", (e) => {
             loadTrack(track);

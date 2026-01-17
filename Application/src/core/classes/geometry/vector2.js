@@ -52,6 +52,11 @@ export default class Vector2 {
         return this.scale(1 / (m == 0 ? 1 : m));
     }
 
+    round() {
+        return new Vector2(
+            Math.round(this.x()), Math.round(this.y()));
+    }
+
     // serialisation
     toObject() {
         return {

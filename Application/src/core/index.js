@@ -19,7 +19,7 @@ export { default as RaceInstance } from "./classes/gameplay/race-instance.js";
 
 // enums
 export { default as RACECAR_STATE } from "./enums/racecar-state.js";
-export { default as MATERIAL_TYPE } from "./enums/material-type.js";
+export { default as MATERIAL_INFO } from "./enums/material-info.js";
 export { default as TOOL_TYPE } from "./enums/tool-type.js";
 
 // utilities

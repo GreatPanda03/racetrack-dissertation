@@ -9,11 +9,13 @@ import Vector2 from "../geometry/vector2.js";
 export default class RaceCar {
     #position;  // GRID units (NOT pixels)
     #velocity;  // GRID units (NOT pixels)
+    #maxAcceleration;   // GRID units (NOT pixels)
     #style;
 
     constructor() {
         this.#position = new Vector2();
         this.#velocity = new Vector2();
+        this.#maxAcceleration = 1;
         this.style = null;
     }
 
@@ -23,6 +25,9 @@ export default class RaceCar {
 
     getVelocity() { return this.#velocity; }
     setVelocity(velocity) { this.#velocity = velocity; }
+
+    getMaxAcceleration() { return this.#maxAcceleration }
+    setMaxAcceleration(acceleration) { this.#maxAcceleration = acceleration};
 
     getStyle() { return this.#style; }
     setStyle(style) { this.#style = style; }

@@ -3,7 +3,7 @@
 
 
 // [[ Imports ]] //
-import Vector2 from "../geometry/vector2.js";
+import PathNode from "../geometry/path-node.js";
 import Material from "./components/material.js";
 import TrackNode from "./components/track-node.js";
 
@@ -115,7 +115,6 @@ export default class Track {
     }
 
     addNodeAtIndex(node, index) {
-        this.#validateIndexInBounds(index);
         this.#path = this.#path.toSpliced(index, 0, node);
     }
 
@@ -131,36 +130,30 @@ export default class Track {
         this.#materials.push(material);
     }
 
-    addPointToMaterial(material, point) {
-        let materials = this.#materials;
-        let index = materials.indexOf(material);
-
-        if ( !(point instanceof Vector2) ) {
+    addMaterialPoint(material, point) {
+        if ( !(point instanceof PathNode) ) {
             throw new Error(`[Track] "${point}" is not a valid Vector2`);
         }
 
-        if (index < 0) {
-            throw new Error(`[Track] "${material}" is not a material of the track`);
-        }
-
+        this.#validateListPresence(this.#materials, material);
         material.addPoint(point);
     }
 
-    removePointFromMaterial(material, point) {
-        let materials = this.#materials;
-        let index = materials.indexOf(material);
+    removeMaterial(material) {
+        let index = this.#validateListPresence(this.#materials, material);
+        this.#materials.splice(index, 1);
+    }
 
-        if ( !(point instanceof Vector2) ) {
+    removeMaterialPoint(material, point) {
+        if ( !(point instanceof PathNode) ) {
             throw new Error(`[Track] "${point}" is not a valid Vector2`);
         }
 
-        if (index < 0) {
-            throw new Error(`[Track] "${material}" is not a material of the track`);
-        }
-
+        this.#validateListPresence(this.#materials, material);
         material.removePoint(point);        
     }
 
+    
     // serialisation
     toObject() {
         return {
@@ -193,8 +186,8 @@ export default class Track {
         track.#tags = object.tags;
 
         track.#path = object.path.map(n => TrackNode.toInstance(n));
-        track.#materials = object.materials; // TODO: object.path.map(p => Polygon.toInstance(p));
-        track.#obstacles = object.obstacles; // ditto
+        track.#materials = object.materials.map(m => Material.toInstance(m));
+        track.#obstacles = object.obstacles; // // TODO: object.path.map(p => Polygon.toInstance(p));
         track.#decorations = object.decorations; // ditto
 
         track.#looped = object.looped;
@@ -205,6 +198,7 @@ export default class Track {
     toJson(pretty) {
         return JSON.stringify(this.toObject(), null, pretty);
     }
+
 
     // validation
     #validateIndexInBounds(index) {

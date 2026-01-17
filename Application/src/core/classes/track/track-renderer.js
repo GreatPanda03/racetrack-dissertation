@@ -6,6 +6,7 @@
 import Vector2 from "../geometry/vector2.js";
 import TrackForm from "./track-form.js";
 import Track from "./track.js";
+import MATERIAL_INFO from "../../enums/material-info.js";
 import SplineUtil from "../../utilities/spline-util.js";
 
 
@@ -18,6 +19,7 @@ export default class TrackRenderer extends TrackForm {
     _nodesVisible;  // boolean
     _edgesVisible;  // boolean
     _trackVisible;  // boolean
+    _materialsVisible;  // boolean
     _offset;        // Vector2 (pixels, for panning)
     _spacing;       // int (pixels, for grid lines)
 
@@ -38,6 +40,7 @@ export default class TrackRenderer extends TrackForm {
         this._nodesVisible = true;
         this._edgesVisible = true;
         this._trackVisible = true;
+        this._materialsVisible = true;
         this._offset = new Vector2(0, 0);
         this._spacing = 25;
     }
@@ -53,6 +56,9 @@ export default class TrackRenderer extends TrackForm {
 
     getTrackVisible() { return this._trackVisible; }
     setTrackVisible(visible) { this._trackVisible = visible; }
+
+    getMaterialsVisible() { return this._materialsVisible; }
+    setMaterialsVisible(visible) { this._materialsVisible = visible; }
 
     getOffset() { return this._offset; }
     setOffset(offset) { this._offset = offset; }
@@ -76,12 +82,15 @@ export default class TrackRenderer extends TrackForm {
         let size = track.getSize();
         let looped = track.isLooped();
 
-        // track path (a polygon with a whole)
+        let materials = track.getMaterials();
+
+        // track path (a polygon with a hole)
         if (this._trackVisible && size > 0) {
             let res = 0.1;
             let tmax = looped ? size : size - 1;
 
             ctx.fillStyle = "#CCC";
+            ctx.beginPath();
             
             // preparing the first stroke into the left side
             if (looped) { // starting at on the left of Node 1
@@ -126,10 +135,88 @@ export default class TrackRenderer extends TrackForm {
             }
 
             ctx.fill() // fill in based on all points
+            ctx.closePath();
+        }
+
+        // materials
+        if (this._materialsVisible && materials.length > 0) {
+            for (let material of materials) {
+                let colour = MATERIAL_INFO[material.getType()].Colour;
+                ctx.strokeStyle = colour;
+                ctx.fillStyle = colour;
+
+                let points = material.getPoints();
+                let sides = points.length;
+
+                // edges first
+                ctx.beginPath();
+
+                let start = points[0].getPosition();
+                ctx.moveTo(start.x(), start.y());
+
+                for (let p = 1; p <= sides; p++) {
+                    let pos = points[p % sides].getPosition();
+                    ctx.lineTo(pos.x(), pos.y());
+                }
+
+                ctx.fill();
+                ctx.closePath();
+                
+                // point on top
+                if (this._nodesVisible) {
+                    let ctx = this._ctx;
+                    ctx.font = "10px Segoe UI";
+                    ctx.strokeStyle = "#FFF";
+                    ctx.lineWidth = 1;
+                    ctx.textAlign = "center";
+
+                    for (let p = 0; p < sides; p++) {
+                        let pos = points[p].getPosition();
+                        this.#drawCircle(pos, 7.5, colour);
+                        ctx.strokeText((p + 1).toString(), pos.x(), pos.y() + 3);
+                    }   
+                }
+            }
+        }
+
+        // track outline (to see through materials)
+        if (this._trackVisible && size > 0) {
+            let res = 0.1;
+            let tmax = looped ? size : size - 1;
+
+            ctx.strokeStyle = "#555";
+            
+            // left track edge
+            ctx.beginPath();
+
+            for (let t = 0; t < tmax; t += res) {
+                let left1 = SplineUtil.getPointAtT(leftSide, t, looped);
+                let left2 = SplineUtil.getPointAtT(leftSide, t + res, looped);
+
+                ctx.lineTo(left1.x(), left1.y());
+                ctx.lineTo(left2.x(), left2.y());
+            }
+
+            ctx.stroke();
+            ctx.closePath();
+
+            // right track edge
+            ctx.beginPath();
+
+            for (let t = 0; t < tmax; t += res) {
+                let right1 = SplineUtil.getPointAtT(rightSide, t, looped);
+                let right2 = SplineUtil.getPointAtT(rightSide, t + res, looped);
+
+                ctx.lineTo(right1.x(), right1.y());
+                ctx.lineTo(right2.x(), right2.y());
+            }
+            
+            ctx.stroke();
+            ctx.closePath();
         }
 
         // checkpoints
-        if (size > 0) {
+        if (this._trackVisible && size > 0) {
             ctx.strokeStyle = "#000"; // Node 1 is the starting line
 
             let left = leftSide[0].getPosition();
@@ -207,7 +294,7 @@ export default class TrackRenderer extends TrackForm {
         }
 
         // directional dot
-        if (size >= 2) {
+        if (this._trackVisible && size >= 2) {
             let start = path[0].getPosition();
             let end = path[1].getPosition();
             let unit = end.sub(start).unit();

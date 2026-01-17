@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
     TrackNode, Material, 
     Track,
-    MATERIAL_TYPE
+    MATERIAL_INFO
 } from "../../../src/core";
 
 
@@ -182,14 +182,24 @@ describe("classes.track.addNodeAtIndex", () => {
         expect( track.getPath()[index] ).toBe(node);
     });
 
-    it("throws an error if the given index is beyond the current bounds", () => {
+    it("adds a new node to the start of the track if the index is below the track bounds", () => {
         let track = new Track();
         let target = new TrackNode();
 
         track.setPath([new TrackNode(), new TrackNode(), new TrackNode()]);
+        track.addNodeAtIndex(target, 5);
 
-        expect( () => track.addNodeAtIndex(target, 4) ).toThrowError();
-        expect( () => track.addNodeAtIndex(target, -1) ).toThrowError();
+        expect( track.getPath()[track.getSize() - 1] ).toBe(target);
+    });
+
+    it("adds a new node to the end of the track if the index is beyond the track bounds", () => {
+        let track = new Track();
+        let target = new TrackNode();
+
+        track.setPath([new TrackNode(), new TrackNode(), new TrackNode()]);
+        track.addNodeAtIndex(target, -2);
+
+        expect( track.getPath()[0] ).toStrictEqual(target);
     });
 });
 
@@ -221,7 +231,7 @@ describe("classes.track.removeNode", () => {
 describe("classes.track.addMaterial", () => {
     it("adds the given material to the track", () => {
         let track = new Track();
-        let material = new Material([], MATERIAL_TYPE.Water);
+        let material = new Material([], MATERIAL_INFO.Water.Name);
 
         track.addMaterial(material);
 
@@ -230,7 +240,7 @@ describe("classes.track.addMaterial", () => {
 
     it("throws an error if the given material is already in the track", () => {
         let track = new Track();
-        let material = new Material([], MATERIAL_TYPE.Water);
+        let material = new Material([], MATERIAL_INFO.Water.Name);
 
         track.addMaterial(material);
 
