@@ -4,7 +4,7 @@
 // [[ Imports ]] //
 import {
     Vector2, PathNode,
-    TrackNode, Material,
+    TrackNode, Material, Obstacle, Decoration,
     Track, TrackRenderer,
     TOOL_TYPE, MATERIAL_INFO,
     SplineUtil
@@ -130,8 +130,11 @@ function initialiseCanvasTools() {
 function initialiseVisualToggles() {
     let nodes = document.getElementById("visuals-nodes");
     let edges = document.getElementById("visuals-edges");
+
     let path = document.getElementById("visuals-track");
     let materials = document.getElementById("visuals-materials");
+    let obstacles = document.getElementById("visuals-obstacles");
+    let decorations = document.getElementById("visuals-decorations");
 
     nodes.addEventListener("click", (e) => {
         let state = !renderer.getNodesVisible();
@@ -159,7 +162,21 @@ function initialiseVisualToggles() {
         toggleButton(materials, state);
         renderer.setMaterialsVisible(state);
         renderer.redrawTrack();
-    });   
+    });
+
+    obstacles.addEventListener("click", (e) => {
+        let state = !renderer.getObstaclesVisible();
+        toggleButton(obstacles, state);
+        renderer.setObstaclesVisible(state);
+        renderer.redrawTrack();
+    });
+
+    decorations.addEventListener("click", (e) => {
+        let state = !renderer.getDecorationsVisible();
+        toggleButton(decorations, state);
+        renderer.setDecorationsVisible(state);
+        renderer.redrawTrack();
+    });
 }
 
 
@@ -307,6 +324,28 @@ function onDrawStart(x, y) {
             }
         }
 
+        for (let obstacle of track.getObstacles()) {
+            for (let point of obstacle.getPoints()) {
+                let pos = point.getPosition();
+
+                if (mousePos.sub(pos).mag() <= 10) {
+                    selection.Primary = point;
+                    selection.Secondary = obstacle;
+                }
+            }
+        }
+
+        for (let decoration of track.getDecorations()) {
+            for (let point of decoration.getPoints()) {
+                let pos = point.getPosition();
+
+                if (mousePos.sub(pos).mag() <= 10) {
+                    selection.Primary = point;
+                    selection.Secondary = decoration;
+                }
+            }
+        }
+
         if (selection.Primary) {
             let pos = selection.Primary.getPosition();
             selectionDiff = pos.sub(mousePos);
@@ -323,7 +362,7 @@ function onDrawStart(x, y) {
         track.addNode(node);
         renderer.redrawTrack();
     
-    // place a new material / node in a selected material
+    // place a new material / a point in a selected material
     } else if (tool.Primary == TOOL_TYPE.Material) {
         
         // * TODO: make this more reliable
@@ -344,8 +383,52 @@ function onDrawStart(x, y) {
             selection.Secondary.addPoint(point);
             renderer.redrawTrack();
         }
-    }
+
+    // place a new obstacle / a point in a selected obstacle
+    } else if (tool.Primary == TOOL_TYPE.Obstacle) {
+
+        // * TODO: make this more reliable
+        if ( !(selection.Secondary instanceof Obstacle) ) {
+            let obstacle = new Obstacle();
+            let point = new PathNode(mousePos);
+            obstacle.addPoint(point);
+
+            selection.Primary = point;
+            selection.Secondary = obstacle;
+            track.addObstacle(obstacle);
+            renderer.redrawTrack();
+
+        } else {
+            let point = new PathNode(mousePos);
+
+            selection.Primary = point;
+            selection.Secondary.addPoint(point);
+            renderer.redrawTrack();
+        }
+
+    // place a new decoration / a point in a selected material
+    } else if (tool.Primary == TOOL_TYPE.Decoration) {
         
+        // * TODO: make this more reliable
+        if ( !(selection.Secondary instanceof Decoration) ) {
+            let decoration = new Decoration();
+            let point = new PathNode(mousePos);
+            decoration.addPoint(point);
+
+            selection.Primary = point;
+            selection.Secondary = decoration;
+            track.addDecoration(decoration);
+            renderer.redrawTrack();
+
+        } else {
+            let point = new PathNode(mousePos);
+
+            selection.Primary = point;
+            selection.Secondary.addPoint(point);
+            renderer.redrawTrack();
+        }
+    }
+
     if (selection.Primary) showSelectionDetails();
 
     last = mousePos;
@@ -402,9 +485,14 @@ function initialiseCanvas() {
 function showSelectionDetails() {
     let nodeDetails = document.getElementById("details-node");
     let materialDetails = document.getElementById("details-material");
+    let obstacleDetails = document.getElementById("details-obstacle");
+    let decorationDetails = document.getElementById("details-decoration");
     let pointDetails = document.getElementById("details-point");
 
-    let sections = [nodeDetails, materialDetails, pointDetails];
+    let sections = [
+        nodeDetails, materialDetails, obstacleDetails, decorationDetails,
+        pointDetails
+    ];
 
     for (let section of sections) {
         section.classList.add("hidden");
@@ -419,7 +507,25 @@ function showSelectionDetails() {
         materialDetails.classList.remove("hidden");
 
         if (selection.Primary instanceof PathNode) {
-            updatePointDetails(selection.Primary);
+            updatePointDetails(track.getMaterials(), selection.Primary);
+            pointDetails.classList.remove("hidden");
+        }
+    
+    } else if (selection.Secondary instanceof Obstacle) {
+        updateObstacleDetails(selection.Secondary);
+        obstacleDetails.classList.remove("hidden");
+
+        if (selection.Primary instanceof PathNode) {
+            updatePointDetails(track.getObstacles(), selection.Primary);
+            pointDetails.classList.remove("hidden");
+        }
+    
+    } else if (selection.Secondary instanceof Decoration) {
+        updateDecorationDetails(selection.Secondary);
+        decorationDetails.classList.remove("hidden");
+
+        if (selection.Primary instanceof PathNode) {
+            updatePointDetails(track.getDecorations(), selection.Primary);
             pointDetails.classList.remove("hidden");
         }
     }
@@ -453,22 +559,50 @@ function updateMaterialDetails(material) {
     let materialTitle = document.getElementById("details-material-title");
     let typeInput = document.getElementById("material-type-input");
 
-    let index = track.getMaterials().findIndex((e) => e == material);
+    let index = track.getMaterials().findIndex((m) => m == material);
 
     materialTitle.innerHTML = `<b>Material ${index + 1}</b>`;
     typeInput.value = material.getType();
 }
 
 
+// updates the obstacle details area with the given obstacle
+function updateObstacleDetails(obstacle) {
+    if ( !(obstacle instanceof Obstacle) ) return;
+
+    let obstacleTitle = document.getElementById("details-obstacle-title");
+
+    let index = track.getObstacles().findIndex((o) => o == obstacle);
+
+    obstacleTitle.innerHTML = `<b>Obstacle ${index + 1}</b>`;
+}
+
+
+// updates the decoration details area with the given decoration
+function updateDecorationDetails(decoration) {
+    if ( !(decoration instanceof Decoration) ) return;
+
+    let decorationTitle = document.getElementById("details-decoration-title");
+    let colourInput = document.getElementById("decoration-colour-input");
+
+    let index = track.getDecorations().findIndex((d) => d == decoration);
+
+    decorationTitle.innerHTML = `<b>Decoration ${index + 1}</b>`;
+
+    console.log(decoration.getColour());
+    colourInput.value = decoration.getColour();
+}
+
+
 // updates the point details area with the given point
-function updatePointDetails(point) {
+function updatePointDetails(polygons, point) {
     if ( !(point instanceof PathNode) ) return;
 
     let pointTitle = document.getElementById("details-point-title");
     let index;
 
-    for (let material of track.getMaterials()) {
-        let points = material.getPoints();
+    for (let polygon of polygons) {
+        let points = polygon.getPoints();
         let i = points.findIndex((p) => p == point);
         
         if (i > -1) {
@@ -595,26 +729,93 @@ function initialiseMaterialDetails() {
 }
 
 
+// inputs to apply operations to the selected obstacle (if any)
+function initialiseObstacleDetails() {
+    let deleteBtn = document.getElementById("details-obstacle-delete");
+
+    deleteBtn.addEventListener("click", (e) => {
+        let obstacle = selection.Secondary;
+
+        if (obstacle instanceof Obstacle) {
+            track.removeObstacle(obstacle);
+            selection.Primary = null;
+            selection.Secondary = null;
+        }
+
+        showSelectionDetails();
+        renderer.redrawTrack();
+    });
+}
+
+
+// inputs to apply operations to the selected decoration (if any)
+function initialiseDecorationDetails() {
+    let colourInput = document.getElementById("decoration-colour-input");
+    let deleteBtn = document.getElementById("details-decoration-delete");
+
+    colourInput.addEventListener("change", (e) => {
+        let decoration = selection.Secondary;
+
+        if (decoration instanceof Decoration) {
+            decoration.setColour(colourInput.value);
+            renderer.redrawTrack();
+        }
+    });
+
+    deleteBtn.addEventListener("click", (e) => {
+        let decoration = selection.Secondary;
+
+        if (decoration instanceof Decoration) {
+            track.removeDecoration(decoration);
+            selection.Primary = null;
+            selection.Secondary = null;
+        }
+
+        showSelectionDetails();
+        renderer.redrawTrack();
+    });
+}
+
+
 // inputs to apply operations to the selected point (if any)
 function initialisePointDetails() {
     let deleteBtn = document.getElementById("details-point-delete");
 
+    // * TODO: generalise this to work for Materials, Obstacles, & Decorations
     deleteBtn.addEventListener("click", (e) => {
         let point = selection.Primary;
-        let material = selection.Secondary;
+        let polygon = selection.Secondary;
 
-        if (material instanceof Material) {
-            track.removeMaterialPoint(material, point);
+        if (polygon instanceof Material) {
+            track.removeMaterialPoint(polygon, point);
             selection.Primary = null;
 
-            if (material.getPoints().length == 0) {
-                track.removeMaterial(material);
+            if (polygon.getPoints().length == 0) {
+                track.removeMaterial(polygon);
                 selection.Secondary = null;
             }
 
-            showSelectionDetails();
-            renderer.redrawTrack();
+        } else if (polygon instanceof Obstacle) {
+            track.removeObstaclePoint(polygon, point);
+            selection.Primary = null;
+
+            if (polygon.getPoints().length == 0) {
+                track.removeObstacle(polygon);
+                selection.Secondary = null;
+            }
+
+        } else if (polygon instanceof Decoration) {
+            track.removeDecorationPoint(polygon, point);
+            selection.Primary = null;
+
+            if (polygon.getPoints().length == 0) {
+                track.removeDecoration(polygon);
+                selection.Secondary = null;
+            }
         }
+
+        showSelectionDetails();
+        renderer.redrawTrack();
     });
 }
 
@@ -634,6 +835,8 @@ initialiseCanvas();
 
 initialiseNodeDetails();
 initialiseMaterialDetails();
+initialiseObstacleDetails();
+initialiseDecorationDetails();
 initialisePointDetails();
 
 lucide.createIcons();

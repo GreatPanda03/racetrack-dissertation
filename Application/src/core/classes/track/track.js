@@ -4,8 +4,10 @@
 
 // [[ Imports ]] //
 import PathNode from "../geometry/path-node.js";
-import Material from "./components/material.js";
 import TrackNode from "./components/track-node.js";
+import Material from "./components/material.js";
+import Obstacle from "./components/obstacle.js";
+import Decoration from "./components/decoration.js";
 
 
 
@@ -132,7 +134,7 @@ export default class Track {
 
     addMaterialPoint(material, point) {
         if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Track] "${point}" is not a valid Vector2`);
+            throw new Error(`[Track] "${point}" is not a valid PathNode`);
         }
 
         this.#validateListPresence(this.#materials, material);
@@ -146,11 +148,71 @@ export default class Track {
 
     removeMaterialPoint(material, point) {
         if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Track] "${point}" is not a valid Vector2`);
+            throw new Error(`[Track] "${point}" is not a valid PathNode`);
         }
 
         this.#validateListPresence(this.#materials, material);
         material.removePoint(point);        
+    }
+
+    // obstacle methods
+    addObstacle(obstacle) {
+        this.#validateIsObstacle(obstacle);
+        this.#validateListAbsence(this.#materials, obstacle);
+        this.#obstacles.push(obstacle);
+    }
+
+    addObstaclePoint(obstacle, point) {
+        if ( !(point instanceof PathNode) ) {
+            throw new Error(`[Track] "${point}" is not a valid PathNode`);
+        }
+
+        this.#validateListPresence(this.#obstacles, obstacle);
+        obstacle.addPoint(point);
+    }
+
+    removeObstacle(obstacle) {
+        let index = this.#validateListPresence(this.#obstacles, obstacle);
+        this.#obstacles.splice(index, 1);
+    }
+
+    removeObstaclePoint(obstacle, point) {
+        if ( !(point instanceof PathNode) ) {
+            throw new Error(`[Track] "${point}" is not a valid PathNode`);
+        }
+
+        this.#validateListPresence(this.#obstacles, obstacle);
+        obstacle.removePoint(point);
+    }
+
+    // decoration methods
+    addDecoration(decoration) {
+        this.#validateIsDecoration(decoration);
+        this.#validateListAbsence(this.#decorations, decoration);
+        this.#decorations.push(decoration);
+    }
+
+    addDecorationPoint(decoration, point) {
+        if ( !(point instanceof PathNode) ) {
+            throw new Error(`[Track] "${point}" is not a valid PathNode`);
+        }
+
+        this.#validateListPresence(this.#obstacles, decoration);
+        decoration.addPoint(point);
+    }
+
+    removeDecoration(decoration) {
+        let index = this.#validateListPresence(this.#decorations, decoration);
+        this.#decorations.splice(index, 1);
+    }
+
+    removeDecorationPoint(decoration, point) {
+        if ( !(point instanceof PathNode) ) {
+            throw new Error(`[Track] "${point}" is not a valid PathNode`);
+        }
+
+        this.#validateListPresence(this.#decorations, decoration);
+        decoration.removePoint(point);
     }
 
     
@@ -187,8 +249,8 @@ export default class Track {
 
         track.#path = object.path.map(n => TrackNode.toInstance(n));
         track.#materials = object.materials.map(m => Material.toInstance(m));
-        track.#obstacles = object.obstacles; // // TODO: object.path.map(p => Polygon.toInstance(p));
-        track.#decorations = object.decorations; // ditto
+        track.#obstacles = object.obstacles.map(o => Obstacle.toInstance(o));
+        track.#decorations = object.decorations.map(d => Decoration.toInstance(d));
 
         track.#looped = object.looped;
 
@@ -216,6 +278,18 @@ export default class Track {
     #validateIsMaterial(material) {
         if( !(material instanceof Material) ) {
             throw new Error(`[Track] "${material}" is not a Material`);
+        }
+    }
+
+    #validateIsObstacle(obstacle) {
+        if ( !(obstacle instanceof Obstacle) ) {
+            throw new Error(`[Track] "${obstacle}" is not an Obstacle`);
+        }
+    }
+
+    #validateIsDecoration(decoration) {
+        if ( !(decoration instanceof Decoration) ) {
+            throw new Error(`[Track] "${decoration}" is not an Decoration`);
         }
     }
 

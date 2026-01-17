@@ -7,6 +7,8 @@ export { default as PathNode } from "./classes/geometry/path-node.js";
 
 export { default as TrackNode } from "./classes/track/components/track-node.js";
 export { default as Material } from "./classes/track/components/material.js";
+export { default as Obstacle } from "./classes/track/components/obstacle.js";
+export { default as Decoration } from "./classes/track/components/decoration.js";
 
 export { default as TrackBoundaries } from "./classes/track/track-boundaries.js";
 export { default as TrackForm } from "./classes/track/track-form.js";
