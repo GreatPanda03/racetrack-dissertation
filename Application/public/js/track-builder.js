@@ -3,7 +3,7 @@
 
 // [[ Imports ]] //
 import {
-    Vector2, PathNode,
+    Vector2, Polygon, PathNode,
     TrackNode, Material, Obstacle, Decoration,
     Track, TrackRenderer,
     TOOL_TYPE, MATERIAL_INFO,
@@ -43,9 +43,40 @@ function toggleButton(button, state) {
 
 // builder options
 function initialiseBuilderOptions() {
-    let share = document.getElementById("options-export");
+    let importPrompt = document.getElementById("options-import");
+    let importSubmit = document.getElementById("import-submit");
+    let importInput = document.getElementById("import-input");
+    let importError = document.getElementById("import-error");
 
-    share.addEventListener("click", (e) => {
+    let export_ = document.getElementById("options-export");
+
+    importPrompt.addEventListener("click", (e) => {
+        let popup = document.getElementById("modal-track-import");
+        let modal = new bootstrap.Modal(popup);
+        modal.show();
+    });
+
+    importSubmit.addEventListener("click", (e) => {
+        let json = importInput.value.trim();
+
+        try {
+            track = Track.toInstance(JSON.parse(json));
+            renderer.setTrack(track);
+            importError.classList.add("hidden");
+
+            let popup = document.getElementById("modal-track-import");
+            let modal = new bootstrap.Modal(popup);
+            modal.hide();
+
+        } catch(error) {
+            importError.innerHTML = "Invalid JSON provided!";
+            importError.classList.remove("hidden");
+
+            console.log(error);
+        }
+    });
+
+    export_.addEventListener("click", (e) => {
         console.log(track);
         console.log(track.toJson(true));
     })
@@ -128,55 +159,22 @@ function initialiseCanvasTools() {
 
 // toggle the visibility of different track components
 function initialiseVisualToggles() {
-    let nodes = document.getElementById("visuals-nodes");
-    let edges = document.getElementById("visuals-edges");
+    let toggles = ["nodes", "wires", "path", "materials", "obstacles", "decorations"];
 
-    let path = document.getElementById("visuals-track");
-    let materials = document.getElementById("visuals-materials");
-    let obstacles = document.getElementById("visuals-obstacles");
-    let decorations = document.getElementById("visuals-decorations");
+    function toggleVisibilityOnClick(target) {
+        let button = document.getElementById(`visuals-${target}`);
 
-    nodes.addEventListener("click", (e) => {
-        let state = !renderer.getNodesVisible();
-        toggleButton(nodes, state);
-        renderer.setNodesVisible(state);
-        renderer.redrawTrack();
-    });
+        button.addEventListener("click", (e) => {
+            let state = !renderer.getVisibility(target);
+            toggleButton(button, state);
+            renderer.setVisibility(target, state);
+            renderer.redrawTrack();
+        })
+    }
 
-    edges.addEventListener("click", (e) => {
-        let state = !renderer.getEdgesVisible();
-        toggleButton(edges, state);
-        renderer.setEdgesVisible(state);
-        renderer.redrawTrack();
-    });
-
-    path.addEventListener("click", (e) => {
-        let state = !renderer.getTrackVisible();
-        toggleButton(path, state);
-        renderer.setTrackVisible(state);
-        renderer.redrawTrack();
-    });    
-
-    materials.addEventListener("click", (e) => {
-        let state = !renderer.getMaterialsVisible();
-        toggleButton(materials, state);
-        renderer.setMaterialsVisible(state);
-        renderer.redrawTrack();
-    });
-
-    obstacles.addEventListener("click", (e) => {
-        let state = !renderer.getObstaclesVisible();
-        toggleButton(obstacles, state);
-        renderer.setObstaclesVisible(state);
-        renderer.redrawTrack();
-    });
-
-    decorations.addEventListener("click", (e) => {
-        let state = !renderer.getDecorationsVisible();
-        toggleButton(decorations, state);
-        renderer.setDecorationsVisible(state);
-        renderer.redrawTrack();
-    });
+    for (let target of toggles) {
+        toggleVisibilityOnClick(target);
+    }
 }
 
 
@@ -299,52 +297,33 @@ function getRelativePositionOnCanvas(canvas, x, y) {
 function onDrawStart(x, y) {
     let mousePos = getRelativePositionOnCanvas(canvas, x, y);
 
+    let createPolygon = {
+        [TOOL_TYPE.Material]: () => {
+            let material = new Material(null, tool.Secondary);
+            track.addMaterial(material);
+            return material;
+        },
+        [TOOL_TYPE.Obstacle]: () => {
+            let obstacle = new Obstacle();
+            track.addObstacle(obstacle);
+            return obstacle;
+        },
+        [TOOL_TYPE.Decoration]: () => {
+            let decoration = new Decoration();
+            track.addDecoration(decoration);
+            return decoration;
+        }
+    }
+
     // select the element clicked over
     if (tool.Primary == TOOL_TYPE.Select) {
+        let selected = false;
         selection = {};
 
-        for (let node of track.getPath()) {
-            let pos = node.getPosition();
-
-            if (mousePos.sub(pos).mag() <= 15) {
-                selection.Primary = node;
-                break;
-            }
-        }
-
-        for (let material of track.getMaterials()) {
-            for (let point of material.getPoints()) {
-                let pos = point.getPosition();
-
-                if (mousePos.sub(pos).mag() <= 10) {
-                    selection.Primary = point;
-                    selection.Secondary = material;
-                    break;
-                }
-            }
-        }
-
-        for (let obstacle of track.getObstacles()) {
-            for (let point of obstacle.getPoints()) {
-                let pos = point.getPosition();
-
-                if (mousePos.sub(pos).mag() <= 10) {
-                    selection.Primary = point;
-                    selection.Secondary = obstacle;
-                }
-            }
-        }
-
-        for (let decoration of track.getDecorations()) {
-            for (let point of decoration.getPoints()) {
-                let pos = point.getPosition();
-
-                if (mousePos.sub(pos).mag() <= 10) {
-                    selection.Primary = point;
-                    selection.Secondary = decoration;
-                }
-            }
-        }
+        if (!selected) selected = checkNodesClicked(track.getPath(), mousePos, 15);
+        if (!selected) selected = checkPolygonsClicked(track.getMaterials(), mousePos, 10);
+        if (!selected) selected = checkPolygonsClicked(track.getObstacles(), mousePos, 10);
+        if (!selected) selected = checkPolygonsClicked(track.getDecorations(), mousePos, 10);
 
         if (selection.Primary) {
             let pos = selection.Primary.getPosition();
@@ -362,76 +341,59 @@ function onDrawStart(x, y) {
         track.addNode(node);
         renderer.redrawTrack();
     
-    // place a new material / a point in a selected material
-    } else if (tool.Primary == TOOL_TYPE.Material) {
-        
-        // * TODO: make this more reliable
-        if ( !(selection.Secondary instanceof Material) ) {
-            let material = new Material(null, tool.Secondary);
-            let point = new PathNode(mousePos);
-            material.addPoint(point);
+    // place a point in a new / existing polygon-based element
+    } else if (
+           tool.Primary == TOOL_TYPE.Material
+        || tool.Primary == TOOL_TYPE.Obstacle
+        || tool.Primary == TOOL_TYPE.Decoration
+    ) {
+        let point = new PathNode(mousePos);
+        selection.Primary = point;
 
-            selection.Primary = point;
-            selection.Secondary = material;
-            track.addMaterial(material);
-            renderer.redrawTrack();
-
-        } else {
-            let point = new PathNode(mousePos);
-
-            selection.Primary = point;
-            selection.Secondary.addPoint(point);
-            renderer.redrawTrack();
-        }
-
-    // place a new obstacle / a point in a selected obstacle
-    } else if (tool.Primary == TOOL_TYPE.Obstacle) {
-
-        // * TODO: make this more reliable
-        if ( !(selection.Secondary instanceof Obstacle) ) {
-            let obstacle = new Obstacle();
-            let point = new PathNode(mousePos);
-            obstacle.addPoint(point);
-
-            selection.Primary = point;
-            selection.Secondary = obstacle;
-            track.addObstacle(obstacle);
-            renderer.redrawTrack();
+        if ( !(selection.Secondary instanceof Polygon) ) {
+            let polygon = createPolygon[tool.Primary]();
+            polygon.addPoint(point);
+            selection.Secondary = polygon;
 
         } else {
-            let point = new PathNode(mousePos);
-
-            selection.Primary = point;
             selection.Secondary.addPoint(point);
-            renderer.redrawTrack();
         }
 
-    // place a new decoration / a point in a selected material
-    } else if (tool.Primary == TOOL_TYPE.Decoration) {
-        
-        // * TODO: make this more reliable
-        if ( !(selection.Secondary instanceof Decoration) ) {
-            let decoration = new Decoration();
-            let point = new PathNode(mousePos);
-            decoration.addPoint(point);
-
-            selection.Primary = point;
-            selection.Secondary = decoration;
-            track.addDecoration(decoration);
-            renderer.redrawTrack();
-
-        } else {
-            let point = new PathNode(mousePos);
-
-            selection.Primary = point;
-            selection.Secondary.addPoint(point);
-            renderer.redrawTrack();
-        }
+        renderer.redrawTrack();
     }
 
     if (selection.Primary) showSelectionDetails();
 
     last = mousePos;
+}
+
+function checkNodesClicked(nodes, mousePos, radius) {
+    for (let node of nodes) {
+        let pos = node.getPosition();
+
+        if (mousePos.sub(pos).mag() <= radius) {
+            selection.Primary = node;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function checkPolygonsClicked(polygons, mousePos, radius) {
+    for (let polygon of polygons) {
+        for (let point of polygon.getPoints()) {
+            let pos = point.getPosition();
+
+            if (mousePos.sub(pos).mag() <= radius) {
+                selection.Primary = point;
+                selection.Secondary = polygon;
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 
@@ -449,6 +411,7 @@ function onDrawMove(x, y) {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.translate(offset.x(), offset.y());
     
+    // ... or just drags the selection
     } else if (selection.Primary) {
         selection.Primary.setPosition(
             pos.add(selectionDiff));
@@ -490,7 +453,10 @@ function showSelectionDetails() {
     let pointDetails = document.getElementById("details-point");
 
     let sections = [
-        nodeDetails, materialDetails, obstacleDetails, decorationDetails,
+        nodeDetails, 
+        materialDetails, 
+        obstacleDetails, 
+        decorationDetails,
         pointDetails
     ];
 
@@ -503,7 +469,7 @@ function showSelectionDetails() {
         nodeDetails.classList.remove("hidden");
         
     } else if (selection.Secondary instanceof Material) {
-        updateMaterialDetails(selection.Secondary, selection.Primary);
+        updateMaterialDetails(selection.Secondary);
         materialDetails.classList.remove("hidden");
 
         if (selection.Primary instanceof PathNode) {
@@ -558,7 +524,6 @@ function updateMaterialDetails(material) {
 
     let materialTitle = document.getElementById("details-material-title");
     let typeInput = document.getElementById("material-type-input");
-
     let index = track.getMaterials().findIndex((m) => m == material);
 
     materialTitle.innerHTML = `<b>Material ${index + 1}</b>`;
@@ -571,7 +536,6 @@ function updateObstacleDetails(obstacle) {
     if ( !(obstacle instanceof Obstacle) ) return;
 
     let obstacleTitle = document.getElementById("details-obstacle-title");
-
     let index = track.getObstacles().findIndex((o) => o == obstacle);
 
     obstacleTitle.innerHTML = `<b>Obstacle ${index + 1}</b>`;
@@ -584,12 +548,9 @@ function updateDecorationDetails(decoration) {
 
     let decorationTitle = document.getElementById("details-decoration-title");
     let colourInput = document.getElementById("decoration-colour-input");
-
     let index = track.getDecorations().findIndex((d) => d == decoration);
 
     decorationTitle.innerHTML = `<b>Decoration ${index + 1}</b>`;
-
-    console.log(decoration.getColour());
     colourInput.value = decoration.getColour();
 }
 
@@ -615,8 +576,7 @@ function updatePointDetails(polygons, point) {
 }
 
 
-// inputs to apply operations / details to the current
-//   selected node (if any)
+// inputs to apply operations / details to the current selected node (if any)
 function initialiseNodeDetails() {
     let widthInput = document.getElementById("node-width-input");
     let checkpointInput = document.getElementById("node-checkpoint-input");
@@ -626,73 +586,66 @@ function initialiseNodeDetails() {
 
     widthInput.addEventListener("change", (e) => {
         let node = selection.Primary;
+        if ( !(node instanceof TrackNode) ) return;
 
-        if (node instanceof TrackNode) {
-            node.setWidth(Number(widthInput.value));
-            renderer.redrawTrack();
-        }
+        node.setWidth(Number(widthInput.value));
+        renderer.redrawTrack();
     });
 
     checkpointInput.addEventListener("change", (e) => {
         let node = selection.Primary;
-
-        if (node instanceof TrackNode) {
-            node.setCheckpoint(checkpointInput.checked);
-            renderer.redrawTrack();
-        }
+        if ( !(node instanceof TrackNode) ) return;
+        
+        node.setCheckpoint(checkpointInput.checked);
+        renderer.redrawTrack();
     });
 
     addBefore.addEventListener("click", (e) => {
         let node = selection.Primary;
+        if ( !(node instanceof TrackNode) ) return;
 
-        if (node instanceof TrackNode) {
-            let index = track.getNodeIndex(node);
-            index = (index == 0 ? track.getSize() : index);
+        let index = track.getNodeIndex(node);
+        index = (index == 0 ? track.getSize() : index);
 
-            let t = index - 0.5;
-            let newPos = SplineUtil.getPointAtT(track.getPath(), t, true);
+        let t = index - 0.5;
+        let newPos = SplineUtil.getPointAtT(track.getPath(), t, true);
+        let newNode = new TrackNode(newPos, 100, false);
+        track.addNodeAtIndex(newNode, index);
 
-            let newNode = new TrackNode(newPos, 100, false);
-            track.addNodeAtIndex(newNode, index);
-
-            renderer.redrawTrack();
-            updateNodeDetails(node);
-        }
+        renderer.redrawTrack();
+        updateNodeDetails(node);
     });
 
     addAfter.addEventListener("click", (e) => {
         let node = selection.Primary;
+        if ( !(node instanceof TrackNode) ) return;
 
-        if (node instanceof TrackNode) {
-            let index = track.getNodeIndex(node);
-            index = index + 1;
+        let index = track.getNodeIndex(node);
+        index = index + 1;
 
-            let t = index - 0.5
-            let newPos = SplineUtil.getPointAtT(track.getPath(), t, true);
+        let t = index - 0.5
+        let newPos = SplineUtil.getPointAtT(track.getPath(), t, true);
+        let newNode = new TrackNode(newPos, 100, false);
+        track.addNodeAtIndex(newNode, index);
 
-            let newNode = new TrackNode(newPos, 100, false);
-            track.addNodeAtIndex(newNode, index);
-
-            renderer.redrawTrack();
-            updateNodeDetails(node);
-        }
+        renderer.redrawTrack();
+        updateNodeDetails(node);
     });
 
     deleteBtn.addEventListener("click", (e) => {
         let node = selection.Primary;
-
-        if (node instanceof TrackNode) {
-            track.removeNode(node);
-            node.Primary = null;
-            showSelectionDetails();
-            renderer.redrawTrack();
-        }
+        if ( !(node instanceof TrackNode) ) return;
+        
+        track.removeNode(node);
+        selection.Primary = null;
+        
+        renderer.redrawTrack();
+        showSelectionDetails();
     });
 }
 
 
-// inputs to apply operations / details to the current
-//   selected material (if any)
+// inputs to apply operations / details to the current selected material (if any)
 function initialiseMaterialDetails() {
     let typeInput = document.getElementById("material-type-input");
     let deleteBtn = document.getElementById("details-material-delete");
@@ -707,24 +660,14 @@ function initialiseMaterialDetails() {
 
     typeInput.addEventListener("change", (e) => {
         let material = selection.Secondary;
+        if ( !(material instanceof Material) ) return;
 
-        if (material instanceof Material) {
-            material.setType(typeInput.value);
-            renderer.redrawTrack();
-        }
+        material.setType(typeInput.value);
+        renderer.redrawTrack();
     });
 
     deleteBtn.addEventListener("click", (e) => {
-        let material = selection.Secondary;
-
-        if (material instanceof Material) {
-            track.removeMaterial(material);
-            selection.Primary = null;
-            selection.Secondary = null;
-        }
-
-        showSelectionDetails();
-        renderer.redrawTrack();
+        deletePolygonIfSecondary(track.removeMaterial);
     });
 }
 
@@ -734,16 +677,7 @@ function initialiseObstacleDetails() {
     let deleteBtn = document.getElementById("details-obstacle-delete");
 
     deleteBtn.addEventListener("click", (e) => {
-        let obstacle = selection.Secondary;
-
-        if (obstacle instanceof Obstacle) {
-            track.removeObstacle(obstacle);
-            selection.Primary = null;
-            selection.Secondary = null;
-        }
-
-        showSelectionDetails();
-        renderer.redrawTrack();
+        deletePolygonIfSecondary(track.removeObstacle);
     });
 }
 
@@ -755,25 +689,28 @@ function initialiseDecorationDetails() {
 
     colourInput.addEventListener("change", (e) => {
         let decoration = selection.Secondary;
+        if ( !(decoration instanceof Decoration) ) return;
 
-        if (decoration instanceof Decoration) {
-            decoration.setColour(colourInput.value);
-            renderer.redrawTrack();
-        }
+        decoration.setColour(colourInput.value);
+        renderer.redrawTrack();
     });
 
     deleteBtn.addEventListener("click", (e) => {
-        let decoration = selection.Secondary;
-
-        if (decoration instanceof Decoration) {
-            track.removeDecoration(decoration);
-            selection.Primary = null;
-            selection.Secondary = null;
-        }
-
-        showSelectionDetails();
-        renderer.redrawTrack();
+        deletePolygonIfSecondary(track.removeDecoration);
     });
+}
+
+
+function deletePolygonIfSecondary(removalMethod) {
+    let polygon = selection.Secondary;
+    if ( !(polygon instanceof Polygon) ) return;
+
+    removalMethod.call(track, polygon);
+    selection.Primary = null;
+    selection.Secondary = null
+
+    showSelectionDetails();
+    renderer.redrawTrack();
 }
 
 
@@ -781,36 +718,24 @@ function initialiseDecorationDetails() {
 function initialisePointDetails() {
     let deleteBtn = document.getElementById("details-point-delete");
 
-    // * TODO: generalise this to work for Materials, Obstacles, & Decorations
     deleteBtn.addEventListener("click", (e) => {
         let point = selection.Primary;
         let polygon = selection.Secondary;
 
-        if (polygon instanceof Material) {
-            track.removeMaterialPoint(polygon, point);
-            selection.Primary = null;
+        polygon.removePoint(point);
+        selection.Primary = null;
 
-            if (polygon.getPoints().length == 0) {
+        if (polygon.getPoints().length == 0) {
+            selection.Secondary = null;
+            
+            if (polygon instanceof Material) {
                 track.removeMaterial(polygon);
-                selection.Secondary = null;
-            }
-
-        } else if (polygon instanceof Obstacle) {
-            track.removeObstaclePoint(polygon, point);
-            selection.Primary = null;
-
-            if (polygon.getPoints().length == 0) {
+            } else if (polygon instanceof Obstacle) {
                 track.removeObstacle(polygon);
-                selection.Secondary = null;
-            }
-
-        } else if (polygon instanceof Decoration) {
-            track.removeDecorationPoint(polygon, point);
-            selection.Primary = null;
-
-            if (polygon.getPoints().length == 0) {
+            } else if (polygon instanceof Decoration) {
                 track.removeDecoration(polygon);
-                selection.Secondary = null;
+            } else {
+                throw new Error(`[Track Builder] "${polygon}" is not of a recognised component type`);
             }
         }
 

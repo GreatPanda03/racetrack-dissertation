@@ -1,13 +1,9 @@
 // manages instances of Node objects
 // * PathNode is a generic point used to form larger paths
 
-
-// [[ Imports ]] //
 import Vector2 from "./vector2.js";
 
 
-
-// [[ Main Class ]] //
 export default class PathNode {
     _position;      // Vector2
 

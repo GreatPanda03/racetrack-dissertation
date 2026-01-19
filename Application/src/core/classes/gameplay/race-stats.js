@@ -42,6 +42,7 @@ export default class RaceStats {
             }
         }
     }
+    
 
     // getters / setters
     getTrack() { return this.#track; }
@@ -54,10 +55,8 @@ export default class RaceStats {
     getState() { return this.#state; }
     setState(active) { this.#state = active; }
 
-    // methods
 
-    // adds a point to the path and updates each stat
-    // * assumes 1 second passes per move
+    // methods
     addToPath(point) {
         if ( !(point instanceof Vector2) ) {
             throw new Error(`[RaceStats] "${point}" is not a valid point`);
@@ -79,28 +78,20 @@ export default class RaceStats {
         this.#topSpeed = speed > topSpeed ? speed : topSpeed;
     }
 
-    // marks the given checkpoint as passed
-    // * TODO: this function is messy - clean it
     setCheckpointPassed(checkpoint, passed) {
         let info = this.#getCheckpointInfo(checkpoint);
         info.passed = passed;
     }
 
-    // returns whether the given checkpoint has been passed
     isCheckpointPassed(checkpoint) {
         let info = this.#getCheckpointInfo(checkpoint);
         return info.passed;
     }
 
-    // returns the total number of moves
-    // * index 0-1 is a move (likewise for subsequent indexes)
-    // * if only 1 point in path, then moves = 0
     getMoves() {
-        return Math.max(this.#path.length - 1, 0);
+        return Math.max(this.#path.length - 1, 0); // first point of path is not a move
     }
 
-    // calculates all stats based on the current path
-    // * assumes 1 second passes per move
     calculateStats() {
         let path = this.#path;
 
@@ -120,8 +111,6 @@ export default class RaceStats {
 
 
     // validation
-
-    // ensures the given node is a checkpoint
     #getCheckpointInfo(node) {
         for (let checkpoint of this.#checkpoints) {
             if (checkpoint.node == node) {

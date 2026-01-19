@@ -1,8 +1,6 @@
 // manages instances of Vector2 objects
-// * vector2s are simple (x, y) vectors with simple maths operations
+// * a Vector2 is a simple (x, y) vector with basic vector operations
 
-
-// [[ Main Class ]] //
 export default class Vector2 {
     #x;     // float
     #y;     // float
@@ -20,9 +18,11 @@ export default class Vector2 {
         this.#y = y;
     }
 
+
     // getters / setters
     x() { return this.#x; }
     y() { return this.#y; }
+
 
     // methods
     add(b) {
@@ -56,6 +56,7 @@ export default class Vector2 {
         return new Vector2(
             Math.round(this.x()), Math.round(this.y()));
     }
+
 
     // serialisation
     toObject() {

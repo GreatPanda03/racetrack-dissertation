@@ -256,14 +256,14 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 
 ---
 
-### WC 2026/01/19 MON
+### 2026/01/22 THU
 <details>
 <summary>V1 - Transition from V0, and Materials</summary>
 
 - As of the last entry:
-    - Implemented v1.0.0 (see changelog)
+    - Implemented v1.0.0 - v1.3.0 (see changelog)
 
-- Supervisor meeting will be held around during WB **2026/01/19 MON**
+- Supervisor meeting will be held around during WB **2026/01/22 THU**
     - ...
 
 </details>

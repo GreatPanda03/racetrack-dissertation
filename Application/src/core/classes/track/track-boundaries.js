@@ -4,15 +4,11 @@
 // * source: "How to check if two given line segments intersect?", GeeksforGeeks, geeksforgeeks.org, [Online]. Accessed: Nov 29, 2025. Available at: https://www.geeksforgeeks.org/dsa/check-if-two-given-line-segments-intersect/
 // * source: M. Shimrat, "Algorithm 112: Position of point relative to polygon", Commun. ACM, vol. 5, no. 8, p. 434, Aug. 1962.
 
-
-// [[ Imports ]] //
 import Track from "./track.js";
 import TrackForm from "./track-form.js";
 import SplineUtil from "../../utilities/spline-util.js";
 
 
-
-// [[ Main Class ]] //
 export default class TrackBoundaries extends TrackForm {
     _boundaries;    // Vector2[][]
 
@@ -31,9 +27,6 @@ export default class TrackBoundaries extends TrackForm {
 
 
     // methods
-
-    // calculates the track's boundaries
-    // * edges between conseuctive left / right node pairs
     calculateBoundaries() {
         this._boundaries = [];
 
@@ -76,7 +69,7 @@ export default class TrackBoundaries extends TrackForm {
         this._boundaries = this._boundaries.concat( obstacleEdges );
     }
 
-    // [source 2] returns whether the two given lines intersect (Vector2 points)
+    // [source 2]
     static doLinesIntersect(p11, p12, p21, p22) {
         function onSegment(p, q, r) {
             return ( q.x() <= Math.max( p.x(), r.x() ) && q.x() >= Math.min( p.x(), r.x() ) )

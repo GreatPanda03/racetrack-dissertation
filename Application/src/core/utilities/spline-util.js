@@ -1,15 +1,9 @@
 // static utility class for spline operations
 
-
-// [[ Imports ]] //
 import Vector2 from "../classes/geometry/vector2.js";
 
 
-
-// [[ Main Class ]] // 
 export default class SplineUtil {
-
-    // returns the indexes of nodes influencing the spline's curvature at t
     static getInfluencersAtT(nodes, t, looped) {
         let p0, p1, p2, p3;
         let size = nodes.length;
@@ -41,7 +35,6 @@ export default class SplineUtil {
         return [p0, p1, p2, p3];
     }
 
-    // returns the coordinates of the point on the spline at t
     static getPointAtT(nodes, t, looped) {
         let [p0, p1, p2, p3] = SplineUtil.getInfluencersAtT(nodes, t, looped);
 
@@ -67,7 +60,6 @@ export default class SplineUtil {
         return new Vector2(tx, ty);
     }
 
-    // returns the gradient of the spline at t
     static getGradientAtT(nodes, t, looped) {
         let [p0, p1, p2, p3] = SplineUtil.getInfluencersAtT(nodes, t, looped);
 
