@@ -1,11 +1,8 @@
 // class to manage RaceCar instances
 
-
-// [[ Imports ]] //
 import Vector2 from "../geometry/vector2.js";
 
 
-// [[ Main Class ]] //
 export default class RaceCar {
     #position;  // GRID units (NOT pixels)
     #velocity;  // GRID units (NOT pixels)
@@ -18,6 +15,7 @@ export default class RaceCar {
         this.#maxAcceleration = 1;
         this.style = null;
     }
+
 
     // getters / setters
     getPosition() { return this.#position; }
@@ -32,6 +30,7 @@ export default class RaceCar {
     getStyle() { return this.#style; }
     setStyle(style) { this.#style = style; }
 
+    
     // methods
     accelerate(speedup) {
         if ( !(speedup instanceof Vector2) ) {

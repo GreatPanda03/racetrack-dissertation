@@ -1,8 +1,6 @@
 // manages instances of Track objects
-// * Track is a collection of nodes, data, and other objects which define it
+// * a Track is a collection of nodes, data, and other objects which define it
 
-
-// [[ Imports ]] //
 import PathNode from "../geometry/path-node.js";
 import TrackNode from "./components/track-node.js";
 import Material from "./components/material.js";
@@ -10,8 +8,6 @@ import Obstacle from "./components/obstacle.js";
 import Decoration from "./components/decoration.js";
 
 
-
-// [[ Main Class ]] //
 export default class Track {
     #trackId;       // int
 
@@ -44,6 +40,7 @@ export default class Track {
         
         this.#looped = true;
     }
+
 
     // getters / setters
     getTrackId() { return this.#trackId; }    
@@ -82,9 +79,7 @@ export default class Track {
     setLooped(looped) { this.#looped = looped; }
 
 
-    // methods
-
-    // node methods 
+    // node methods
     getSize() {
         return this.#path.length;
     }
@@ -132,27 +127,9 @@ export default class Track {
         this.#materials.push(material);
     }
 
-    addMaterialPoint(material, point) {
-        if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Track] "${point}" is not a valid PathNode`);
-        }
-
-        this.#validateListPresence(this.#materials, material);
-        material.addPoint(point);
-    }
-
     removeMaterial(material) {
         let index = this.#validateListPresence(this.#materials, material);
         this.#materials.splice(index, 1);
-    }
-
-    removeMaterialPoint(material, point) {
-        if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Track] "${point}" is not a valid PathNode`);
-        }
-
-        this.#validateListPresence(this.#materials, material);
-        material.removePoint(point);        
     }
 
     // obstacle methods
@@ -162,27 +139,9 @@ export default class Track {
         this.#obstacles.push(obstacle);
     }
 
-    addObstaclePoint(obstacle, point) {
-        if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Track] "${point}" is not a valid PathNode`);
-        }
-
-        this.#validateListPresence(this.#obstacles, obstacle);
-        obstacle.addPoint(point);
-    }
-
     removeObstacle(obstacle) {
         let index = this.#validateListPresence(this.#obstacles, obstacle);
         this.#obstacles.splice(index, 1);
-    }
-
-    removeObstaclePoint(obstacle, point) {
-        if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Track] "${point}" is not a valid PathNode`);
-        }
-
-        this.#validateListPresence(this.#obstacles, obstacle);
-        obstacle.removePoint(point);
     }
 
     // decoration methods
@@ -192,27 +151,9 @@ export default class Track {
         this.#decorations.push(decoration);
     }
 
-    addDecorationPoint(decoration, point) {
-        if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Track] "${point}" is not a valid PathNode`);
-        }
-
-        this.#validateListPresence(this.#obstacles, decoration);
-        decoration.addPoint(point);
-    }
-
     removeDecoration(decoration) {
         let index = this.#validateListPresence(this.#decorations, decoration);
         this.#decorations.splice(index, 1);
-    }
-
-    removeDecorationPoint(decoration, point) {
-        if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Track] "${point}" is not a valid PathNode`);
-        }
-
-        this.#validateListPresence(this.#decorations, decoration);
-        decoration.removePoint(point);
     }
 
     

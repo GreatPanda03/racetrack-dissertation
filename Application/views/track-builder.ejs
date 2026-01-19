@@ -85,12 +85,12 @@
                                     <i class="button-off hidden" data-lucide="circle-off"></i>
                                 </button>
 
-                                <button id="visuals-edges" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Edges">
+                                <button id="visuals-wires" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Wireframe">
                                     <i class="button-on" data-lucide="pen"></i>
                                     <i class="button-off hidden" data-lucide="pen-off"></i>
                                 </button>
                                 
-                                <button id="visuals-track" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Track">
+                                <button id="visuals-path" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Path">
                                     <i class="button-on" data-lucide="route"></i>
                                     <i class="button-off hidden" data-lucide="route-off"></i>
                                 </button>
@@ -284,6 +284,29 @@
                 </div>
             </div>
         </div>
+
+        <div id="modal-track-import" class="modal" tabindes="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Enter Track JSON</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <textarea id="import-input"></textarea>
+                        </div>
+                        
+                        <button id="import-submit" class="btn btn-success">
+                            <i data-lucide="download"></i>
+                            Import
+                        </button>
+
+                        <span id="import-error" style="color: #F00"></span>
+                    </div>
+                </div>
+            </div>
+        </div>  
 
         <footer>
             <%- include("./partials/footer.ejs") %>

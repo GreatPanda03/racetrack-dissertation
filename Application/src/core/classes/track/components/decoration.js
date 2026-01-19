@@ -1,14 +1,10 @@
 // manages instances of Decoration objects
 // * a Decoration is a Polygon which is solely ornamental with no extra effects
 
-
-// [[ Imports ]] //
 import PathNode from "../../geometry/path-node.js";
 import Polygon from "../../geometry/polygon.js";
 
 
-
-// [[ Main Class ]] //
 export default class Decoration extends Polygon {
     _colour;
 

@@ -5,8 +5,6 @@
 // * source: "How to check if two given line segments intersect?", GeeksforGeeks, geeksforgeeks.org, [Online]. Accessed: Nov 29, 2025. Available at: https://www.geeksforgeeks.org/dsa/check-if-two-given-line-segments-intersect/
 // * source: M. Shimrat, "Algorithm 112: Position of point relative to polygon", Commun. ACM, vol. 5, no. 8, p. 434, Aug. 1962.
 
-
-// [[ Imports ]] //
 import Vector2 from "../geometry/vector2.js";
 import TrackBoundaries from "../track/track-boundaries.js";
 import RaceCar from "../gameplay/racecar.js";
@@ -15,22 +13,22 @@ import RACECAR_STATE from "../../enums/racecar-state.js";
 import MATERIAL_INFO from "../../enums/material-info.js";
 
 
-
-// [[ Main Class ]] //
 export default class RaceInstance {
     #track;         // Track
     #boundaries;    // TrackBoundaries
     #racecars;      // RaceCar[]
     #raceStats;     // {RaceCar: RaceStats}
 
-    // TODO: add "racecars" parameters to automatically add and
-    //   position racecars (tedious to remember .prepareRacecars() )
-
-    constructor(track) {
+    constructor(track, racecars = []) {
         this.#track = track;
         this.#boundaries = new TrackBoundaries(track);
         this.#racecars = [];
         this.#raceStats = {};
+
+        if (racecars.length > 0) {
+            for (let racecar of racecars) this.addRacecar(racecar);
+            this.prepareRacecars();
+        }
     }
 
     // getters / setters
@@ -41,8 +39,6 @@ export default class RaceInstance {
 
 
     // methods
-
-    // adds the given racecar to the race
     addRacecar(racecar) {
         let track = this.#track;
         let racecars = this.#racecars;
@@ -60,7 +56,6 @@ export default class RaceInstance {
         raceStats[racecar] = new RaceStats(track);
     }
 
-    // returns the race stats associated with the given race car
     getRacecarStats(racecar) {
         let raceStats = this.#raceStats;
 
@@ -71,7 +66,6 @@ export default class RaceInstance {
         return raceStats[racecar];
     }
 
-    // moves all racecars to the starting line
     prepareRacecars() {
         let track = this.#track;
         let raceStats = this.#raceStats;
@@ -89,7 +83,6 @@ export default class RaceInstance {
         }
     }
 
-    // applies the given acceleration to the given race car
     moveRacecar(racecar, acceleration) {
         if ( !(racecar instanceof RaceCar) ) {
             throw new Error(`[RaceInstance] "${racecar}" is not a valid RaceCar`);
@@ -171,17 +164,40 @@ export default class RaceInstance {
             if (crossed) stats.setState(RACECAR_STATE.Crashed);
         }
 
-        // * TODO: add obstacle polygon sides as boundary lines
+        // TODO: if the crash boundary / finish line is crossed, adjust time accordingly
 
-        // TODO: if the finished line is crossed, adjust time accordingly
+        /*
+
+        * source: https://www.youtube.com/watch?v=bvlIYX9cgls
+        * - calculates an alpha and a beta, then determines whether they intersect or not
+        *     based on the values they have...
+        * ... but since i already check for an intersection, i can just use whatever value
+        *   either alpha or beta produce
+        * 
+        * alpha = (p22.x - p21.x) * (p21.y - p11.y) - (p22.y - p21.y) * (p21.x - p11.x)
+        *       / (p22.x - p21.x) * (p12.y - p11.y) - (p22.y - p21.y) * (p12.x - p11.x)
+        * 
+        * direction = p21.sub(p11)
+        * 
+        * :. distance travelled = alpha * direction
+
+        
+        * source: https://www.youtube.com/watch?v=-fCvkUZPxX4
+        * 
+        * using the distance over acceleration, calculate the time
+        * :. d = 0.5 * a * t^2
+        * => t = sqrt(2d / a)
+        * 
+        * ... then add this result onto the final time!
+        * (or deduct from 1s if i can't figure out how to NOT do the last stat update)
+
+        */
     }
 
-    // returns the given racecar's moveset based on the 
-    //   material it's on (if any)
     getPossibleMoves(racecar) {
 
         /*
-            * TODO: rework this so that ALL INDIVIDUAL MOVE LINES are considered
+            * TODO: MAYBE rework this so that ALL INDIVIDUAL MOVE LINES are considered
             * for example - if a car's line to the CENTRAL dot crosses the material,
                 then it's acceleration relative to THAT move is affected
             * ... but if the player picks a point which doesn't cross the material,
@@ -194,7 +210,7 @@ export default class RaceInstance {
             * Vector Racer ONLY affects the car if it's IN the material
         */
 
-        // determining current material (if any)
+        // determining the current material (if any)
         let pos = racecar.getPosition().scale(25);
         let ray = new Vector2(10000, 0);
 
@@ -220,82 +236,30 @@ export default class RaceInstance {
         // gathering possible moves
         let moves = [];
         let acc = racecar.getMaxAcceleration();
+        let effect;
 
         if (onMaterial) {
             let type = onMaterial.getType();
 
-            if (type == MATERIAL_INFO.Curb.Name) {
-                for (let x = -acc; x <= acc; x++) {
-                    for (let y = -acc; y <= acc; y++) {
-                        let move = {
-                            Offset: new Vector2(x, y),
-                            Active: (x == 0 || y == 0) // TODO
-                        };
-
-                        moves.push(move);
-                    }
-                }
-
-            } else if (type == MATERIAL_INFO.Gravel.Name) {
-                let velocity = racecar.getVelocity();
-
-                for (let x = -acc; x <= acc; x++) {
-                    for (let y = -acc; y <= acc; y++) {
-                        let offset = new Vector2(x, y);
-
-                        let move = {
-                            Offset: offset,
-                            Active: (velocity.add(offset)).mag() < velocity.mag()
-                        };
-
-                        moves.push(move);
-                    }
-                }
-
-            } else if (type == MATERIAL_INFO.Water.Name) {
-                for (let x = -acc; x <= acc; x++) {
-                    for (let y = -acc; y <= acc; y++) {
-                        let move = {
-                            Offset: new Vector2(x, y),
-                            Active: (x == 0 && y == 0)
-                        };
-
-                        moves.push(move);
-                    }
-                }
-
-            } else if (type == MATERIAL_INFO.Booster.Name) {
-                let velocity = racecar.getVelocity();
-
-                let X = Math.sign(velocity.x());
-                let Y = Math.sign(velocity.y());
-
-                for (let x = -acc; x <= acc; x++) {
-                    for (let y = -acc; y <= acc; y++) {
-                        let move = {
-                            Offset: new Vector2(X + x, Y + y),
-                            Active: true
-                        };
-
-                        moves.push(move);
-                    }
-                }
-
-            } else {
-                throw new Error(`[RaceInstance] "${type}" is an unrecognised material`);
+            if ( !(type in MATERIAL_INFO) ) {
+                throw new Error(`[RaceInstance] "${type}" is not a recognised material`);
             }
 
-        // not on any material - use normal moveset
-        } else {
-            for (let x = -acc; x <= acc; x++) {
-                for (let y = -acc; y <= acc; y++) {
-                    let move = {
-                        Offset: new Vector2(x, y),
-                        Active: true
-                    };
+            effect = MATERIAL_INFO[type].Effect;
 
-                    moves.push(move);
+        } else {
+            effect = (racecar, x, y) => {
+                return {
+                    Offset: new Vector2(x, y),
+                    Active: true
                 }
+            }
+        }
+
+        for (let x = -acc; x <= acc; x++) {
+            for (let y = -acc; y <= acc; y++) {
+                let move = effect(racecar, x, y);
+                moves.push(move);
             }
         }
 

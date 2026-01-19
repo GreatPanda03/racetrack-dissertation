@@ -1,14 +1,10 @@
 // manages instances of Obstacle objects
 // * an Obstacle is a Polygon which causes players to crash when driven into
 
-
-// [[ Imports ]] //
 import PathNode from "../../geometry/path-node.js";
 import Polygon from "../../geometry/polygon.js";
 
 
-
-// [[ Main Class ]] //
 export default class Obstacle extends Polygon {
     constructor(points = []) {
         super(points);

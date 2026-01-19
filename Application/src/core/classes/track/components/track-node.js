@@ -1,14 +1,10 @@
 // manages instances of TrackNode objects
 // * TrackNodes are points representing a track path
 
-
-// [[ Imports ]] //
 import Vector2 from "../../geometry/vector2.js";
 import PathNode from "../../geometry/path-node.js";
 
 
-
-// [[ Main Class ]] //
 export default class TrackNode extends PathNode {
     _width;         // number
     _checkpoint;    // boolean

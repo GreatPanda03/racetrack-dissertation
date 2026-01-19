@@ -4,7 +4,8 @@
 // [[ Imports ]] //
 import {
     Vector2,
-    Track, TrackRenderer,
+    Track,
+    CanvasRenderer, TrackRenderer,
     RaceCar, RaceInstance,
     RACECAR_STATE
 } from "/core/index.js";
@@ -17,13 +18,16 @@ import {
 var raceInstance;
 
 // rendering
-var renderer = null;
+var trackRenderer = null;
+var raceRenderer = null;
+
 var trackCanvas = document.getElementById("track-canvas");
 var playCanvas = document.getElementById("play-canvas");
 
 var spacing = 25; // pixels between each grid cell
 var spotRadius = 10;
 var racecarRadius = 7;
+var pointRadius = 3;
 var offset = new Vector2();
 
 
@@ -34,22 +38,19 @@ var offset = new Vector2();
 function loadTrack(t) {
     let track = Track.toInstance(JSON.parse(t));
 
-    renderer = new TrackRenderer(track, trackCanvas);
-    renderer.setNodesVisible(false);
-    renderer.setEdgesVisible(false);
-    renderer.redrawTrack();
+    trackRenderer = new TrackRenderer(track, trackCanvas);
+    trackRenderer.setVisibility("nodes", false);
+    trackRenderer.setVisibility("wires", false);
+    trackRenderer.redrawTrack();
 
-    // preparing the race instance
-    raceInstance = new RaceInstance(track);
-    raceInstance.addRacecar(new RaceCar());
-    raceInstance.prepareRacecars();
+    raceRenderer = new CanvasRenderer(playCanvas);
+
+    let racecar = new RaceCar();
+    raceInstance = new RaceInstance(track, [racecar]);
 
     renderRacecars();
-    
-    let racecar = raceInstance.getRacecars()[0];
 
-    displayMoves(
-        racecar, raceInstance.getPossibleMoves(racecar));
+    displayMoves(racecar, raceInstance.getPossibleMoves(racecar));
 }
 
 
@@ -114,8 +115,8 @@ function endRace(stats, state) {
                 <b>Total Moves:</b> ${moves}
             <br><b>Distance:</b> ${distance} m
             <br><b>Time:</b> ${time} s
-            <br><b>Top Speed:</b> ${topSpeed} ms⁻²
-            <br><b>Average Speed:</b> ${averageSpeed} ms⁻²
+            <br><b>Top Speed:</b> ${topSpeed} m/s
+            <br><b>Average Speed:</b> ${averageSpeed} m/s
         </p>`;
 
     if (state == RACECAR_STATE.Crashed) {
@@ -140,40 +141,24 @@ function endRace(stats, state) {
 
 // renders the race car to the track
 function renderRacecars() {
-    let ctx = playCanvas.getContext("2d");
-
-    ctx.clearRect(-offset.x(), -offset.y(), playCanvas.width, playCanvas.height);
+    raceRenderer.clearCanvas();
     
     for (let racecar of raceInstance.getRacecars()) {
         let pos = racecar.getPosition().scale(spacing);
         let raceStats = raceInstance.getRacecarStats(racecar);
 
-        ctx.fillStyle = "#A00";
-        ctx.beginPath();
-        ctx.ellipse(pos.x(), pos.y(), racecarRadius, racecarRadius, 0, 2 * Math.PI, 0);
-        ctx.fill();
+        raceRenderer.drawCircle(pos, racecarRadius, "#A00");  // racecar
 
-        let racecarPath = raceStats.getPath();
-
-        // first dot of race path
-        let firstDot = racecarPath[0].scale(spacing);
-        ctx.beginPath();
-        ctx.ellipse(firstDot.x(), firstDot.y(), 3, 3, 0, 2 * Math.PI, 0);
-        ctx.fill();
+        let racecarPath = raceStats.getPath();              // racecar path (first dot)
+        let firstDot = racecarPath[0].scale(spacing); 
+        raceRenderer.drawCircle(firstDot, pointRadius, "#A00");
 
         for (let p = 0; p < racecarPath.length - 1; p ++) {
             let start = racecarPath[p].scale(spacing);
             let end = racecarPath[p + 1].scale(spacing);
 
-            ctx.strokeStyle = "#A00";
-            ctx.beginPath();
-            ctx.moveTo(start.x(), start.y());
-            ctx.lineTo(end.x(), end.y());
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.ellipse(end.x(), end.y(), 3, 3, 0, 2 * Math.PI, 0);
-            ctx.fill();
+            raceRenderer.drawLine(start, end, 1, "#A00");
+            raceRenderer.drawCircle(end, pointRadius, "#A00");
         }
     }
 }
@@ -184,14 +169,12 @@ function displayMoves(racecar, moves) {
     let centre = racecar.getPosition().add(racecar.getVelocity());
 
     for (let move of moves) {
+        console.log(move);
+
         let gridPos = centre.add(move.Offset);
         let pos = gridPos.scale(spacing);
 
-        let ctx = playCanvas.getContext("2d");
-        ctx.strokeStyle = move.Active ? "#A00" : "#999";
-        ctx.beginPath();
-        ctx.ellipse(pos.x(), pos.y(), spotRadius, spotRadius, 0, 2 * Math.PI, 0);
-        ctx.stroke();
+        raceRenderer.drawCircle(pos, spotRadius, move.Active ? "#A00" : "#999", false);
     }
 }
 

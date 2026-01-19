@@ -13,6 +13,30 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.3.0
+**Date:** 2026/01/19
+<details>
+<summary>Track Building - Cleanup Pit Stop</summary>
+
+**Additions / Changes:**
+1. Made the track builder "Import" option functional - provide valid Track JSON to reconstruct the track
+2. Amended units typo for race results showing velocity as "ms⁻²" instead of "m/s" (oops...)
+3. (DEV) Code cleanup (lots of repeated code from 1.1.0 & 1.2.0)
+    * DRY'd & organised track renderer drawing methods, race instance material application, and track builder polygon-related code
+    * Made basal track renderer drawing methods public (to make gameplay code concise)
+    * Amended references to missing attributes that didn't throw errors
+    * Created a new CanvasRenderer class: TrackRenderer now extends this class instead of TrackForm, and now has a TrackForm object
+
+**Bugs Fixed:**
+1. Amended gravel slowing race cars down to a complete stop (if at 0 m/s, acts like Curb)
+
+**Bugs Discovered:**
+1. Aware that flipping an unlooped track causes the nodes to shift 1 node more than required
+
+</details>
+
+---
+
 ### Version: 1.2.0
 **Date:** 2026/01/17
 <details>

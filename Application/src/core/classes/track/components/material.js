@@ -2,14 +2,10 @@
 // * materials are polygons that apply special effects to race cars
 //     which drive over them during a race
 
-
-// [[ Imports ]] //
 import PathNode from "../../geometry/path-node.js";
 import Polygon from "../../geometry/polygon.js";
 
 
-
-// [[ Main Class ]] //
 export default class Material extends Polygon {
     _type;
 

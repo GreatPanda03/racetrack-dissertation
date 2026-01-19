@@ -1,13 +1,9 @@
 // manages instances of Polygon objects
 // * Polygons consist of Vector2 points which define a shape
 
-
-// [[ Imports ]] //
 import PathNode from "./path-node.js";
 
 
-
-// [[ Main Class ]] //
 export default class Polygon {
     _points;    // Node[]
 
@@ -21,6 +17,8 @@ export default class Polygon {
         this._points = points ?? [];
     }
 
+
+    // getters / setters
     getPoints() { return this._points; }
 
 

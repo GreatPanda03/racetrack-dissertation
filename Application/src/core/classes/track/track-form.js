@@ -1,8 +1,6 @@
 // class to manage instances of TrackForm objects
 // * TrackForm stores a construction of the track and its extents
 
-
-// [[ Imports ]] //
 import Vector2 from "../geometry/vector2.js";
 import PathNode from "../geometry/path-node.js";
 import TrackNode from "./components/track-node.js";
@@ -10,8 +8,6 @@ import Track from "./track.js";
 import SplineUtil from "../../utilities/spline-util.js";
 
 
-
-// [[ Main Class ]] //
 export default class TrackForm {
     _track;         // Track
     _leftSide;      // TrackNode[]
@@ -29,15 +25,14 @@ export default class TrackForm {
         this.updateNodeExtents();
     }
 
-    // getters and setters
+
+    // getters / setters
     getTrack() { return this._track; }
     getLeftSide() { return this._leftSide; }
     getRightSide() { return this._rightSide; }
 
 
     // methods
-
-    // returns the extents of a node based on its width
     getSegmentExtents(node) {
         if ( !(node instanceof TrackNode) ) {
             throw new Error(`[TrackForm] "${node}" is not a TrackNode`);
@@ -68,9 +63,8 @@ export default class TrackForm {
         return [leftPos, rightPos];
     }
 
-    // adds a left / right side around the given node
-    // * as of v1.0.0 - not really used, redundant (keep for reference)
     addSegment(node) {
+        // * as of v1.0.0 - not really used, redundant (keep for reference)
         if ( !(node instanceof TrackNode) ) {
             throw new Error(`[TrackForm] "${node}" is not a TrackNode`);
         }
@@ -86,7 +80,6 @@ export default class TrackForm {
         this._rightSide = rightSide.toSpliced(index, 0, new PathNode(rightPos));
     }
 
-    // updates the extents of all nodes
     updateNodeExtents() {
         this._leftSide = [];
         this._rightSide = [];

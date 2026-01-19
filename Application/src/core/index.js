@@ -12,8 +12,10 @@ export { default as Decoration } from "./classes/track/components/decoration.js"
 
 export { default as TrackBoundaries } from "./classes/track/track-boundaries.js";
 export { default as TrackForm } from "./classes/track/track-form.js";
-export { default as TrackRenderer } from "./classes/track/track-renderer.js";
 export { default as Track } from "./classes/track/track.js";
+
+export { default as CanvasRenderer } from "./classes/rendering/canvas-renderer.js";
+export { default as TrackRenderer } from "./classes/rendering/track-renderer.js";
 
 export { default as RaceCar } from "./classes/gameplay/racecar.js";
 export { default as RaceStats } from "./classes/gameplay/race-stats.js";
