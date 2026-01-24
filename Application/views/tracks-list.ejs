@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
-    <script type="module" src="/js/tracks-list.js" defer></script>
+    <script type="module" src="/js/tracks-list.js"></script>
 </head>
 <body>
     <div class="container">
@@ -13,9 +13,26 @@
 
         <div class="content">
             Welcome to the <b>Track List</b> section. Here you can view all game tracks as well as player-made tracks and tracks made by you!
-            
-            <div class="mt-3">
-                <ul id="game-tracks"></ul>
+
+            <div id="track-list" class="mt-5">
+                <div>
+                    <div id="nav-tab" class="nav nav-tabs">
+                        <button id="game-tracks-tab" class="nav-link active" data-bs-toggle="tab" data-bs-target="#game-tracks-pane">Game Tracks</button>
+                        <button id="player-tracks-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#player-tracks-pane">Player Tracks</button>
+                        <button id="personal-tracks-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#personal-tracks-pane">Your Tracks</button>
+                    </div>
+                </div>
+                <div id="track-lists" class="tab-content">
+                    <div id="game-tracks-pane" class="tab-pane fade show active">
+                        <div id="game-tracks-list" class="d-flex flex-wrap gap-3"></div>
+                    </div>
+                    <div id="player-tracks-pane" class="tab-pane fade">
+                        <div id="player-tracks-list" class="d-flex flex-wrap gap-3"></div>
+                    </div>
+                    <div id="personal-tracks-pane" class="tab-pane fade">
+                        <div id="personal-tracks-list" class="d-flex flex-wrap gap-3"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -24,8 +41,67 @@
         </footer>
     </div>
 
+    <!-- track entry details -->
+    <div id="modal-track-details" class="modal fade" tabindes="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Track Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex flex-row gap-3">
+                        <div class="canvas-wrapped">
+                            <canvas id="details-canvas" width="450" height="450"></canvas>
+                        </div>
+                        <div>
+                            <div id="d-flex flex-column gap-1 mb-3">
+                                <div id="details-name"></div>
+                                <div id="details-description"></div>
+                                <div id="details-author"></div>
+                            </div>
+
+                            <hr>
+
+                            <div class="d-flex justify-content-around gap-3">
+                                <button id="details-play" class="btn btn-success">
+                                    <i data-lucide="play"></i>
+                                    Play
+                                </button>
+                                <button id="details-edit" class="btn btn-primary">
+                                    <i data-lucide="hammer"></i>
+                                    Edit
+                                </button>
+                                <button id="details-delete" class="btn btn-danger">
+                                    <i data-lucide="trash-2"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>  
+    
+    <!-- track entry template -->
+    <template id="track-list-entry-template">
+        <div class="track-entry">
+            <div class="entry-body">
+                <div class="canvas-wrapped">
+                    <canvas class="entry-canvas" width="250" height="250"></canvas>
+                </div>
+            </div>
+            <div class="entry-footer">
+                <div class="entry-title">
+                    <b>This is the title</b>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <script>
-        window.gameTracks = <%- JSON.stringify(gameTracks) %>;
+        window.tracks = <%- JSON.stringify(tracks) %>;
     </script>
 </body>
 </html>

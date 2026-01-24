@@ -35,7 +35,7 @@ export default class Decoration extends Polygon {
         return decoration;
     }
 
-    toJson(pretty) {
-        return JSON.stringify(this.toObject(), null, pretty);
+    toJson(spaces) {
+        return JSON.stringify(this.toObject(), null, spaces);
     }
 }

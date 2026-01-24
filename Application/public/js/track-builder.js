@@ -43,43 +43,139 @@ function toggleButton(button, state) {
 
 // builder options
 function initialiseBuilderOptions() {
-    let importPrompt = document.getElementById("options-import");
-    let importSubmit = document.getElementById("import-submit");
-    let importInput = document.getElementById("import-input");
-    let importError = document.getElementById("import-error");
+    function initialiseCompact() {
+        let compactBtn = document.getElementById("options-compact");
+        let compact = true;
 
-    let export_ = document.getElementById("options-export");
+        function applyCompact() {
+            let labels = document.querySelectorAll("button span");
 
-    importPrompt.addEventListener("click", (e) => {
-        let popup = document.getElementById("modal-track-import");
-        let modal = new bootstrap.Modal(popup);
-        modal.show();
-    });
+            for (let label of labels) {
+                label.hidden = compact;
+            }
 
-    importSubmit.addEventListener("click", (e) => {
-        let json = importInput.value.trim();
+            compactBtn.getElementsByTagName("label")[0].innerHTML
+                = `<b>Compact:</b> ${compact ? "on" : "off"}`;
+        }
 
-        try {
-            track = Track.toInstance(JSON.parse(json));
-            renderer.setTrack(track);
-            importError.classList.add("hidden");
+        compactBtn.addEventListener("click", (e) => {
+            compact = !compact;
+            applyCompact();
+        });
 
+        applyCompact();
+    }
+
+    function initialiseDetails() {
+        let detailsPrompt = document.getElementById("options-details");
+        let detailsApply = document.getElementById("details-apply");
+
+        detailsPrompt.addEventListener("click", (e) => {
+            let nameInput = document.getElementById("details-name");
+            let descriptionInput = document.getElementById("details-description");
+
+            nameInput.value = track.getName();
+            descriptionInput.value = track.getDescription();
+
+            let popup = document.getElementById("modal-track-details");
+            let modal = new bootstrap.Modal(popup);
+            modal.show();
+        });
+
+        detailsApply.addEventListener("click", () => {
+            let nameInput = document.getElementById("details-name");
+            let descriptionInput = document.getElementById("details-description");
+
+            track.setName(nameInput.value);
+            track.setDescription(descriptionInput.value);
+        });
+    }
+
+    function initialiseSave() {
+        let saveBtn = document.getElementById("options-save");
+
+        saveBtn.addEventListener("click", async () => {
+            try {
+                await fetch("/tracks/save", {
+                   method: "POST",
+                   headers: new Headers({ "Content-Type": "application/json"}),
+                   body: track.toJson() 
+                });
+
+                saveBtn.classList.remove("btn-primary");
+                saveBtn.classList.add("btn-success");
+
+                setTimeout(() => {
+                    saveBtn.classList.add("btn-primary");
+                    saveBtn.classList.remove("btn-success");
+                }, 500)
+
+            } catch (error) {
+                console.log(error);
+            }
+        });
+    }
+    
+    function initialiseImport() {
+        let importPrompt = document.getElementById("options-import");
+        let importSubmit = document.getElementById("import-submit");
+        let importInput = document.getElementById("import-input");
+        let importError = document.getElementById("import-error");
+
+        importPrompt.addEventListener("click", (e) => {
             let popup = document.getElementById("modal-track-import");
             let modal = new bootstrap.Modal(popup);
-            modal.hide();
+            modal.show();
+        });
 
-        } catch(error) {
-            importError.innerHTML = "Invalid JSON provided!";
-            importError.classList.remove("hidden");
+        importSubmit.addEventListener("click", (e) => {
+            let json = importInput.value.trim();
 
-            console.log(error);
-        }
-    });
+            try {
+                track = Track.toInstance(JSON.parse(json));
+                renderer.setTrack(track);
+                importError.classList.add("hidden");
 
-    export_.addEventListener("click", (e) => {
-        console.log(track);
-        console.log(track.toJson(true));
-    })
+                let popup = document.getElementById("modal-track-import");
+                let modal = new bootstrap.Modal(popup);
+                modal.hide();
+
+            } catch(error) {
+                importError.innerHTML = "Invalid JSON provided!";
+                importError.classList.remove("hidden");
+            }
+        });
+    }
+
+    function initialiseExport() {
+        let exportPrompt = document.getElementById("options-export");
+        let exportCopy = document.getElementById("export-copy");
+        let exportOutput = document.getElementById("export-output");
+        let exportError = document.getElementById("export-error");
+
+        exportPrompt.addEventListener("click", (e) => {
+            let popup = document.getElementById("modal-track-export");
+            let modal = new bootstrap.Modal(popup);
+            modal.show();
+
+            exportOutput.value = track.toJson(4);
+            exportError.hidden = true;
+        });
+
+        exportCopy.addEventListener("click", (e) => {
+            exportOutput.select();
+            document.execCommand('copy'); // TODO: DEPRECATED - find an alternative!!
+
+            exportError.hidden = false;
+            exportError.innerHTML = "Copied Track JSON to Clipboard!";
+        });
+    }
+
+    initialiseCompact();
+    initialiseDetails();
+    initialiseSave();
+    initialiseImport();
+    initialiseExport();
 }
 
 // selects the corresponding track element
@@ -748,7 +844,12 @@ function initialisePointDetails() {
 
 // [[ Set Up ]] //
 
-track = new Track();
+if (trackToLoad) {
+    track = Track.toInstance(trackToLoad);
+} else {
+    track = new Track();
+}
+
 renderer = new TrackRenderer(track, canvas);
 
 initialiseBuilderOptions();

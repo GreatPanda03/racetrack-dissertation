@@ -36,7 +36,7 @@ var offset = new Vector2();
 
 // loads the given track 
 function loadTrack(t) {
-    let track = Track.toInstance(JSON.parse(t));
+    let track = Track.toInstance(t);
 
     trackRenderer = new TrackRenderer(track, trackCanvas);
     trackRenderer.setVisibility("nodes", false);
@@ -169,8 +169,6 @@ function displayMoves(racecar, moves) {
     let centre = racecar.getPosition().add(racecar.getVelocity());
 
     for (let move of moves) {
-        console.log(move);
-
         let gridPos = centre.add(move.Offset);
         let pos = gridPos.scale(spacing);
 

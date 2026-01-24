@@ -4,16 +4,24 @@
 // [[ Imports ]] //
 const express = require("express");
 const { version } = require("./package.json");
-const { gameTracks } = require("./src/track-repository");
+
+const mongoose = require("mongoose");
+const TrackModel = require("./models/track");
+
 
 
 // [[ App Set Up ]] //
 const app = express();
 app.set("view engine", "ejs");
-app.listen(3000); 
 
+app.use(express.json());
 app.use(express.static("public")); // static resources
 app.use("/core", express.static("src/core")); // core classes etc.
+
+const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
+mongoose.connect(uri)
+    .then((result) => app.listen(3000))
+    .catch((error) => console.log(error));
 
 
 
@@ -23,31 +31,122 @@ app.use("/core", express.static("src/core")); // core classes etc.
 app.use((request, response, next) => {
     response.locals.version = version;
     next();
-})
+});
+
 
 // available pages
 app.get("/", (request, response) => {
     response.render("home", { title: "Home" });
 });
 
+
 app.get("/tracks/build", (request, response) => {
-    response.render("track-builder", { title: "Track Builder" });
+    response.render("track-builder", { title: "Track Builder", trackToLoad: null });
 });
 
-app.get("/tracks/list", (request, response) => {
-    response.render("tracks-list", { title: "Tracks List", gameTracks });
+
+app.get("/tracks/build/:trackId", async (request, response) => {
+    try {
+        let trackToLoad = await TrackModel.findById( request.params.trackId );
+
+        if (trackToLoad) {
+            let author = trackToLoad.author;
+            
+            if (author == "" || author == "Game") {
+                response.redirect("/tracks/list");
+                return;
+            }
+
+            response.render("track-builder", { title: "Track Builder", trackToLoad });
+
+        } else {
+            response.redirect("/tracks/build");
+        }
+        
+    } catch(error) {
+        console.log(`[Track Builder] Couldn't load track: "${error}"`);
+    }
 });
 
-app.get("/tracks/play/:trackId", (request, response) => {
-    let trackId = request.params.trackId;
-    let track = gameTracks.find(t => JSON.parse(t).trackId == trackId);
+
+app.get("/tracks/list", async (request, response) => {
+    try {
+        let data = await TrackModel.find();
+        let tracks = data.map(d => JSON.stringify(d));
+        response.render("tracks-list", { title: "Tracks List", tracks });
     
-    response.render("track-play", { title: "Racing", track })
-})
+    } catch(error) {
+        console.log(`[Tracks List] Listing failed: "${error}"`);
+    }
+});
+
+
+app.get("/tracks/play/:trackId", async (request, response) => {
+    try {
+        let track = await TrackModel.findById( request.params.trackId );
+
+        if (track) {
+            response.render("track-play", { title: "Race", track });
+
+        } else {
+            response.redirect("/tracks/list");
+            return;
+        }
+
+    } catch(error) {
+        console.log(`[Gameplay] Loading failed: "${error}"`);
+    }
+});
+
+
+app.post("/tracks/save", async (request, response) => {
+    try {
+        let track = request.body;
+
+        if (!track) {
+            throw new Error(`[Track Builder] Track save failed: no track data provided`);
+        }
+
+        if (track._id) {
+            await TrackModel.findByIdAndUpdate(
+                track._id, { "$set": track }, { new: true });
+            
+        } else {
+            await new TrackModel(track).save();
+        }
+
+        response.status(200).json({ success: true });
+
+    } catch(error) {
+        console.log(`[Track Builder] Track save failed: "${error}"`);
+    }
+});
+
+
+app.get("/tracks/delete/:trackId", async (request, response) => {
+    try {
+        let track = await TrackModel.findById( request.params.trackId );
+        let author = track.author;
+
+        if (author == "" || author == "Game") {
+            response.redirect("/tracks/list");
+            return;
+        }
+
+        await TrackModel.findByIdAndDelete( request.params.trackId );
+        
+        response.redirect("/tracks/list");
+    
+    } catch(error) {
+        console.log(`[Tracks List] Deletion failed: "${error}"`);
+    }
+});
+
 
 app.get("/settings", (request, response) => {
     response.render("settings", { title: "Settings" } );
 });
+
 
 // missing page (404)
 app.use((request, response) => {

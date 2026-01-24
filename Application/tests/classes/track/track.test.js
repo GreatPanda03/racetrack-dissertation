@@ -11,7 +11,7 @@ describe("classes.track.new", () => {
     it("creates a new Track with default values", () => {
         let track = new Track();
 
-        expect( typeof track.getTrackId() ).toBe( "number" );
+        expect( typeof track.getId() ).toBe( "number" );
 
         expect( typeof track.getName() ).toBe( "string" );
         expect( typeof track.getDescription() ).toBe( "string" );

@@ -26,7 +26,7 @@ export default class Obstacle extends Polygon {
         return obstacle;
     }
 
-    toJson(pretty) {
-        return JSON.stringify(this.toObject(), null, pretty);
+    toJson(spaces) {
+        return JSON.stringify(this.toObject(), null, spaces);
     }
 }

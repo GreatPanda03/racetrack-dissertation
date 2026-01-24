@@ -9,7 +9,7 @@ import Decoration from "./components/decoration.js";
 
 
 export default class Track {
-    #trackId;       // int
+    #_id;       // int
 
     #name;          // string
     #description;   // string
@@ -25,8 +25,6 @@ export default class Track {
     #looped;        // boolean
 
     constructor() {
-        this.#trackId = 0;
-
         this.#name = "New Track";
         this.#description = "This is a new track";
         this.#authorId = 0;
@@ -43,8 +41,8 @@ export default class Track {
 
 
     // getters / setters
-    getTrackId() { return this.#trackId; }    
-    setTrackId(id) { this.#trackId = id; }
+    getId() { return this.#_id; }    
+    setId(id) { this.#_id = id; }
 
 
     getName() { return this.#name; }
@@ -160,7 +158,7 @@ export default class Track {
     // serialisation
     toObject() {
         return {
-            trackId: this.#trackId,
+            _id: this.#_id,
 
             name: this.#name,
             description: this.#description,
@@ -180,7 +178,7 @@ export default class Track {
     static toInstance(object) {
         let track = new Track();
 
-        track.#trackId = object.trackId;
+        track.#_id = object._id;
 
         track.#name = object.name;
         track.#description = object.description;
@@ -198,8 +196,8 @@ export default class Track {
         return track;
     }
 
-    toJson(pretty) {
-        return JSON.stringify(this.toObject(), null, pretty);
+    toJson(spaces) {
+        return JSON.stringify(this.toObject(), null, spaces);
     }
 
 

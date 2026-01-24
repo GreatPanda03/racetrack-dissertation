@@ -70,7 +70,7 @@ export default class Vector2 {
         return new Vector2(object.x, object.y);
     }
 
-    toJson(pretty) {
-        return JSON.stringify(this.toObject(), null, pretty);
+    toJson(spaces) {
+        return JSON.stringify(this.toObject(), null, spaces);
     }
 }

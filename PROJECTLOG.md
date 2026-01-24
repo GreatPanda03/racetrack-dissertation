@@ -258,14 +258,30 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 
 ### 2026/01/22 THU
 <details>
-<summary>V1 - Transition from V0, and Materials</summary>
+<summary>V1 - Transition from V0, and Materials / Obstacles / Decorations</summary>
 
 - As of the last entry:
     - Implemented v1.0.0 - v1.3.0 (see changelog)
 
-- Supervisor meeting will be held around during WB **2026/01/22 THU**
-    - ...
+- Supervisor meeting held on **2026/01/22 THU**
+    - Demonstrated work done so far & updated on future plans
+    - Discussed interview preparation (what kinds of topics to talk about, flow & structure, etc.)
+    - Will prepare slide deck to review for next meeting
 
 </details>
 
+---
+
+### 2026/02/05 THU
+<details>
+<summary>Track Saving & Listing</summary>
+
+- As of the last entry:
+    - Implemented v1.4.0 (see changelog)
+    - Prepared draft slide deck for interview to review in the meeting
+
+- Supervisor meeting will be held on **2026/02/05 THU**
+    - ...
+
+</details>
 
