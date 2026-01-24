@@ -39,36 +39,49 @@
                 
                 <!-- builder options -->
                 <div id="builder-options" class="d-flex gap-2">
+                    <button id="options-compact" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Compact Mode">
+                        <i data-lucide="fullscreen"></i>
+                        <label><b>Compact:</b> off</label>
+                    </button>
+
                     <button id="options-details" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Track Details">
                         <i data-lucide="notebook-pen"></i>
+                        <span><br>Details</span>
                     </button>
                     
                     <button id="options-save" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save Track">
                         <i data-lucide="save"></i>
+                        <span><br>Save</span>
                     </button>
                     
                     <button id="options-save-as" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save Track As">
                         <i data-lucide="save-all"></i>
+                        <span><br>Save As</span>
                     </button>
 
                     <button id="options-undo" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Undo">
                         <i data-lucide="undo"></i>
+                        <span><br>Undo</span>
                     </button>
 
                     <button id="options-redo" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Redo">
                         <i data-lucide="redo"></i>
+                        <span><br>Redo</span>
                     </button>
 
                     <button id="options-test" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Test Track">
                         <i data-lucide="play"></i>
+                        <span><br>Test</span>
                     </button>
 
                     <button id="options-import" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Import Track">
                         <i data-lucide="download"></i>
+                        <span><br>Import</span>
                     </button>
 
                     <button id="options-export" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Export Track">
                         <i data-lucide="share"></i>
+                        <span><br>Export</span>
                     </button>
                 </div>
 
@@ -83,21 +96,25 @@
                                 <button id="visuals-nodes" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Nodes">
                                     <i class="button-on" data-lucide="circle"></i>
                                     <i class="button-off hidden" data-lucide="circle-off"></i>
+                                    <span><br>Node</span>
                                 </button>
 
                                 <button id="visuals-wires" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Wireframe">
                                     <i class="button-on" data-lucide="pen"></i>
                                     <i class="button-off hidden" data-lucide="pen-off"></i>
+                                    <span><br>Wires</span>
                                 </button>
                                 
                                 <button id="visuals-path" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Path">
                                     <i class="button-on" data-lucide="route"></i>
                                     <i class="button-off hidden" data-lucide="route-off"></i>
+                                    <span><br>Path</span>
                                 </button>
 
                                 <button id="visuals-materials" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Materials">
                                     <i class="button-on" data-lucide="droplet"></i>
                                     <i class="button-off hidden" data-lucide="droplet-off"></i>
+                                    <span><br>Materials</span>
                                 </button>
 
                                 <button id="visuals-obstacles" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Obstacles">
@@ -106,6 +123,7 @@
                                         <i data-lucide="brick-wall"></i>
                                         <i data-lucide="slash" style="position: absolute; top: 0; left: 0;  rotate: -90deg;"></i>
                                     </i>
+                                    <span><br>Walls</span>
                                 </button>
 
                                 <button id="visuals-decorations" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Decorations">
@@ -114,6 +132,7 @@
                                         <i data-lucide="sprout"></i>
                                         <i data-lucide="slash" style="position: absolute; top: 0; left: 0; rotate: -90deg;"></i>
                                     </i>
+                                    <span><br>Decor</span>
                                 </button>                                
                             </div>
 
@@ -123,23 +142,28 @@
 
                                 <button id="nodes-anticlockwise" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Shift Nodes Backwards">
                                     <i data-lucide="rotate-ccw-square"></i>
+                                    <span><br>Shift Nodes<br>Left</span>
                                 </button>
 
                                 <button id="nodes-clockwise" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Shift Nodes Forwards">
                                     <i data-lucide="rotate-cw-square"></i>
+                                    <span><br>Shift Nodes<br>Right</span>
                                 </button>
 
                                 <button id="track-reverse" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Flip Track Direction">
                                     <i data-lucide="repeat"></i>
+                                    <span><br>Flip Track</span>
                                 </button>
 
                                 <button id="track-looped" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Track Looping">
                                     <i class="button-on" data-lucide="link-2"></i>
                                     <i class="button-off hidden" data-lucide="link-2-off"></i>
+                                    <span><br>Looped</span>
                                 </button>
 
                                 <button id="track-centre" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Recentre Track">
-                                    <i data-lucide="locate"></i>
+                                    <i data-lucide="focus"></i>
+                                    <span><br>Recentre</span>
                                 </button>
                             </div>
 
@@ -149,15 +173,18 @@
 
                                 <button id="tools-select-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Select">
                                     <i data-lucide="mouse-pointer-2"></i>
+                                    <span><br>Select</span>
                                 </button>
                                 
                                 <button id="tools-path-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Place Path">
                                     <i data-lucide="route"></i>
+                                    <span><br>Path</span>
                                 </button>
                                 
                                 <div id="tools-material-div" class="btn-group dropend" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Place Material">
                                     <button id="tools-materials-btn" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
                                         <i data-lucide="droplet"></i>
+                                        <span><br>Material</span>
                                     </button>
                                     <ul class="dropdown-menu"></ul>
                                     <!-- materials auto-generated by track-builder.js -->
@@ -165,10 +192,12 @@
                             
                                 <button id="tools-obstacles-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Place Obstacle">
                                     <i data-lucide="brick-wall"></i>
+                                    <span><br>Wall</span>
                                 </button>
                                 
                                 <button id="tools-decoration-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Place Decoration">
                                     <i data-lucide="sprout"></i>
+                                    <span><br>Decor</span>
                                 </button>
                             </div>
                         </div>
@@ -205,14 +234,17 @@
                                 <div class="d-flex justify-content-around">
                                     <button id="details-node-addBefore" class="btn btn-secondary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Node Before">
                                         <i data-lucide="between-horizontal-start"></i>
+                                        <span><br>Add Before</span>
                                     </button>
                                     
                                     <button id="details-node-addAfter" class="btn btn-secondary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Node After">
                                         <i data-lucide="between-horizontal-end"></i>
+                                        <span><br>Add After</span>
                                     </button>
 
                                     <button id="details-node-delete" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete Node">
                                         <i data-lucide="trash-2"></i>
+                                        <span><br>Delete</span>
                                     </button>
                                 </div>
                             </div>
@@ -285,7 +317,42 @@
             </div>
         </div>
 
-        <div id="modal-track-import" class="modal" tabindes="-1">
+        <!-- track details -->
+        <div id="modal-track-details" class="modal fade" tabindes="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Track Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <form>
+                                <div class="form-group mb-2">
+                                    <label for="details-name">Track Name</label>
+                                    <input type="text" class="form-control" id="details-name" placeholder="Enter Name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="details-description">Track Description</label>
+                                    <input type="text" class="form-control" id="details-description" placeholder="Enter Description">
+                                </div>
+                            </form>
+                        </div>
+
+                        <span id="details-error" style="color: #F00"></span>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="details-apply" class="btn btn-success">
+                            <i data-lucide="notebook-pen"></i>
+                            Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- track importing -->
+        <div id="modal-track-import" class="modal fade" tabindes="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -296,13 +363,39 @@
                         <div>
                             <textarea id="import-input"></textarea>
                         </div>
-                        
+
+                        <span id="import-error" style="color: #F00"></span>
+                    </div>
+                    <div class="modal-footer">
                         <button id="import-submit" class="btn btn-success">
                             <i data-lucide="download"></i>
                             Import
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>  
 
-                        <span id="import-error" style="color: #F00"></span>
+        <!-- track exporting -->
+        <div id="modal-track-export" class="modal fade" tabindes="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Exported Track JSON</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <textarea id="export-output" readonly></textarea>
+                        </div>
+
+                        <span id="export-error" style="color: #0A0"></span>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="export-copy" class="btn btn-success">
+                            <i data-lucide="clipboard-copy"></i>
+                            Copy
+                        </button>
                     </div>
                 </div>
             </div>
@@ -312,5 +405,9 @@
             <%- include("./partials/footer.ejs") %>
         </footer>
     </div>
+
+    <script>
+        window.trackToLoad = <%- JSON.stringify(trackToLoad) %>;
+    </script>
 </body>
 </html>

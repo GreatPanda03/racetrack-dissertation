@@ -8,6 +8,7 @@ export default class CanvasRenderer {
     _canvas;        // HTML canvas element
     _ctx;           // Context (never exposed)
     _offset;        // Vector2
+    _scale;         // float
 
     constructor(canvas) {
         if (canvas == null || canvas.tagName != "CANVAS") {
@@ -17,6 +18,22 @@ export default class CanvasRenderer {
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
         this._offset = new Vector2(0, 0);
+        this._scale = 1;
+    }
+
+
+    // getters / setters
+    getOffset() { return this._offset; }
+    setOffset(offset) { this._offset = offset; }
+
+    getScale() { return this._scale; }
+    setScale(scale) { 
+        this._scale = scale;
+        this._ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this._ctx.scale(scale, scale);
+
+        // NOTE: scale is cumulative (multiplicative?),
+        //   so must be reset
     }
 
     
@@ -102,8 +119,14 @@ export default class CanvasRenderer {
         let canvas = this._canvas;
         let ctx = this._ctx;
         let offset = this._offset;
+        let correction = 1 / this._scale;
 
-        ctx.clearRect(-offset.x(), -offset.y(), canvas.width, canvas.height);
+        ctx.clearRect(
+            -offset.x(), 
+            -offset.y(), 
+            canvas.width * correction,
+            canvas.height * correction
+        );
     }
 }
 

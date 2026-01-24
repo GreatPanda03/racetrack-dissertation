@@ -13,6 +13,34 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.4.0
+**Date:** 2026/01/24
+<details>
+<summary>Track Gameplay - Track Saving & Listing</summary>
+
+**Additions / Changes:**
+1. Made some track builder options functional
+    * **Track Details:** edit the current track's details
+    * **Save:** save the current track
+    * **Export:** displays the JSON data of the track to share
+2. Reworked the Tracks List page
+    * Tracks are divided into three sections: "Game Tracks", "Player Tracks", and "Personal Tracks"
+    * Tracks are displayed as a list with a preview and title
+    * Selecting a track displays all the track's details, including its preview
+    * Personal tracks have the option to be edited further or deleted
+3. Re-added Track Builder button labels, and a "Compact Mode" option to hide these labels (enabled by default)
+* **NOTE:** notifications / toasts will be added later!
+
+**Bugs Fixed:**
+1. (DEV) Fixed "toJson" object methods using the wrong argument type for pretty-printing (oops...)
+
+**Bugs Discovered:**
+<br>No additional bugs discovered.
+
+</details>
+
+---
+
 ### Version: 1.3.0
 **Date:** 2026/01/19
 <details>

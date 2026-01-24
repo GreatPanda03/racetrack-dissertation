@@ -19,10 +19,6 @@ export default class TrackRenderer extends CanvasRenderer {
             throw new Error(`[TrackRenderer] "${track}" is not a valid Track`);
         }
 
-        if (canvas == null || canvas.tagName != "CANVAS") {
-            throw new Error(`[TrackRenderer] "${canvas}" is not a valid Canvas`)
-        }
-
         super(canvas);
 
         this._ctx = canvas.getContext("2d");
@@ -80,7 +76,7 @@ export default class TrackRenderer extends CanvasRenderer {
 
         let visibility = this._visibility;
 
-        let visuals = [
+        let visuals = [ // corresponds to draw order
             { Method: this.renderPath,          Key: "path" },
             { Method: this.renderDecorations,   Key: "decorations" },
             { Method: this.renderMaterials,     Key: "materials" },
@@ -340,19 +336,20 @@ export default class TrackRenderer extends CanvasRenderer {
     renderGridLines() {
         let canvas = this._canvas;
         let spacing = this._spacing;
+        let correction = 1 / this._scale;
 
-        let gridR = Math.floor(canvas.height / spacing)
-        let gridC = Math.floor(canvas.width / spacing)
+        let gridR = Math.floor(canvas.height / spacing * correction);
+        let gridC = Math.floor(canvas.width / spacing * correction);
 
         for (let r = 1; r < gridR; r += 1) {
             let start = new Vector2(0, r * spacing);
-            let end = new Vector2(canvas.width, r * spacing);
+            let end = new Vector2(canvas.width * correction, r * spacing);
             this.drawLine(start, end, 1, "#0005");
         }
 
         for (let c = 1; c < gridC; c += 1) {
             let start = new Vector2(c * spacing, 0);
-            let end = new Vector2(c * spacing, canvas.height);
+            let end = new Vector2(c * spacing, canvas.height * correction);
             this.drawLine(start, end, 1, "#0005");
         }
     }
