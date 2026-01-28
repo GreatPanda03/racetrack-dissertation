@@ -22,9 +22,10 @@ export { default as RaceStats } from "./classes/gameplay/race-stats.js";
 export { default as RaceInstance } from "./classes/gameplay/race-instance.js";
 
 // enums
-export { default as RACECAR_STATE } from "./enums/racecar-state.js";
-export { default as MATERIAL_INFO } from "./enums/material-info.js";
 export { default as TOOL_TYPE } from "./enums/tool-type.js";
+export { default as MATERIAL_INFO } from "./enums/material-info.js";
+export { default as RACECAR_INFO } from "./enums/racecar-info.js";
+export { default as RACECAR_STATE } from "./enums/racecar-state.js";
 
 // utilities
 export { default as SplineUtil } from "./utilities/spline-util.js";

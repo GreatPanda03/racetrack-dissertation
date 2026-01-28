@@ -108,7 +108,7 @@ function initialiseBuilderOptions() {
                 setTimeout(() => {
                     saveBtn.classList.add("btn-primary");
                     saveBtn.classList.remove("btn-success");
-                }, 500)
+                }, 500);
 
             } catch (error) {
                 console.log(error);

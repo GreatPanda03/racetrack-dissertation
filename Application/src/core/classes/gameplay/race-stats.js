@@ -78,6 +78,10 @@ export default class RaceStats {
         this.#topSpeed = speed > topSpeed ? speed : topSpeed;
     }
 
+    popFromPath() {
+        return this.#path.pop();
+    }
+
     setCheckpointPassed(checkpoint, passed) {
         let info = this.#getCheckpointInfo(checkpoint);
         info.passed = passed;

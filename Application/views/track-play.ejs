@@ -12,7 +12,7 @@
         </nav>
 
         <div class="content">
-            <div>
+            <div class="introduction">
                 <p>
                     Welcome to <b><%= track.name %></b>! Start your engines...
                 </p>
@@ -29,9 +29,31 @@
                 <!-- TODO: display track details -->
             </div>
 
-            <div class="canvas-wrapper">
-                <canvas id="track-canvas" width="750" height="750" style="z-index: 0;"></canvas>
-                <canvas id="play-canvas" width="750" height="750" style="z-index: 1;"></canvas>
+            <div>
+                <div class="d-flex gap-3" style="margin-bottom: 10px;">
+                    <div>
+                        <i data-lucide="clock"></i>
+                        <span id="race-time">
+                            <b>Time:</b> 999 seconds
+                        </span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <div class="canvas-wrapper">
+                        <canvas id="track-canvas" width="750" height="750" style="z-index: 0;"></canvas>
+                        <canvas id="play-canvas" width="750" height="750" style="z-index: 1;"></canvas>
+                    </div>
+
+                    <div id="race-stats">
+                        <div id="stats-header">
+                            Your Stats
+                        </div>
+                        <hr>
+                        <div id="stats-body" class="d-flex flex-column"></div>
+                        <!-- script generated -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -43,7 +65,13 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body results">
-                        <p></p>
+                        <p></p> <!-- script generated -->
+                    </div>
+                    <div class="modal-footer">
+                        <button id="results-retry" class="btn btn-danger" data-bs-dismiss="modal">
+                            <i data-lucide="wrench"></i>
+                            Retry from Last Point
+                        </button>
                     </div>
                 </div>
             </div>
@@ -56,6 +84,7 @@
 
     <script>
         window.track = <%- JSON.stringify(track) %>;
+        window.racecarId = <%- JSON.stringify(racecarId) %>;
     </script>
 </body>
 </html>

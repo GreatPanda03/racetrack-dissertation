@@ -13,10 +13,38 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.5.0
+**Date:** 2026/01/28
+<details>
+<summary>Track Gameplay - Live Race Stats & Race Car Types</summary>
+
+**Additions / Changes:**
+1. Added a display for race car details during a race
+    * Current velocity, max acceleration, max velocity
+2. Added a display for live race stats during a race
+    * Time passed, distance travelled, top speed, average speed, checkpoints passed
+3. Added a set of race cars to choose from for a race
+    * There are 3 new race car types: The Race Car; The Motorbike; and The Truck
+    * Each race car (currently) has a max velocity and acceleration, so choose wisely!
+    * Select a track from the list of available tracks, then choose a race car to race with
+4. Added an option to restart at rest from the last location before crashing
+5. Added an option to search for tracks by name in the tracks list
+6. Renamed "A Bumpy Ride" to "The Striped Oval"
+
+**Bugs Fixed:**
+<br>No existing bugs fixed.
+
+**Bugs Discovered:**
+1. Aware that some UI elements "overlap" when the screen is too narrow
+
+</details>
+
+---
+
 ### Version: 1.4.0
 **Date:** 2026/01/24
 <details>
-<summary>Track Gameplay - Track Saving & Listing</summary>
+<summary>Track Management - Track Saving & Listing</summary>
 
 **Additions / Changes:**
 1. Made some track builder options functional
@@ -35,7 +63,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 1. (DEV) Fixed "toJson" object methods using the wrong argument type for pretty-printing (oops...)
 
 **Bugs Discovered:**
-<br>No additional bugs discovered.
+1. Aware that moves appear entirely off track when race cars are near the edge at high speed
 
 </details>
 

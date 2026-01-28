@@ -16,9 +16,10 @@ const MATERIAL_INFO = {
         Colour: "#AAA",
 
         Effect: (racecar, x, y) => {
+            let acc = racecar.getMaxAcceleration().x();
             return {
                 Offset: new Vector2(x, y),
-                Active: (x == 0 || y == 0)
+                Active: Math.abs(x) + Math.abs(y) <= acc
             }
         },
     },
@@ -44,13 +45,15 @@ const MATERIAL_INFO = {
     Water: {
         Id: 3,
         Name: "Water",
-        Description: "Forces the player to travel at the same velocity",
+        Description: "Forces the player to travel at the same velocity (acts like Curb if at 0 m/s)",
         Colour: "#8BF",
 
         Effect: (racecar, x, y) => {
+            let velocity = racecar.getVelocity();
             return {
                 Offset: new Vector2(x, y),
                 Active: (x == 0 && y == 0)
+                    || (velocity.mag() == 0 && new Vector2(x, y).mag() <= 1)
             }
         },
     },
