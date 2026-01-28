@@ -60,7 +60,7 @@ export default class RaceInstance {
         let raceStats = this.#raceStats;
 
         if ( !(racecar in raceStats) ) {
-            throw new Error(`[RaceInstance] "${racecar}" is does not have stats`);
+            throw new Error(`[RaceInstance] "${racecar}" does not have stats`);
         }
 
         return raceStats[racecar];
@@ -233,9 +233,9 @@ export default class RaceInstance {
             }
         }
 
-        // gathering possible moves
+        // gathering possible moves based on material
         let moves = [];
-        let acc = racecar.getMaxAcceleration();
+        let acc = racecar.getMaxAcceleration().x();
         let effect;
 
         if (onMaterial) {
@@ -260,6 +260,21 @@ export default class RaceInstance {
             for (let y = -acc; y <= acc; y++) {
                 let move = effect(racecar, x, y);
                 moves.push(move);
+            }
+        }
+
+        // further limiting moves based on max speed
+        let velocity = racecar.getVelocity();
+        let maxSpeed = racecar.getMaxSpeed();
+
+        for (let move of moves) {
+            let finalVelocity = velocity.add(move.Offset);
+
+            if (
+                   Math.abs(finalVelocity.x()) > maxSpeed.x()
+                || Math.abs(finalVelocity.y()) > maxSpeed.y()
+            ) {
+                move.Active = false;
             }
         }
 

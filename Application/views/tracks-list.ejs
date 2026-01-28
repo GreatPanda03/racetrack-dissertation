@@ -12,25 +12,36 @@
         </nav>
 
         <div class="content">
-            Welcome to the <b>Track List</b> section. Here you can view all game tracks as well as player-made tracks and tracks made by you!
+            <div class="introduction">
+                Welcome to the <b>Track List</b> section. Here you can view all game tracks as well as player-made tracks and tracks made by you!
 
-            <div id="track-list" class="mt-5">
-                <div>
-                    <div id="nav-tab" class="nav nav-tabs">
-                        <button id="game-tracks-tab" class="nav-link active" data-bs-toggle="tab" data-bs-target="#game-tracks-pane">Game Tracks</button>
-                        <button id="player-tracks-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#player-tracks-pane">Player Tracks</button>
-                        <button id="personal-tracks-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#personal-tracks-pane">Your Tracks</button>
+                <div id="track-list" class="mt-5">
+                    <div id="nav-tab" class="nav nav-tabs d-flex justify-content-between">
+                        <div class="d-flex flex-row">
+                            <button id="game-tracks-tab" class="nav-link active" data-bs-toggle="tab" data-bs-target="#game-tracks-pane">Game Tracks</button>
+                            <button id="player-tracks-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#player-tracks-pane">Player Tracks</button>
+                            <button id="personal-tracks-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#personal-tracks-pane">Your Tracks</button>
+                        </div>
+                        <div class="mb-2">
+                            <small id="track-search-count" class="form-text text-muted">Total Results: 0 / 0</small>
+                            <div class="d-flex flex-row gap-1">
+                                <input id="track-search-input" class="form-control" placeholder="Search Track" aria-label="Search">
+                                <button id="track-search-submit" class="btn btn-primary">
+                                    <i data-lucide="search"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div id="track-lists" class="tab-content">
-                    <div id="game-tracks-pane" class="tab-pane fade show active">
-                        <div id="game-tracks-list" class="d-flex flex-wrap gap-3"></div>
-                    </div>
-                    <div id="player-tracks-pane" class="tab-pane fade">
-                        <div id="player-tracks-list" class="d-flex flex-wrap gap-3"></div>
-                    </div>
-                    <div id="personal-tracks-pane" class="tab-pane fade">
-                        <div id="personal-tracks-list" class="d-flex flex-wrap gap-3"></div>
+                    <div id="track-lists" class="tab-content">
+                        <div id="game-tracks-pane" class="tab-pane fade show active">
+                            <div id="game-tracks-list" class="d-flex flex-wrap gap-3"></div>
+                        </div>
+                        <div id="player-tracks-pane" class="tab-pane fade">
+                            <div id="player-tracks-list" class="d-flex flex-wrap gap-3"></div>
+                        </div>
+                        <div id="personal-tracks-pane" class="tab-pane fade">
+                            <div id="personal-tracks-list" class="d-flex flex-wrap gap-3"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -55,14 +66,20 @@
                             <canvas id="details-canvas" width="450" height="450"></canvas>
                         </div>
                         <div>
-                            <div id="d-flex flex-column gap-1 mb-3">
-                                <div id="details-name"></div>
-                                <div id="details-description"></div>
-                                <div id="details-author"></div>
+                            <div id="details-info" class="d-flex flex-column gap-1 mb-3">
+                                <!-- script generated -->
                             </div>
-
                             <hr>
-
+                            <div id="details-racecar">
+                                <label class="mb-1"><b>Race Car</b></label>
+                                <select id="details-racecar-input" class="form-select mb-1">
+                                    <!-- script generated -->
+                                </select>
+                                <div id="details-racecar-info" class="d-flex flex-column gap-1">
+                                    <!-- script generated -->
+                                </div>
+                            </div>
+                            <hr>
                             <div class="d-flex justify-content-around gap-3">
                                 <button id="details-play" class="btn btn-success">
                                     <i data-lucide="play"></i>

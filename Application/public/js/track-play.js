@@ -7,7 +7,7 @@ import {
     Track,
     CanvasRenderer, TrackRenderer,
     RaceCar, RaceInstance,
-    RACECAR_STATE
+    RACECAR_STATE, RACECAR_INFO
 } from "/core/index.js";
 
 
@@ -30,13 +30,16 @@ var racecarRadius = 7;
 var pointRadius = 3;
 var offset = new Vector2();
 
+var timeElapsed = 0;
+
 
 
 // [[ Gameplay & Controls ]] //
 
 // loads the given track 
-function loadTrack(t) {
-    let track = Track.toInstance(t);
+function loadTrack(trackToLoad, racecarId) {
+    let track = Track.toInstance(trackToLoad);
+    let racecarType = RACECAR_INFO.find((r) => r.Id == racecarId)
 
     trackRenderer = new TrackRenderer(track, trackCanvas);
     trackRenderer.setVisibility("nodes", false);
@@ -46,11 +49,16 @@ function loadTrack(t) {
     raceRenderer = new CanvasRenderer(playCanvas);
 
     let racecar = new RaceCar();
+    racecar.setType(racecarType);
+
     raceInstance = new RaceInstance(track, [racecar]);
 
     renderRacecars();
 
+    timeElapsed = 0;
     displayMoves(racecar, raceInstance.getPossibleMoves(racecar));
+    updateRaceHeader();
+    updateLiveStats(racecar);
 }
 
 
@@ -78,9 +86,13 @@ function initialisePlayCanvas() {
 
         if (!target) return;
 
-        // move car to location
+        // move car to location & update stats
         raceInstance.moveRacecar(racecar, target);
         renderRacecars();
+
+        timeElapsed += 1;
+        updateRaceHeader();
+        updateLiveStats(racecar);
 
         // determining next step
         let state = raceInstance.getRacecarStats(racecar).getState();
@@ -94,6 +106,33 @@ function initialisePlayCanvas() {
             endRace(stats, state)
         }
     });
+}
+
+
+// prepares the race results popup functionality
+function initialiseResultsPopup() {
+    let retryBtn = document.getElementById("results-retry");
+
+    retryBtn.addEventListener("click", (e) => {
+
+        // TODO: generalise this
+        let racecar = raceInstance.getRacecars()[0];
+        let raceStats = raceInstance.getRacecarStats(racecar);
+
+        if (raceStats.getState() == RACECAR_STATE.Crashed) {
+            raceStats.popFromPath();
+            raceStats.setState(RACECAR_STATE.Racing);
+            
+            let path = raceStats.getPath();
+            let lastPos = path[path.length - 1];
+
+            racecar.setPosition(lastPos);
+            racecar.setVelocity(new Vector2());
+
+            renderRacecars();
+            displayMoves(racecar, raceInstance.getPossibleMoves(racecar));
+        }
+    })
 }
 
 
@@ -120,11 +159,15 @@ function endRace(stats, state) {
         </p>`;
 
     if (state == RACECAR_STATE.Crashed) {
+        popup.querySelector(".modal-footer").hidden = false;
+
         let modal = new bootstrap.Modal(popup);
         modal.show();
         titleText = "You Crashed!";
 
     } else if (state == RACECAR_STATE.Finished) {
+        popup.querySelector(".modal-footer").hidden = true;
+
         let modal = new bootstrap.Modal(popup);
         modal.show();
         titleText = "You Finished the Race!";
@@ -177,6 +220,68 @@ function displayMoves(racecar, moves) {
 }
 
 
+// updates the race header
+function updateRaceHeader() {
+    let raceTime = document.getElementById("race-time");
+    raceTime.innerHTML = `<b>Time:</b> ${timeElapsed} seconds`;
+}
+
+
+// displays the player's live race stats
+function updateLiveStats(racecar) {
+    let statsBody = document.getElementById("stats-body");
+    let stats = raceInstance.getRacecarStats(racecar);
+    let content = "";
+
+    let velocity = racecar.getVelocity();
+    
+    let avgSpeed = stats.getDistance() / stats.getTime();
+    avgSpeed = isNaN(avgSpeed) ? 0 : avgSpeed;
+
+    content += `
+        <span> <b>Velocity:</b> (${velocity.x()}, ${-velocity.y()}) m/s </span>
+        <hr>
+        <span> <b>Moves:</b> ${stats.getMoves()} </span>
+        <span> <b>Distance:</b> ${stats.getDistance().toFixed(3)} m </span>
+        <span> <b>Top Speed:</b> ${stats.getTopSpeed().toFixed(3)} m/s </span>
+        <span> <b>Avg. Speed:</b> ${avgSpeed.toFixed(3)} m/s </span>
+        <hr>
+    `;
+
+    // TOOD: only update this when actually crossing a checkpoint?
+
+    let checkpoints = stats.getCheckpoints();
+    
+    for (let [index, checkpoint] of checkpoints.entries()) {
+        let passed = checkpoint.passed;
+
+        let passedText = `
+            <span style="color: ${passed ? '#0A0' : '#C00'}">
+                ${passed ? "<b>PASSED!</b>" : "not passed..." }
+            </span>
+        `;
+
+        content += `
+            <span> <b>Checkpoint ${index + 1}:</b> ${passedText} </span>
+        `;
+    }
+
+    if (checkpoints.length > 0 && !checkpoints[checkpoints.length - 1].passed) {
+        content += `<span><br> The race isn't over yet... </span>`;
+
+    } else {
+        let br = checkpoints.length > 0 ? "<br>" : "";
+        content += `
+            <span style="color: #C70">
+                ${br} <b><i>GET TO THE FINISH LINE!!!</i></b>
+            </span>
+        `;
+    }
+
+    statsBody.innerHTML = content;
+}
+
+
 // returns the position of the mouse relative to the canvas
 // * TODO: make this a generic utility function?
 function getRelativePositionOnCanvas(canvas, x, y) {
@@ -194,4 +299,8 @@ function getRelativePositionOnCanvas(canvas, x, y) {
 
 initialisePlayCanvas();
 
-loadTrack(window.track);
+initialiseResultsPopup();
+
+loadTrack(window.track, window.racecarId);
+
+lucide.createIcons();

@@ -77,24 +77,31 @@ app.get("/tracks/list", async (request, response) => {
     
     } catch(error) {
         console.log(`[Tracks List] Listing failed: "${error}"`);
+        response.status(500).json({ success: false, error });
     }
 });
 
 
-app.get("/tracks/play/:trackId", async (request, response) => {
+app.get("/tracks/play/:trackId/:racecarId", async (request, response) => {
     try {
-        let track = await TrackModel.findById( request.params.trackId );
+        let trackId = request.params.trackId;
+        let racecarId = request.params.racecarId;
+
+        if ( !(trackId && racecarId) ) {
+            response.status(400).json({ success: false, error: "Track / race car ID missing" });
+        }
+
+        let track = await TrackModel.findById( trackId );
 
         if (track) {
-            response.render("track-play", { title: "Race", track });
-
+            response.render("track-play", { title: "Race", track, racecarId });   
         } else {
             response.redirect("/tracks/list");
-            return;
         }
 
     } catch(error) {
         console.log(`[Gameplay] Loading failed: "${error}"`);
+        response.status(500).json({ success: false, error });
     }
 });
 
@@ -119,6 +126,7 @@ app.post("/tracks/save", async (request, response) => {
 
     } catch(error) {
         console.log(`[Track Builder] Track save failed: "${error}"`);
+        response.status(400).json({ success: false, error });
     }
 });
 

@@ -277,7 +277,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 <summary>Track Saving & Listing</summary>
 
 - As of the last entry:
-    - Implemented v1.4.0 (see changelog)
+    - Implemented v1.4.0 - v1.5.0 (see changelog)
     - Prepared draft slide deck for interview to review in the meeting
 
 - Supervisor meeting will be held on **2026/02/05 THU**
