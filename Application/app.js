@@ -47,6 +47,7 @@ app.get("/tracks/build", (request, response) => {
 
 app.get("/tracks/build/:trackId", async (request, response) => {
     try {
+        console.log(request.params.trackId);
         let trackToLoad = await TrackModel.findById( request.params.trackId );
 
         if (trackToLoad) {
@@ -65,6 +66,7 @@ app.get("/tracks/build/:trackId", async (request, response) => {
         
     } catch(error) {
         console.log(`[Track Builder] Couldn't load track: "${error}"`);
+        response.redirect("/tracks/list");
     }
 });
 

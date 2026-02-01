@@ -13,6 +13,35 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.6.0
+**Date:** 2026/01/30
+<details>
+<summary>Track Building - Extended Features</summary>
+
+**Additions / Changes:**
+1. Implemented the ability to undo / redo track building actions
+    * Currently only applicable to node & point placement, movement, and deletion (not detail changes)
+2. Implemented the option to play test a track while building it
+3. Implemented the option to save a track as a new copy
+    * Tracks are saved as "`[track_name] Copy`"
+4. Adjusted track builder toolbox
+    * Re-added the canvas pan tool button (non-functional)
+    * Changed material droplet icons to match the respective material colour
+    * Swapped columns of build and manipulation options
+5. Recentring the track now accounts for polygons
+6. (DEV) Re-organised track builder code
+
+**Bugs Fixed:**
+<br>No existing bugs fixed.
+
+**Bugs Discovered:**
+<br>No additional bugs discovered.
+
+</details>
+
+
+---
+
 ### Version: 1.5.0
 **Date:** 2026/01/28
 <details>

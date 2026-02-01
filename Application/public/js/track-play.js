@@ -111,6 +111,7 @@ function initialisePlayCanvas() {
 
 // prepares the race results popup functionality
 function initialiseResultsPopup() {
+    let buildBtn = document.getElementById("results-build");
     let retryBtn = document.getElementById("results-retry");
 
     retryBtn.addEventListener("click", (e) => {
@@ -132,7 +133,18 @@ function initialiseResultsPopup() {
             renderRacecars();
             displayMoves(racecar, raceInstance.getPossibleMoves(racecar));
         }
-    })
+    });
+
+    buildBtn.addEventListener("click", (e) => {
+        let buildUrl = `/tracks/build/${raceInstance.getTrack().getId()}`;
+        let canBuild = document.referrer.includes(buildUrl);
+
+        // TODO: make this more secure
+
+        if (canBuild) {
+            window.location.href = buildUrl;
+        }
+    });
 }
 
 
@@ -172,6 +184,11 @@ function endRace(stats, state) {
         modal.show();
         titleText = "You Finished the Race!";
     }
+
+    let buildBtn = document.getElementById("results-build");
+    let buildUrl = `/tracks/build/${raceInstance.getTrack().getId()}`;
+    let buildVisible = document.referrer.includes(buildUrl);
+    buildBtn.hidden = !buildVisible;
 
     let title = popup.getElementsByClassName("modal-title")[0];
 

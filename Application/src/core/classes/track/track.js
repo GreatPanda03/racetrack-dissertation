@@ -118,6 +118,11 @@ export default class Track {
         this.#path.splice(index, 1);
     }
 
+    // generic polygon methods
+    getPolygons() {
+        return this.#materials.concat(this.#obstacles, this.#decorations);
+    }
+
     // material methods
     addMaterial(material) {
         this.#validateIsMaterial(material);
@@ -243,7 +248,7 @@ export default class Track {
     #validateListAbsence(list, element) {
         let index = list.findIndex((e) => e == element);
         if (index > -1) {
-            throw new Error(`[Track] ${typeof element} "${element}" is not a part of the track`);
+            throw new Error(`[Track] ${typeof element} "${element}" is a part of the track`);
         }
         return index;
     }
