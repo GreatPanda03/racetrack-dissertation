@@ -3,37 +3,33 @@
 
 import Vector2 from "../../geometry/vector2.js";
 import PathNode from "../../geometry/path-node.js";
+import Validator from "../../../utilities/validator.js";
 
 
 export default class TrackNode extends PathNode {
     _width;         // number
     _checkpoint;    // boolean
 
-    constructor(position, width, checkpoint) {
+    constructor(position, width = 50, checkpoint = false) {
         super(position);
 
-        width = width ?? 50;
-        checkpoint = checkpoint ?? false;
-
-        if (typeof width !== "number" || Number.isNaN(width)) {
-            throw new Error(`[TrackNode] "${width}" is not a number`);
-        }
-
-        if (typeof checkpoint !== "boolean") {
-            throw new Error(`[TrackNode] "${checkpoint}" is not a boolean`);
-        }
-
-        this._width = width;
-        this._checkpoint = checkpoint;
+        this.setWidth(width);
+        this.setCheckpoint(checkpoint);
     }
 
 
     // getters / setters
     getWidth() { return this._width; }
-    setWidth(width) { this._width = width; } 
+    setWidth(width) { 
+        Validator.isPrimitive(width, "number");
+        this._width = width;
+    } 
 
     isCheckpoint() { return this._checkpoint; }
-    setCheckpoint(checkpoint) { this._checkpoint = checkpoint; }
+    setCheckpoint(checkpoint) {
+        Validator.isPrimitive(checkpoint, "boolean");
+        this._checkpoint = checkpoint;
+    }
 
 
     // serialisation

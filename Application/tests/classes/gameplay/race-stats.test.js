@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
-    Vector2,
+    Vector2, Line,
     TrackNode, Track,
     RaceStats,
     RACECAR_STATE
@@ -14,11 +14,11 @@ describe("classes.race-stats.new", () => {
         let stats = new RaceStats(track);
 
         expect( stats.getTrack() ).toBe( track );
-        expect( stats.getPath() ).toEqual( [] );
+        expect( stats.getMoves().length ).toBe( 0 );
         expect( stats.getDistance() ).toBe( 0 );
         expect( stats.getTime() ).toBe( 0 );
         expect( stats.getTopSpeed() ).toBe( 0 );
-        expect( stats.getCheckpoints() ).toEqual( [] );
+        expect( stats.getCheckpoints().length ).toBe( 0 );
         expect( stats.getState() ).toBe( RACECAR_STATE.Racing );
     });
 
@@ -31,10 +31,9 @@ describe("classes.race-stats.new", () => {
         track.setPath([first, second]);
 
         let stats = new RaceStats(track);
-        let target = stats.getCheckpoints()[0].node
-        let index = track.getNodeIndex(target);
+        let index = stats.getCheckpoints()[0].index;
 
-        expect( index ).toStrictEqual( 1 ); // corresponds to "second"
+        expect( index ).toBe( 1 ); // corresponds to "second"
         expect( stats.getCheckpoints().length ).toBe( 1 );
     })
 
@@ -45,122 +44,59 @@ describe("classes.race-stats.new", () => {
     });
 });
 
-describe("classes.race-stats.addToPath", () => {
-    it("adds the given point to the end of the path", () => {
+describe("classes.race-stats.addMove", () => {
+    it("adds the given path and velocity as a move", () => {
         let track = new Track();
         let stats = new RaceStats(track);
 
-        stats.addToPath(new Vector2(-5, 3));
+        let path = new Line( new Vector2(3, -2), new Vector2(-5, 3) );
+        let velocity = new Vector2();
 
-        let size = stats.getPath().length;
+        stats.addMove(path, velocity);
 
-        expect( stats.getPath()[size - 1].x() ).toBe( -5 );
-        expect( stats.getPath()[size - 1].y() ).toBe( 3 );
+        expect( stats.getMoves().length ).toBe( 1 );
+        expect( stats.getMoves()[0].Path ).toBe( path );
+        expect( stats.getMoves()[0].Velocity ).toBe( velocity );
     });
 
-    it("throws an error when the given point is not a Vector2", () => {
+    it("throws an error when the given path isn't a Line", () => {
         let track = new Track();
         let stats = new RaceStats(track);
 
-        expect( () => stats.addToPath() ).toThrowError();
-        expect( () => stats.addToPath("a") ).toThrowError();
-        expect( () => stats.addToPath(new TrackNode()) ).toThrowError();
-    })
-});
-
-describe("classes.race-stats.setCheckpointPassed", () => {
-    it("marks the given checkpoint as passed", () => {
-        let track = new Track();
-
-        let target = new TrackNode(new Vector2(), 25, true);
-
-        track.setPath([
-            new TrackNode(new Vector2(), 25, false),
-            target,
-            new TrackNode(new Vector2(), 25, true),
-        ]);
-
-        let stats = new RaceStats(track);
-        stats.setCheckpointPassed(target, true);
-
-        expect( stats.isCheckpointPassed(target) ).toBe( true );
+        expect( () => stats.addMove(null, new Vector2()) ).toThrowError();
+        expect( () => stats.addMove("a", new Vector2()) ).toThrowError();
+        expect( () => stats.addMove(new TrackNode(), new Vector2()) ).toThrowError();
     });
 
-    it("throws an error if the checkpoint isn't part of the track", () => {
+    it("throws an error when the given velocity isn't a Vector2", () => {
         let track = new Track();
-
-        let target = new TrackNode(new Vector2(), 25, true);
-        
         let stats = new RaceStats(track);
 
-        expect( () => stats.setCheckpointPassed(target, true) ).toThrowError();
-    });
+        let line = new Line(new Vector2(), new Vector2());
 
-    it("throws an error if passed is not a boolean", () => {
-        let track = new Track();
-
-        let target = new TrackNode();
-        
-        let stats = new RaceStats(track);
-
-        expect( () => stats.setCheckpointPassed(target, null) ).toThrowError();
-        expect( () => stats.setCheckpointPassed(target, "a") ).toThrowError();
-        expect( () => stats.setCheckpointPassed(target, new TrackNode()) ).toThrowError();
-    })
-});
-
-describe("classes.race-stats.isCheckpointPassed", () => {
-    // see "classes.race-stats.setCheckpointPassed"
-    // * already validated there
-
-    it("throws an error if the checkpoint isn't part of the track", () => {
-        let track = new Track();
-
-        let target = new TrackNode(new Vector2(), 25, true);
-
-        track.setPath([
-            new TrackNode(new Vector2(), 25, true),
-            new TrackNode(new Vector2(), 25, true)
-        ]);
-
-        let stats = new RaceStats(track);
-
-        expect( () => stats.isCheckpointPassed(target) ).toThrowError();
+        expect( () => stats.addMove(line, null) ).toThrowError();
+        expect( () => stats.addMove(line, "a") ).toThrowError();
+        expect( () => stats.addMove(line, new TrackNode()) ).toThrowError();
     });
 });
-
-describe("classes.race-stats.getMoves", () => {
-    it("returns the number of moves in a path", () => {
-        let track = new Track();
-        let stats = new RaceStats(track);
-
-        stats.addToPath(new Vector2(0, 0));
-        stats.addToPath(new Vector2(5, 3));
-        stats.addToPath(new Vector2(10, 10));
-
-        expect( stats.getMoves() ).toBe( 2 );
-    });
-
-    it("returns 0 moves when the path is empty", () => {
-        let track = new Track();
-        let stats = new RaceStats(track);
-
-        expect( stats.getMoves() ).toBe( 0 );
-    });
-})
 
 describe("classes.race-stats.calculateStats", () => {
     it("calculates all stats based on the path", () => {
         let track = new Track();
         let stats = new RaceStats(track);
 
+        let line1 = new Line( new Vector2(0, 0), new Vector2(1, 2) );
+        let line2 = new Line( new Vector2(1, 2), new Vector2(3, 1) );
+        let line3 = new Line( new Vector2(3, 1), new Vector2(2, 5) );
+        let line4 = new Line( new Vector2(2, 5), new Vector2(3, 6) );
+        let line5 = new Line( new Vector2(3, 6), new Vector2(5, 10) );
+
         // technically recalculates / adjusts stats each add...
-        stats.addToPath(new Vector2(0, 0));
-        stats.addToPath(new Vector2(1, 2));
-        stats.addToPath(new Vector2(3, 1));
-        stats.addToPath(new Vector2(2, 5));
-        stats.addToPath(new Vector2(3, 6));
-        stats.addToPath(new Vector2(5, 10));
+        stats.addMove(line1, new Vector2(1, 2));
+        stats.addMove(line2, new Vector2(2, -1));
+        stats.addMove(line3, new Vector2(-1, 4));
+        stats.addMove(line4, new Vector2(1, 1));
+        stats.addMove(line5, new Vector2(2, 4));
 
         // ... but checking this produces the same result
         stats.calculateStats();

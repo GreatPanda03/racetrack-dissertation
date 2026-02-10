@@ -2,6 +2,7 @@
 
 // classes
 export { default as Vector2 } from "./classes/geometry/vector2.js";
+export { default as Line } from "./classes/geometry/line.js";
 export { default as Polygon } from "./classes/geometry/polygon.js";
 export { default as PathNode } from "./classes/geometry/path-node.js";
 
@@ -10,7 +11,6 @@ export { default as Material } from "./classes/track/components/material.js";
 export { default as Obstacle } from "./classes/track/components/obstacle.js";
 export { default as Decoration } from "./classes/track/components/decoration.js";
 
-export { default as TrackBoundaries } from "./classes/track/track-boundaries.js";
 export { default as TrackForm } from "./classes/track/track-form.js";
 export { default as Track } from "./classes/track/track.js";
 
@@ -31,3 +31,4 @@ export { default as TOOL_TYPE } from "./enums/tool-type.js";
 
 // utilities
 export { default as SplineUtil } from "./utilities/spline-util.js";
+export { default as Validator } from "./utilities/validator.js";

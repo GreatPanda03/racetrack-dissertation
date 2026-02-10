@@ -7,33 +7,30 @@ import Track from "../track/track.js";
 import CanvasRenderer from "../rendering/canvas-renderer.js";
 import MATERIAL_INFO from "../../enums/material-info.js";
 import SplineUtil from "../../utilities/spline-util.js";
+import Validator from "../../utilities/validator.js";
 
 
 export default class TrackRenderer extends CanvasRenderer {
+    _track;
     _trackForm;     // TrackForm
     _visibility;    // {string: bool}
     _spacing;       // int (pixels, for grid lines)
 
-    constructor(track, canvas, spacing = 25) {
-        if (track == null || !(track instanceof Track)) {
-            throw new Error(`[TrackRenderer] "${track}" is not a valid Track`);
-        }
-
+    constructor(track, canvas, spacing = 10) {
         super(canvas);
-
-        this._ctx = canvas.getContext("2d");
-        this._trackForm = new TrackForm(track);
-
+        
         this._visibility = {
             nodes: true,
             wires: true,
             path: true,
             materials: true,
             obstacles: true,
-            decorations: true
+            decorations: true,
+            grid: true
         }
-
-        this._spacing = spacing;
+        
+        this.setTrack(track); // also sets TrackForm
+        this.setSpacing(spacing);
     }
 
 
@@ -49,30 +46,35 @@ export default class TrackRenderer extends CanvasRenderer {
     getTrackForm() { return this._trackForm; }
 
     setTrack(track) {
+        Validator.isInstance(track, Track);
+        this._track = track;
         this._trackForm = new TrackForm(track);
         this.redrawTrack();
     }
 
     getVisibility(type) {
-        this.#validateVisibilityKey(type);
+        Validator.keyPresence(this._visibility, type);
         return this._visibility[type];
     }
 
     setVisibility(type, state) {
-        this.#validateVisibilityKey(type);
+        Validator.keyPresence(this._visibility, type);
         this._visibility[type] = state;
     }
 
-    getOffset() { return this._offset; }
-    setOffset(offset) { this._offset = offset; }
+    getSpacing() { return this._spacing; }
+    setSpacing(spacing) {
+        Validator.isPrimitive(spacing, "number");
+        this._spacing = spacing;
+    }
 
 
     // methods
     redrawTrack() {
         this.clearCanvas();
 
-        let form = this._trackForm;
-        form.updateNodeExtents();
+        this._trackForm.calculateNodeSpans(this._track);
+        this._trackForm.calculateBoundaries(this._track);
 
         let visibility = this._visibility;
 
@@ -85,29 +87,29 @@ export default class TrackRenderer extends CanvasRenderer {
             { Method: this.renderCheckpoints,   Key: "path" },
             { Method: this.renderWires,         Key: "wires" },
             { Method: this.renderNodes,         Key: "nodes" },
-            { Method: this.renderDirection,     Key: "path" }
+            { Method: this.renderDirection,     Key: "path" },
+            { Method: this.renderGridLines,     Key: "grid" }
         ]
 
         for (let entry of visuals) {
-            this.#validateVisibilityKey(entry.Key);
+            Validator.keyPresence(visibility, entry.Key);
             if (visibility[entry.Key]) entry.Method.call(this);
         }
-        
-        this.renderGridLines();
     }
 
     renderNodes() {
-        let track = this._trackForm.getTrack();
+        let track = this._track;
+        let form = this._trackForm;
         let size = track.getSize();
 
         let path = track.getPath();
-        let leftSide = this._trackForm.getLeftSide();
-        let rightSide = this._trackForm.getRightSide();
 
         for (let n = 0; n < size; n++) {
-            let left = leftSide[n].getPosition();
+            let span = form.getNodeSpan(n);
+
+            let left = span.start;
             let mid = path[n].getPosition();
-            let right = rightSide[n].getPosition();
+            let right = span.end;
 
             this.drawCircle(left, 5, "#C70");
             this.drawCircle(mid, 15, path[n].isCheckpoint() ? "#A5F" : "#5AF");
@@ -117,44 +119,49 @@ export default class TrackRenderer extends CanvasRenderer {
     }
 
     renderWires() {
-        let track = this._trackForm.getTrack();
+        let track = this._track;
         let size = track.getSize();
 
         if (size < 2) return;
 
+        let form = this._trackForm;
         let looped = track.isLooped();
         let path = track.getPath();
-        let leftSide = this._trackForm.getLeftSide();
-        let rightSide = this._trackForm.getRightSide();
 
         let nmax = looped ? size : size - 1;
 
         for (let n = 0; n < nmax; n++) {
+            let span1 = form.getNodeSpan(n);
+            let span2 = form.getNodeSpan((n + 1) % size);
+
             let mid1 = path[n].getPosition();
             let mid2 = path[(n + 1) % size].getPosition();                
             
-            let left1 = leftSide[n].getPosition();
-            let left2 = leftSide[(n + 1) % size].getPosition();
-            
-            let right1 = rightSide[n].getPosition();
-            let right2 = rightSide[(n + 1) % size].getPosition();
+            let left1 = span1.start, left2 = span2.start;
+            let right1 = span1.end, right2 = span2.end;
 
             this.drawLine(left1, left2, 2, "#999");    // left edge
             this.drawLine(mid1, mid2, 5, "#999");      // central edge
             this.drawLine(right1, right2, 2, "#999");  // right edge
             this.drawLine(left1, right1, 2, "#999");   // span
         }
+
+        if (!looped) {
+            let span = form.getNodeSpan(nmax);
+            let left = span.start, right = span.end;
+            this.drawLine(left, right, 2, "#999");
+        }
     }
 
     renderPathOutline() {
-        let track = this._trackForm.getTrack();
+        let track = this._track;
         let size = track.getSize();
 
         if (size < 2) return;
 
+        let form = this._trackForm;
+        let [left, right] = form.getSplitNodeSpans();
         let looped = track.isLooped();
-        let leftSide = this._trackForm.getLeftSide();
-        let rightSide = this._trackForm.getRightSide();
 
         let res = 0.1;
         let tmax = looped ? size : size - 1;
@@ -163,14 +170,17 @@ export default class TrackRenderer extends CanvasRenderer {
         ctx.strokeStyle = "#555";
         
         // left track edge
+        // * see "renderPath" for why an integer step is used
         ctx.beginPath();
 
-        for (let t = 0; t < tmax; t += res) {
-            let left1 = SplineUtil.getPointAtT(leftSide, t, looped);
-            let left2 = SplineUtil.getPointAtT(leftSide, t + res, looped);
+        for (let s = 0; s < Math.round((1 / res) * tmax); s += 1) {
+            let t = s * res;
 
-            ctx.lineTo(left1.x(), left1.y());
-            ctx.lineTo(left2.x(), left2.y());
+            let left1 = SplineUtil.getPointAtT(left, t, looped);
+            let left2 = SplineUtil.getPointAtT(left, t + res, looped);
+
+            ctx.lineTo(left1.x, left1.y);
+            ctx.lineTo(left2.x, left2.y);
         }
 
         ctx.stroke();
@@ -179,12 +189,14 @@ export default class TrackRenderer extends CanvasRenderer {
         // right track edge
         ctx.beginPath();
 
-        for (let t = 0; t < tmax; t += res) {
-            let right1 = SplineUtil.getPointAtT(rightSide, t, looped);
-            let right2 = SplineUtil.getPointAtT(rightSide, t + res, looped);
+        for (let s = 0; s < Math.round((1 / res) * tmax); s += 1) {
+            let t = s * res;
 
-            ctx.lineTo(right1.x(), right1.y());
-            ctx.lineTo(right2.x(), right2.y());
+            let right1 = SplineUtil.getPointAtT(right, t, looped);
+            let right2 = SplineUtil.getPointAtT(right, t + res, looped);
+
+            ctx.lineTo(right1.x, right1.y);
+            ctx.lineTo(right2.x, right2.y);
         }
         
         ctx.stroke();
@@ -193,14 +205,14 @@ export default class TrackRenderer extends CanvasRenderer {
 
     renderPath() {
         // treated as a polygon with a hole
-        let track = this._trackForm.getTrack();
+        let track = this._track;
         let size = track.getSize();
         
         if (size < 2) return;
 
+        let form = this._trackForm;
+        let [left, right] = form.getSplitNodeSpans();
         let looped = track.isLooped();
-        let leftSide = this._trackForm.getLeftSide();
-        let rightSide = this._trackForm.getRightSide();
 
         let res = 0.1;
         let tmax = looped ? size : size - 1;
@@ -211,44 +223,50 @@ export default class TrackRenderer extends CanvasRenderer {
         
         // preparing the first stroke into the left side
         if (looped) { // starting at on the left of Node 1
-            let start = SplineUtil.getPointAtT(leftSide, 0, looped);
-            ctx.moveTo(start.x(), start.y());
+            let start = SplineUtil.getPointAtT(left, 0, looped);
+            ctx.moveTo(start.x, start.y);
 
         } else { // the "closing line" of the start; the span of Node 1
-            let startR = SplineUtil.getPointAtT(rightSide, 0, looped);
-            let startL = SplineUtil.getPointAtT(leftSide, 0, looped);
+            let startR = SplineUtil.getPointAtT(right, 0, looped);
+            let startL = SplineUtil.getPointAtT(left, 0, looped);
             
-            ctx.moveTo(startR.x(), startR.y());
-            ctx.lineTo(startL.x(), startL.y());
+            ctx.moveTo(startR.x, startR.y);
+            ctx.lineTo(startL.x, startL.y);
         }
 
         // left track edge (drawn "clockwise")
-        for (let t = 0; t < tmax; t += res) {
-            let left1 = SplineUtil.getPointAtT(leftSide, t, looped);
-            let left2 = SplineUtil.getPointAtT(leftSide, t + res, looped);
+        // * originally used "t" directly, but that sometimes leaves
+        //     "artefacts" at track end due to floating point errors, so
+        //     uses an integer step instead (as a workaround)
+        for (let s = 0; s < Math.round((1 / res) * tmax); s += 1) {
+            let t = s * res;
 
-            ctx.lineTo(left1.x(), left1.y());
-            ctx.lineTo(left2.x(), left2.y());
+            let left1 = SplineUtil.getPointAtT(left, t, looped);
+            let left2 = SplineUtil.getPointAtT(left, t + res, looped);
+
+            ctx.lineTo(left1.x, left1.y);
+            ctx.lineTo(left2.x, left2.y);
         }
         
         // preparing the first stroke into the right side
         if (looped) { // moving over to the right of Node 1
-            let start = SplineUtil.getPointAtT(rightSide, tmax, looped);
-            ctx.moveTo(start.x(), start.y());
+            let start = SplineUtil.getPointAtT(right, tmax, looped);
+            ctx.moveTo(start.x, start.y);
 
         } else { // the "closing line" of the end; the span of Node N
-            let endR = SplineUtil.getPointAtT(rightSide, tmax, looped);
-            ctx.lineTo(endR.x(), endR.y());
+            let endR = SplineUtil.getPointAtT(right, tmax, looped);
+            ctx.lineTo(endR.x, endR.y);
         }
         
         // right track edge (drawn "anticlockwise" to create the hole)
         // * source: https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes
+        // * okay to use t as part of loop here
         for (let t = tmax; t >= res; t -= res) {
-            let right1 = SplineUtil.getPointAtT(rightSide, t, looped);
-            let right2 = SplineUtil.getPointAtT(rightSide, t - res, looped);
+            let right1 = SplineUtil.getPointAtT(right, t, looped);
+            let right2 = SplineUtil.getPointAtT(right, t - res, looped);
 
-            ctx.lineTo(right1.x(), right1.y());
-            ctx.lineTo(right2.x(), right2.y());
+            ctx.lineTo(right1.x, right1.y);
+            ctx.lineTo(right2.x, right2.y);
         }
 
         ctx.fill() // fill in based on all points
@@ -256,7 +274,7 @@ export default class TrackRenderer extends CanvasRenderer {
     }
 
     renderMaterials() {
-        let track = this._trackForm.getTrack();
+        let track = this._track;
         let materials = track.getMaterials();
 
         for (let material of materials) {
@@ -266,7 +284,7 @@ export default class TrackRenderer extends CanvasRenderer {
     }
 
     renderObstacles() {
-        let track = this._trackForm.getTrack();
+        let track = this._track;
         let obstacles = track.getObstacles();
 
         for (let obstacle of obstacles) {
@@ -276,7 +294,7 @@ export default class TrackRenderer extends CanvasRenderer {
     }
 
     renderDecorations() {
-        let track = this._trackForm.getTrack();
+        let track = this._track;
         let decorations = track.getDecorations();
 
         for (let decoration of decorations) {
@@ -286,39 +304,33 @@ export default class TrackRenderer extends CanvasRenderer {
     }
 
     renderCheckpoints() {
-        let track = this._trackForm.getTrack();
+        let track = this._track;
         let size = track.getSize();
 
         if (size < 2) return;
 
-        let looped = track.isLooped();
         let path = track.getPath();
-        let leftSide = this._trackForm.getLeftSide();
-        let rightSide = this._trackForm.getRightSide();
+        let form = this._trackForm;
+        let [left, right] = form.getSplitNodeSpans();
+        let looped = track.isLooped();
 
         // start line (& finish line, if looped)
-        let left = leftSide[0].getPosition();
-        let right = rightSide[0].getPosition()
-        this.drawLine(left, right, 10, "#000");
+        this.drawLine(left[0], right[0], 10, "#000");
 
         if (!looped) {
-            let left = leftSide[size - 1].getPosition();
-            let right = rightSide[size - 1].getPosition()
-            this.drawLine(left, right, 10, "#000");
+            this.drawLine(left[size - 1], right[size - 1], 10, "#000");
         }
 
         // every other checkpoint
         for (let n = 1; n < size; n++) {
             if (path[n].isCheckpoint()) {
-                let left = leftSide[n].getPosition();
-                let right = rightSide[n].getPosition();
-                this.drawLine(left, right, 10, "#FC5");
+                this.drawLine(left[n], right[n], 10, "#FC5");
             }
         }
     }
 
     renderDirection() {
-        let track = this._trackForm.getTrack();
+        let track = this._track;
         let size = track.getSize();
 
         if (size < 2) return;
@@ -351,14 +363,6 @@ export default class TrackRenderer extends CanvasRenderer {
             let start = new Vector2(c * spacing, 0);
             let end = new Vector2(c * spacing, canvas.height * correction);
             this.drawLine(start, end, 1, "#0005");
-        }
-    }
-
-
-    // validation
-    #validateVisibilityKey(key) {
-        if ( !(key in this._visibility) ) {
-            throw new Error(`[TrackRenderer] "${key}" is not a recognised visual type`);
         }
     }
 }

@@ -100,8 +100,8 @@ describe("utilities.spline-util.getPointAtT.looped", () => {
 
         let point = SplineUtil.getPointAtT(path, 2.35, true);
 
-        expect( point.x() ).toBeCloseTo( 34.085575, 5 );
-        expect( point.y() ).toBeCloseTo( -0.17419375, 5 );
+        expect( point.x ).toBeCloseTo( 34.085575, 5 );
+        expect( point.y ).toBeCloseTo( -0.17419375, 5 );
     });
 
         it("returns the point along the edge of a looped path at t", () => {
@@ -116,8 +116,8 @@ describe("utilities.spline-util.getPointAtT.looped", () => {
 
         let point = SplineUtil.getPointAtT(path, 4.68, true);
 
-        expect( point.x() ).toBeCloseTo( 75.6207488, 5 );
-        expect( point.y() ).toBeCloseTo( 31.9093632, 5 );
+        expect( point.x ).toBeCloseTo( 75.6207488, 5 );
+        expect( point.y ).toBeCloseTo( 31.9093632, 5 );
     });
 });
 
@@ -134,8 +134,8 @@ describe("utilities.spline-util.getPointAtT.unlooped", () => {
 
         let point = SplineUtil.getPointAtT(path, 2.35, false);
 
-        expect( point.x() ).toBeCloseTo( 34.085575, 5 );
-        expect( point.y() ).toBeCloseTo( -0.17419375, 5 );
+        expect( point.x ).toBeCloseTo( 34.085575, 5 );
+        expect( point.y ).toBeCloseTo( -0.17419375, 5 );
     });
 
     it("returns the point along the edge of an unlooped path at t", () => {
@@ -150,8 +150,8 @@ describe("utilities.spline-util.getPointAtT.unlooped", () => {
 
         let point = SplineUtil.getPointAtT(path, 4.68, false);
 
-        expect( point.x() ).toBeCloseTo( 69.169344, 5 );
-        expect( point.y() ).toBeCloseTo( 32.10912, 5 );
+        expect( point.x ).toBeCloseTo( 69.169344, 5 );
+        expect( point.y ).toBeCloseTo( 32.10912, 5 );
     });
 });
 
@@ -169,7 +169,7 @@ describe("utilities.spline-util.getGradientAtT", () => {
 
         let point = SplineUtil.getGradientAtT(path, 4.68, false);
 
-        expect( point.x() ).toBeCloseTo( -59.1976, 5 );
-        expect( point.y() ).toBeCloseTo( 44.002, 5 );
+        expect( point.x ).toBeCloseTo( -59.1976, 5 );
+        expect( point.y ).toBeCloseTo( 44.002, 5 );
     });
 });

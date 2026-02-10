@@ -1,8 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
-    TrackNode, Material, 
-    Track,
+    TrackNode, Material, Obstacle, Decoration, Track,
     MATERIAL_INFO
 } from "../../../src/core";
 
@@ -11,11 +10,9 @@ describe("classes.track.new", () => {
     it("creates a new Track with default values", () => {
         let track = new Track();
 
-        expect( typeof track.getId() ).toBe( "number" );
-
         expect( typeof track.getName() ).toBe( "string" );
         expect( typeof track.getDescription() ).toBe( "string" );
-        expect( typeof track.getAuthorId() ).toBe( "number" );
+        expect( typeof track.getAuthorId() ).toBe( "string" );
         expect( typeof track.getAuthor() ).toBe( "string" );
         expect( track.getTags() ).toEqual( [] );
 
@@ -70,13 +67,11 @@ describe("classes.track.getNodeIndex", () => {
         expect( track.getNodeIndex(target) ).toBe(2);
     });
 
-    it("returns a 'non-existent' value when the node isn't in the track", () => {
-        let track = new Track();
+    it("throws an error when the node isn't in the track", () => {
         let target = new TrackNode();
+        let track = new Track();
         
-        track.setPath([new TrackNode(), new TrackNode(), new TrackNode(), new TrackNode()]);
-        
-        expect( track.getNodeIndex(target) ).toBe(-1);
+        expect( () => track.getNodeIndex(target) ).toThrowError();
     });
 });
 
@@ -152,6 +147,14 @@ describe("classes.track.addNode", () => {
         expect( track.getPath()[track.getSize() - 1] ).toBe(node);
     });
 
+    it("throws an error if the node isn't a valid TrackNode", () => {
+        let track = new Track();
+        
+        expect( () => track.addNode() ).toThrowError();
+        expect( () => track.addNode("a") ).toThrowError();
+        expect( () => track.addNode(new Vector2()) ).toThrowError();
+    });
+
     it("throws an error if the node is already in the track", () => {
         let track = new Track();
         let target = new TrackNode();
@@ -159,14 +162,6 @@ describe("classes.track.addNode", () => {
         track.setPath([target, new TrackNode()]);
 
         expect( () => track.addNode(target) ).toThrowError();
-    });
-
-    it("throws an error if the node isn't a valid TrackNode", () => {
-        let track = new Track();
-        
-        expect( () => track.addNode() ).toThrowError();
-        expect( () => track.addNode("a") ).toThrowError();
-        expect( () => track.addNode(new Vector2()) ).toThrowError();
     });
 });
 
@@ -226,7 +221,7 @@ describe("classes.track.removeNode", () => {
 
 
 
-// [[ Material Tests ]] // 
+// [[ Material Tests ]] //
 
 describe("classes.track.addMaterial", () => {
     it("adds the given material to the track", () => {
@@ -238,12 +233,158 @@ describe("classes.track.addMaterial", () => {
         expect( track.getMaterials()[0] ).toBe( material );
     });
 
-    it("throws an error if the given material is already in the track", () => {
+    it("throws an error if no valid Material is provided", () => {
+        let track = new Track();
+
+        expect( () => track.addMaterial() ).toThrowError();
+        expect( () => track.addMaterial("a") ).toThrowError();
+        expect( () => track.addMaterial(new TrackNode()) ).toThrowError();
+    });
+
+    it("throws an error if the given material is already on the track", () => {
         let track = new Track();
         let material = new Material([], MATERIAL_INFO.Water.Name);
 
         track.addMaterial(material);
 
         expect( () => track.addMaterial(material) ).toThrowError();
+    });
+});
+
+describe("classes.track.removeMaterial", () => {
+    it("removes the given material from the track", () => {
+        let track = new Track();
+        let material = new Material([], MATERIAL_INFO.Water.Name);
+
+        track.addMaterial(material);
+        track.removeMaterial(material);
+
+        expect( track.getMaterials().length ).toBe( 0 );
+    });
+
+    it("throws an error if the material isn't on the track", () => {
+        let track = new Track();
+
+        expect( () => track.removeMaterial() ).toThrowError();
+        expect( () => track.removeMaterial("a") ).toThrowError();
+        expect( () => track.removeMaterial(new TrackNode()) ).toThrowError();
+    });
+});
+
+
+
+// [[ Obstacle Tests ]] // 
+
+describe("classes.track.addObstacle", () => {
+    it("adds the given obstacle to the track", () => {
+        let track = new Track();
+        let obstacle = new Obstacle();
+
+        track.addObstacle(obstacle);
+
+        expect( track.getObstacles()[0] ).toBe( obstacle );
+    });
+
+    it("throws an error if no valid Obstacle is provided", () => {
+        let track = new Track();
+
+        expect( () => track.addObstacle() ).toThrowError();
+        expect( () => track.addObstacle("a") ).toThrowError();
+        expect( () => track.addObstacle(new TrackNode()) ).toThrowError();
+    });
+
+    it("throws an error if the given obstacle is already on the track", () => {
+        let track = new Track();
+        let obstacle = new Obstacle();
+
+        track.addObstacle(obstacle);
+
+        expect( () => track.addObstacle(obstacle) ).toThrowError();
+    });
+});
+
+describe("classes.track.removeObstacle", () => {
+    it("removes the given obstacle from the track", () => {
+        let track = new Track();
+        let obstacle = new Obstacle();
+
+        track.addObstacle(obstacle);
+        track.removeObstacle(obstacle);
+
+        expect( track.getObstacles().length ).toBe( 0 );
+    });
+
+    it("throws an error if the decoration isn't on the track", () => {
+        let track = new Track();
+
+        expect( () => track.removeObstacle() ).toThrowError();
+        expect( () => track.removeObstacle("a") ).toThrowError();
+        expect( () => track.removeObstacle(new TrackNode()) ).toThrowError();
+    });
+});
+
+
+
+// [[ Decoration Tests ]] // 
+
+describe("classes.track.addDecoration", () => {
+    it("adds the given decoration to the track", () => {
+        let track = new Track();
+        let decoration = new Decoration();
+
+        track.addDecoration(decoration);
+
+        expect( track.getDecorations()[0] ).toBe( decoration );
+    });
+
+    it("throws an error if no valid Decoration is provided", () => {
+        let track = new Track();
+
+        expect( () => track.addDecoration() ).toThrowError();
+        expect( () => track.addDecoration("a") ).toThrowError();
+        expect( () => track.addDecoration(new TrackNode()) ).toThrowError();
+    });
+
+    it("throws an error if the given decoration is already on the track", () => {
+        let track = new Track();
+        let decoration = new Decoration();
+
+        track.addDecoration(decoration);
+
+        expect( () => track.addDecoration(decoration) ).toThrowError();
+    });
+});
+
+describe("classes.track.removeDecoration", () => {
+    it("removes the given decoration from the track", () => {
+        let track = new Track();
+        let decoration = new Decoration();
+
+        track.addDecoration(decoration);
+        track.removeDecoration(decoration);
+
+        expect( track.getDecorations().length ).toBe( 0 );
+    });
+
+    it("throws an error if the decoration isn't on the track", () => {
+        let track = new Track();
+
+        expect( () => track.removeDecoration() ).toThrowError();
+        expect( () => track.removeDecoration("a") ).toThrowError();
+        expect( () => track.removeDecoration(new TrackNode()) ).toThrowError();
+    });
+});
+
+
+describe("classes.track (serialisation)", () => {
+    it("can convert itself to an object and back to an instance", () => {
+        let instance = new Track([new TrackNode()]);
+        instance.addMaterial(new Material([], MATERIAL_INFO.Curb.Name));
+        instance.addObstacle(new Obstacle());
+        instance.addDecoration(new Decoration());
+
+        expect(() => {
+            Track.toInstance( instance.toObject() );
+        }).not.toThrowError();
     });
 });

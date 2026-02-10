@@ -1,6 +1,8 @@
 // class to create instances of UndoRedoStack objects
 // * an UndoRedoStack provides undo / redo recording
 
+import Validator from "../../utilities/validator.js";
+
 
 export default class UndoRedoStack {
     #actions;
@@ -9,12 +11,15 @@ export default class UndoRedoStack {
         this.clearActions();
     }
 
+    
     // getters / setters
     getActions() { return this.#actions; }
 
 
     // methods
     recordAction(action) {
+        Validator.isObject(action);
+
         this.#actions.UndoStack.push(action);
         this.#actions.RedoStack = [];
     }
@@ -28,7 +33,7 @@ export default class UndoRedoStack {
     }
 
     undoAction() {
-        if (this.#actions.UndoStack.length == 0) return;
+        if (this.getUndoSize() == 0) return;
 
         let action = this.#actions.UndoStack.pop();
         this.#actions.RedoStack.push(action);
@@ -37,7 +42,7 @@ export default class UndoRedoStack {
     }
 
     redoAction() {
-        if (this.#actions.RedoStack.length == 0) return;
+        if (this.getRedoSize() == 0) return;
 
         let action = this.#actions.RedoStack.pop();
         this.#actions.UndoStack.push(action);

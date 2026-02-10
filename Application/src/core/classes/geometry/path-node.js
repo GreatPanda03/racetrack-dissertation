@@ -2,24 +2,23 @@
 // * PathNode is a generic point used to form larger paths
 
 import Vector2 from "./vector2.js";
+import Validator from "../../utilities/validator.js";
 
 
 export default class PathNode {
     _position;      // Vector2
 
     constructor(position = new Vector2()) {
-        if ( !(position instanceof Vector2) ) {
-            throw new Error(`[PathNode] "${position}" is not a valid Vector2`);
-        }
-
-        this._position = position.round();
-
+        this.setPosition(position);
     }
 
 
     // getters / setters
     getPosition() { return this._position; }
-    setPosition(position) { this._position = position.round(); }
+    setPosition(position) {
+        Validator.isInstance(position, Vector2);
+        this._position = position;
+    }
 
 
     // serialisation

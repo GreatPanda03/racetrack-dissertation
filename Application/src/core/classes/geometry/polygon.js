@@ -2,51 +2,45 @@
 // * Polygons consist of Vector2 points which define a shape
 
 import PathNode from "./path-node.js";
+import Validator from "../../utilities/validator.js";
 
 
 export default class Polygon {
-    _points;    // Node[]
+    _points;    // PathNode[]
 
-    constructor(points) {
-        if (points) {
-            if (points.some( (e) => !(e instanceof PathNode) )) {
-                throw new Error("[Polygon] Invalid element found in nodes");
-            }
-        }
-
-        this._points = points ?? [];
+    constructor(points = []) {
+        this.setPoints(points);
     }
 
 
     // getters / setters
+    setPoints(points) {
+        for (let point of points) Validator.isInstance(point, PathNode);
+        this._points = points;
+    }
     getPoints() { return this._points; }
 
 
     // methods
     addPoint(point) {
+        Validator.isInstance(point, PathNode);
+        
         let points = this._points;
-
-        if ( !(point instanceof PathNode) ) {
-            throw new Error(`[Polygon] "${point} is not a PathNode"`);
-        }
-
         points.push(point);
     }
 
     removePoint(point) {
         let points = this._points;
-        let index = points.indexOf(point);
-
-        if (index < 0) {
-            throw new Error(`[Polygon] "${point}" is not a PathNode to remove`);
-        }
+        let index = Validator.listPresence(points, point);
 
         points.splice(index, 1);
     }
 
     getEdges() {
-        let edges = [];
         let points = this.getPoints();
+        if (points.length == 0) return [];
+
+        let edges = [];
 
         for (let p = 0; p < points.length - 1; p++) {
             let p1 = points[p].getPosition();

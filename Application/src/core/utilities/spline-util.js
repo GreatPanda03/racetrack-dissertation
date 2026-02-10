@@ -1,6 +1,7 @@
 // static utility class for spline operations
 
 import Vector2 from "../classes/geometry/vector2.js";
+import PathNode from "../classes/geometry/path-node.js";
 
 
 export default class SplineUtil {
@@ -48,14 +49,24 @@ export default class SplineUtil {
 	    let q2 = -3*ttt + 4*tt + t;
 	    let q3 =    ttt -   tt    ;
 
-        let pos0 = nodes[p0].getPosition();
-        let pos1 = nodes[p1].getPosition();
-        let pos2 = nodes[p2].getPosition();
-        let pos3 = nodes[p3].getPosition();
+        let pos0, pos1, pos2, pos3;
+
+        // * TODO: change this for this & gradient
+        if (nodes[p0] instanceof PathNode) {
+            pos0 = nodes[p0].getPosition();
+            pos1 = nodes[p1].getPosition();
+            pos2 = nodes[p2].getPosition();
+            pos3 = nodes[p3].getPosition();
+        } else {
+            pos0 = nodes[p0];
+            pos1 = nodes[p1];
+            pos2 = nodes[p2];
+            pos3 = nodes[p3];
+        }
 
         // halve: because t ranges from 0 to 2 with these equations
-        let tx = 0.5 * ( (pos0.x() * q0) + (pos1.x() * q1) + (pos2.x() * q2) + (pos3.x() * q3) );
-        let ty = 0.5 * ( (pos0.y() * q0) + (pos1.y() * q1) + (pos2.y() * q2) + (pos3.y() * q3) );
+        let tx = 0.5 * ( (pos0.x * q0) + (pos1.x * q1) + (pos2.x * q2) + (pos3.x * q3) );
+        let ty = 0.5 * ( (pos0.y * q0) + (pos1.y * q1) + (pos2.y * q2) + (pos3.y * q3) );
 
         return new Vector2(tx, ty);
     }
@@ -73,14 +84,23 @@ export default class SplineUtil {
         let q2 = -9*tt +  8*t + 1;
         let q3 =  3*tt -  2*t    ;
 
-        let pos0 = nodes[p0].getPosition();
-        let pos1 = nodes[p1].getPosition();
-        let pos2 = nodes[p2].getPosition();
-        let pos3 = nodes[p3].getPosition();
+        let pos0, pos1, pos2, pos3;
+
+        if (nodes[p0] instanceof PathNode) {
+            pos0 = nodes[p0].getPosition();
+            pos1 = nodes[p1].getPosition();
+            pos2 = nodes[p2].getPosition();
+            pos3 = nodes[p3].getPosition();
+        } else {
+            pos0 = nodes[p0];
+            pos1 = nodes[p1];
+            pos2 = nodes[p2];
+            pos3 = nodes[p3];
+        }
 
         // halve: because t ranges from 0 to 2 with the undifferentiated equations
-        let tx = 0.5 * ( (pos0.x() * q0) + (pos1.x() * q1) + (pos2.x() * q2) + (pos3.x() * q3) );
-        let ty = 0.5 * ( (pos0.y() * q0) + (pos1.y() * q1) + (pos2.y() * q2) + (pos3.y() * q3) );
+        let tx = 0.5 * ( (pos0.x * q0) + (pos1.x * q1) + (pos2.x * q2) + (pos3.x * q3) );
+        let ty = 0.5 * ( (pos0.y * q0) + (pos1.y * q1) + (pos2.y * q2) + (pos3.y * q3) );
 
         return new Vector2(tx, ty);
     }
