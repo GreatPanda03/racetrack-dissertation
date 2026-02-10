@@ -8,7 +8,7 @@ import {
     TrackNode, Material, Obstacle, Decoration,
     Track, TrackRenderer,
     TOOL_TYPE, MATERIAL_INFO, ACTION_TYPE,
-    SplineUtil
+    SplineUtil, Validator
 } from "/core/index.js";
 
 
@@ -23,10 +23,12 @@ var selection = {Primary: null, Secondary: null};
 var moving = false;
 var selectionDiff = new Vector2();
 var last = new Vector2();
+var changesMade = false;
 
 var track;          // Track
 var renderer;       // TrackRenderer
 var reverter;       // UndoRedoStack
+var spacing = 25;   // float
 
 
 
@@ -44,6 +46,36 @@ function toggleButton(button, state) {
 
 
 // [[ Base Tool Operations ]] //
+
+function recordAction(action) {
+    reverter.recordAction(action);
+
+    let undoBtn = document.getElementById("options-undo");
+    let redoBtn = document.getElementById("options-redo");
+
+    undoBtn.classList.toggle("disabled", reverter.getUndoSize() == 0);
+    redoBtn.classList.toggle("disabled", reverter.getRedoSize() == 0);
+
+    changesMade = true;
+}
+
+async function saveTrack(trackJson) {
+    Validator.isPrimitive(trackJson, "string");
+
+    try {
+        await fetch("/tracks/save", {
+            method: "POST",
+            headers: new Headers({ "Content-Type": "application/json"}),
+            body: trackJson
+        });
+
+        return true;
+
+    } catch(error) {
+        console.log(error);
+        return false;
+    }
+}
 
 // general operations
 function moveElement(record, element, position) {
@@ -114,9 +146,7 @@ function deleteNode(record, node) {
     }
    
     track.removeNode(node);
-    
     renderer.redrawTrack();
-    showSelectionDetails();
 }
 
 // general polygon operations
@@ -226,20 +256,28 @@ function shiftNodesClockwise() {
 
 function reverseTrack() {
     let path = track.getPath();
+    let looped = track.isLooped();
+
     track.setPath( path.reverse() );
     let newPath = track.getPath();
 
     let checkpoints = path.map(node => node.isCheckpoint());
     let widths = path.map(node => node.getWidth());
-    checkpoints.unshift( checkpoints.pop() ); // shift all forward by 1
-    widths.unshift( widths.pop() );
+
+    if (looped) { // shift all forward by 1 (looped correction)
+        checkpoints.unshift( checkpoints.pop() );
+        widths.unshift( widths.pop() );
+    }
 
     for (let n = 0; n < track.getSize(); n++) {
         newPath[n].setCheckpoint(checkpoints[n]);
         newPath[n].setWidth(widths[n]);
     }
 
-    shiftNodesAnticlockwise(); // moves "first" node back to being first
+    if (looped) { // moves "first" node back to being first (looped correction)
+        shiftNodesAnticlockwise();
+    }
+
     renderer.redrawTrack();
 }
 
@@ -292,6 +330,10 @@ function initialiseOptions_Details() {
 
         track.setName(nameInput.value);
         track.setDescription(descriptionInput.value);
+
+        displayToast("Track Details Updated", "Successfully updated the track's details.\nPlease save the track as well!", "#0A0");
+
+        changesMade = true;
     });
 }
 
@@ -299,24 +341,25 @@ function initialiseOptions_Save() {
     let saveBtn = document.getElementById("options-save");
 
     saveBtn.addEventListener("click", async () => {
-        try {
-            await fetch("/tracks/save", {
-                method: "POST",
-                headers: new Headers({ "Content-Type": "application/json"}),
-                body: track.toJson() 
-            });
+        let trackJson = track.toJson();
+        let success = await saveTrack(trackJson);
 
+        if (success) {
+            changesMade = false;
+            displayToast("Track Saved", "Successfully saved track.", "#0A0");
             saveBtn.classList.remove("btn-primary");
             saveBtn.classList.add("btn-success");
 
-            setTimeout(() => {
-                saveBtn.classList.add("btn-primary");
-                saveBtn.classList.remove("btn-success");
-            }, 500);
-
-        } catch (error) {
-            console.log(error);
+        } else {
+            displayToast("Track Not Saved", "Failed to save the track, please try again.", "#C00");
+            saveBtn.classList.remove("btn-primary");
+            saveBtn.classList.add("btn-danger");
         }
+
+        setTimeout(() => {
+            saveBtn.classList.add("btn-primary");
+            saveBtn.classList.remove("btn-success");
+        }, 500);
     });
 }
 
@@ -324,30 +367,27 @@ function initialiseOptions_SaveAs() {
     let saveAsBtn = document.getElementById("options-save-as");
     
     saveAsBtn.addEventListener("click", async (e) => {
-        try {
-            let object = track.toObject();
-            object._id = null;
-            object.name = object.name + " Copy";
+        let object = track.toObject();
+        object._id = null;
+        object.name = object.name + " Copy";
 
-            let json = JSON.stringify(object);
+        let trackJson = JSON.stringify(object);
+        let success = saveTrack(trackJson);
 
-            await fetch("/tracks/save", {
-                method: "POST",
-                headers: new Headers({ "Content-Type": "application/json"}),
-                body: json
-            });
-
+        if (success) {
+            displayToast("Track Copy Saved", "Successfully saved the track as a new copy.", "#0A0");
             saveAsBtn.classList.remove("btn-primary");
             saveAsBtn.classList.add("btn-success");
-
-            setTimeout(() => {
-                saveAsBtn.classList.add("btn-primary");
-                saveAsBtn.classList.remove("btn-success");
-            }, 500);
-
-        } catch (error) {
-            console.log(error);
+        } else {
+            displayToast("Track Copy Not Saved", "Failed to save the track as a new copy, please try again.", "#C00");
+            saveAsBtn.classList.remove("btn-primary");
+            saveAsBtn.classList.add("btn-danger");
         }
+
+        setTimeout(() => {
+            saveAsBtn.classList.add("btn-primary");
+            saveAsBtn.classList.remove("btn-success");
+        }, 500);
     });
 }
 
@@ -546,6 +586,13 @@ function initialiseOptions_Test() {
     // TODO: add option to choose a race car
 
     testBtn.addEventListener("click", (e) => {
+        console.log(track.getId());
+
+        if (!track.getId()) {
+            displayToast("Cannot Test Unsaved Track", "Please save your track first to test it out.", "#C00");
+            return;
+        }
+
         window.location.href = `/tracks/play/${track.getId()}/1`;
     });
 }
@@ -554,7 +601,6 @@ function initialiseOptions_Import() {
     let importPrompt = document.getElementById("options-import");
     let importSubmit = document.getElementById("import-submit");
     let importInput = document.getElementById("import-input");
-    let importError = document.getElementById("import-error");
 
     importPrompt.addEventListener("click", (e) => {
         let popup = document.getElementById("modal-track-import");
@@ -568,15 +614,15 @@ function initialiseOptions_Import() {
         try {
             track = Track.toInstance(JSON.parse(json));
             renderer.setTrack(track);
-            importError.classList.add("hidden");
 
             let popup = document.getElementById("modal-track-import");
             let modal = new bootstrap.Modal(popup);
             modal.hide();
 
+            displayToast("Track Imported", "Successfully imported the track.", "#0A0");
+
         } catch(error) {
-            importError.innerHTML = "Invalid JSON provided!";
-            importError.classList.remove("hidden");
+            displayToast("Track Not Imported", `Failed to import track: ${error}.`, "#C00");
         }
     });
 }
@@ -585,7 +631,6 @@ function initialiseOptions_Export() {
     let exportPrompt = document.getElementById("options-export");
     let exportCopy = document.getElementById("export-copy");
     let exportOutput = document.getElementById("export-output");
-    let exportError = document.getElementById("export-error");
 
     exportPrompt.addEventListener("click", (e) => {
         let popup = document.getElementById("modal-track-export");
@@ -593,15 +638,13 @@ function initialiseOptions_Export() {
         modal.show();
 
         exportOutput.value = track.toJson(4);
-        exportError.hidden = true;
     });
 
     exportCopy.addEventListener("click", (e) => {
         exportOutput.select();
         document.execCommand('copy'); // TODO: DEPRECATED - find an alternative!!
 
-        exportError.hidden = false;
-        exportError.innerHTML = "Copied Track JSON to Clipboard!";
+        displayToast("Track Copied to Clipboard", "Successfully copied the track to clipboard.", "#0A0");
     });
 }
 
@@ -619,24 +662,11 @@ function initialiseBuilderOptions() {
 
 
 
-// [[ Building Undo / Redo ]] //
-
-function recordAction(action) {
-    reverter.recordAction(action);
-
-    let undoBtn = document.getElementById("options-undo");
-    let redoBtn = document.getElementById("options-redo");
-
-    undoBtn.classList.toggle("disabled", reverter.getUndoSize() == 0);
-    redoBtn.classList.toggle("disabled", reverter.getRedoSize() == 0);
-}
-
-
-
 // [[ Track Visual Options ]] //
 
 function initialiseVisualToggles() {
-    let toggles = ["nodes", "wires", "path", "materials", "obstacles", "decorations"];
+    let toggles = ["nodes", "wires", "path", 
+        "materials", "obstacles", "decorations", "grid"];
 
     function applyToggleOnClick(target) {
         let button = document.getElementById(`visuals-${target}`);
@@ -784,8 +814,8 @@ function initialiseTools_Looped() {
         track.setLooped(state);
         renderer.redrawTrack();
 
-        if (selection == track.getPath()[track.getSize() - 1]) {
-            updateDetails_Node(selection);
+        if (selection.Primary == track.getPath()[track.getSize() - 1]) {
+            updateDetails_Node(selection.Primary);
         }
     });
 }
@@ -802,11 +832,11 @@ function initialiseTools_Recentre() {
         for (let node of path) { // calculating the track's centre
             let pos = node.getPosition();
 
-            minX = pos.x() < minX ? pos.x() : minX;
-            maxX = maxX < pos.x() ? pos.x() : maxX;
+            minX = pos.x < minX ? pos.x : minX;
+            maxX = maxX < pos.x ? pos.x : maxX;
 
-            minY = pos.y() < minY ? pos.y() : minY;
-            maxY = maxY < pos.y() ? pos.y() : maxY;
+            minY = pos.y < minY ? pos.y : minY;
+            maxY = maxY < pos.y ? pos.y : maxY;
         }
 
         let oldCentre = new Vector2(minX + (maxX - minX) / 2, minY + (maxY - minY) / 2);
@@ -886,7 +916,7 @@ function onDrawStart(x, y) {
     let mousePos = getRelativePositionOnCanvas(canvas, x, y);
 
     let createPolygon = {
-        [TOOL_TYPE.Material]:   () => { return new Material(null, tool.Secondary); },
+        [TOOL_TYPE.Material]:   () => { return new Material(undefined, tool.Secondary); },
         [TOOL_TYPE.Obstacle]:   () => { return new Obstacle(); },
         [TOOL_TYPE.Decoration]: () => { return new Decoration(); }
     }
@@ -951,7 +981,7 @@ function onDrawMove(x, y) {
         renderer.shiftOffset(pos.sub(last));
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.translate(offset.x(), offset.y());
+        ctx.translate(offset.x, offset.y);
     
     // ... or just drags the selection
     } else if (selection.Primary) {
@@ -1158,8 +1188,8 @@ function initialiseDetails_Node() {
 
     deleteBtn.addEventListener("click", (e) => {
        let node = selection.Primary;
-       deleteNode(true, node);
        selection.Primary = null;
+       deleteNode(true, node);
        showSelectionDetails();
     });
 }
@@ -1256,6 +1286,26 @@ function initialiseElementDetails() {
 
 
 
+// [[ Other UI ]] //
+
+function displayToast(title = "Notification", message = "Default Message", colour = "#59D") {
+    let toast = document.querySelector(".toast");
+
+    let toastIcon = toast.querySelector(".toast-icon");
+    let toastTitle = toast.querySelector(".toast-title");
+    let toastBody = toast.querySelector(".toast-body");
+
+    toastIcon.setAttribute("fill", colour);
+    toastIcon.setAttribute("stroke", colour);
+    toastTitle.innerHTML = title;
+    toastBody.innerHTML = message;
+
+    let bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+
+
 // [[ Set Up ]] //
 
 function loadAllUI() {
@@ -1273,9 +1323,15 @@ function loadAllUI() {
 
     // enables all tooltips on the page
     // * source: https://getbootstrap.com/docs/5.3/components/tooltips/
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    let tooltipTriggerList = document.querySelectorAll("[data-bs-toggle='tooltip']");
+
+    tooltipTriggerList.forEach(tooltip => {
+        new bootstrap.Tooltip(tooltip, { trigger: "hover" })
+    });
+
+    // warns about unsaved changes (if any)
+    window.addEventListener("beforeunload", (e) => {
+        if (changesMade) e.preventDefault();
     });
 }
 
@@ -1286,7 +1342,7 @@ if (trackToLoad) {
     track = new Track();
 }
 
-renderer = new TrackRenderer(track, canvas);
+renderer = new TrackRenderer(track, canvas, spacing);
 reverter = new UndoRedoStack();
 renderer.redrawTrack();
 

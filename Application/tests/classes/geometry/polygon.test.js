@@ -9,7 +9,7 @@ describe("classes.polygon.new", () => {
     it("creates a new polygon with default values (empty)", () => {
         let polygon = new Polygon();
 
-        expect( polygon.getPoints() ).toEqual( [] );
+        expect( polygon.getPoints().length ).toBe( 0 );
     });
 
     it("create a new polygon with points", () => {
@@ -42,7 +42,7 @@ describe("classes.polygon.addPoint", () => {
         expect( points[1] ).toBe( A );
     });
 
-    it ("throws an error if the given point is not a valid Vector2", () => {
+    it ("throws an error if the given point is not a valid PathNode", () => {
         let polygon = new Polygon();
 
         expect( () => polygon.addPoint() ).toThrowError();
@@ -77,5 +77,50 @@ describe("classes.polygon.removePoint", () => {
 
         expect( () => polygon.removePoint(C) ).toThrowError();
         expect( () => polygon.removePoint(D) ).toThrowError();
+    });
+});
+
+describe("classes.polygon.getEdges", () => {
+    it("returns the edges of the polygon as vectors", () => {
+        let A = new PathNode( new Vector2(1, 3) );
+        let B = new PathNode( new Vector2(7, -2) );
+        let C = new PathNode( new Vector2(1.5, -5.6) );
+        let D = new PathNode( new Vector2(1, 3) ); // same as A, but different object!
+
+        let polygon = new Polygon( [A, B, C, D] );
+        let edges = polygon.getEdges();
+
+        expect( edges[0][0] ).toBe( A.getPosition() );
+        expect( edges[0][1] ).toBe( B.getPosition() );
+
+        expect( edges[1][0] ).toBe( B.getPosition() );
+        expect( edges[1][1] ).toBe( C.getPosition() );
+        
+        expect( edges[2][0] ).toBe( C.getPosition() );
+        expect( edges[2][1] ).toBe( D.getPosition() );
+        
+        expect( edges[3][0] ).toBe( D.getPosition() );
+        expect( edges[3][1] ).toBe( A.getPosition() );
+    });
+
+    it("returns no edges when the polygon has no points", () => {
+        let polygon = new Polygon();
+        let edges = polygon.getEdges();
+
+        expect( edges.length ).toBe( 0 );
+    });
+});
+
+describe("classes.polygon (serialisation)", () => {
+    it("can convert itself to an object and back to an instance", () => {
+        let instance = new Polygon([
+            new PathNode( new Vector2(3, 1) ),
+            new PathNode( new Vector2(-2, 5) ),
+            new PathNode( new Vector2(10.5, 10.5) )
+        ]);
+        
+        expect(() => {
+            Polygon.toInstance( instance.toObject() );
+        }).not.toThrowError();
     });
 });

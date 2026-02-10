@@ -1,17 +1,19 @@
 // manages instances of Vector2 objects
 // * a Vector2 is a simple (x, y) vector with basic vector operations
 
+import Validator from "../../utilities/validator.js";
+
+
 export default class Vector2 {
     #x;     // float
     #y;     // float
     
     constructor(x = 0, y = 0) {
-        if (typeof x !== "number" || Number.isNaN(x)) { 
-            throw new Error(`[Vector2] "${x}" is not a number`);
-        }
-        
-        if (typeof y !== "number" || Number.isNaN(y)) {
-            throw new Error(`[Vector2] "${y}" is not a number`);
+        Validator.isPrimitive(x, "number");
+        Validator.isPrimitive(y, "number");
+
+        if (isNaN(x) || isNaN(y)) {
+            throw new Error(`[Vector2] Invalid Vector2 (${x}, ${y})`);
         }
 
         this.#x = x;
@@ -20,26 +22,29 @@ export default class Vector2 {
 
 
     // getters / setters
-    x() { return this.#x; }
-    y() { return this.#y; }
+    get x() { return this.#x; }
+    get y() { return this.#y; }
 
 
     // methods
     add(b) {
+        Validator.isInstance(b, Vector2)
         let a = this;
         return new Vector2(
-            a.x() + b.x(), a.y() + b.y());
+            a.x + b.x, a.y + b.y);
     }
 
     sub(b) {
+        Validator.isInstance(b, Vector2)
         let a = this;
         return new Vector2(
-            a.x() - b.x(), a.y() - b.y());
+            a.x - b.x, a.y - b.y);
     }
 
     scale(s) {
+        Validator.isPrimitive(s, "number")
         let v = this;
-        return new Vector2(v.x() * s, v.y() * s);
+        return new Vector2(v.x * s, v.y * s);
     }
 
     mag() {
@@ -47,23 +52,26 @@ export default class Vector2 {
     }
 
     unit() {
-        let v = this;
         let m = this.mag();
         return this.scale(1 / (m == 0 ? 1 : m));
     }
 
     round() {
         return new Vector2(
-            Math.round(this.x()), Math.round(this.y()));
+            Math.round(this.x), Math.round(this.y));
+    }
+
+    clamp(xMin, xMax, yMin, yMax) {
+        return new Vector2(
+            Math.min(Math.max(this.#x, xMin), xMax),
+            Math.min(Math.max(this.#y, yMin), yMax)
+        );
     }
 
 
     // serialisation
     toObject() {
-        return {
-            x: this.#x,
-            y: this.#y
-        }
+        return { x: this.#x, y: this.#y };
     }
 
     static toInstance(object) {
@@ -71,6 +79,6 @@ export default class Vector2 {
     }
 
     toJson(spaces) {
-        return JSON.stringify(this.toObject(), null, spaces);
+        return JSON.stringify(this.round().toObject(), null, spaces);
     }
 }

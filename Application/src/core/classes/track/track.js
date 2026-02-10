@@ -6,10 +6,11 @@ import TrackNode from "./components/track-node.js";
 import Material from "./components/material.js";
 import Obstacle from "./components/obstacle.js";
 import Decoration from "./components/decoration.js";
+import Validator from "../../utilities/validator.js";
 
 
 export default class Track {
-    #_id;       // int
+    #_id;           // string
 
     #name;          // string
     #description;   // string
@@ -25,18 +26,18 @@ export default class Track {
     #looped;        // boolean
 
     constructor() {
-        this.#name = "New Track";
-        this.#description = "This is a new track";
-        this.#authorId = 0;
-        this.#author = "n/a";
-        this.#tags = [];
+        this.setName("New Track");
+        this.setDescription("This is a new track");
+        this.setAuthorId("0");
+        this.setAuthor("n/a");
+        this.setTags([]);
 
-        this.#path = [];
-        this.#materials = [];
-        this.#obstacles = [];
-        this.#decorations = [];
+        this.setPath([]);
+        this.setMaterials([]);
+        this.setObstacles([]);
+        this.setDecorations([]);
         
-        this.#looped = true;
+        this.setLooped(true);
     }
 
 
@@ -46,35 +47,65 @@ export default class Track {
 
 
     getName() { return this.#name; }
-    setName(name) { this.#name = name; }
+    setName(name) {
+        Validator.isPrimitive(name, "string");
+        this.#name = name;
+    }
 
     getDescription() { return this.#description; }
-    setDescription(description) { this.#description = description; }
+    setDescription(description) {
+        Validator.isPrimitive(description, "string");
+        this.#description = description; 
+    }
 
     getAuthorId() { return this.#authorId; }
-    setAuthorId(id) { this.#authorId = id; }
+    setAuthorId(id) {
+        Validator.isPrimitive(id, "string");
+        this.#authorId = id;
+    }
 
     getAuthor() { return this.#author; }
-    setAuthor(author) { this.#author = author; }
+    setAuthor(author) {
+        Validator.isPrimitive(author, "string");
+        this.#author = author;
+    }
 
     getTags() { return this.#tags; }
-    setTags(tags) { this.#tags = tags; }
+    setTags(tags) {
+        Validator.isPrimitiveList(tags, "string");
+        this.#tags = tags;
+    }
 
 
     getPath() { return this.#path; }
-    setPath(path) { this.#path = path; }
+    setPath(path) {
+        Validator.isInstanceList(path, TrackNode);
+        this.#path = path;
+    }
 
     getMaterials() { return this.#materials; }
-    setMaterials(materials) { this.#materials = materials; }
+    setMaterials(materials) {
+        Validator.isInstanceList(materials, Material);
+        this.#materials = materials; 
+    }
 
     getObstacles() { return this.#obstacles; }
-    setObstacles(obstacles) { this.#obstacles = obstacles; }
+    setObstacles(obstacles) {
+        Validator.isInstanceList(obstacles, Obstacle);
+        this.#obstacles = obstacles;
+    }
 
     getDecorations() { return this.#decorations; }
-    setDecorations(decorations) { this.#decorations = decorations; }
+    setDecorations(decorations) {
+        Validator.isInstanceList(decorations, Decoration);
+        this.#decorations = decorations;
+    }
 
     isLooped() { return this.#looped; }
-    setLooped(looped) { this.#looped = looped; }
+    setLooped(looped) {
+        Validator.isPrimitive(looped, "boolean");
+        this.#looped = looped;
+    }
 
 
     // node methods
@@ -83,29 +114,29 @@ export default class Track {
     }
 
     getNode(index) {
-        this.#validateIndexInBounds(index);
+        Validator.inListBounds(this.#path, index);
         return this.#path[index];
     }
 
     getNodeIndex(node) {
-        return this.#path.findIndex((element) => element == node);
+        return Validator.listPresence(this.#path, node);
     }
 
     getNodeBefore(node) {
-        let index = this.#validateListPresence(this.#path, node);
+        let index = Validator.listPresence(this.#path, node);
         index = (index - 1) < 0 ? this.getSize() - 1 : index - 1;
         return this.#path[index];
     }
 
     getNodeAfter(node) {
-        let index = this.#validateListPresence(this.#path, node);
+        let index = Validator.listPresence(this.#path, node);
         index = (index + 1) % this.getSize();
         return this.#path[index];
     }
 
     addNode(node) {
-        this.#validateIsNode(node);
-        this.#validateListAbsence(this.#path, node);
+        Validator.isInstance(node, TrackNode);
+        Validator.listAbsence(this.#path, node);
         this.#path.push(node);
     }
 
@@ -114,7 +145,7 @@ export default class Track {
     }
 
     removeNode(node) {
-        let index = this.#validateListPresence(this.#path, node);
+        let index = Validator.listPresence(this.#path, node);
         this.#path.splice(index, 1);
     }
 
@@ -125,37 +156,37 @@ export default class Track {
 
     // material methods
     addMaterial(material) {
-        this.#validateIsMaterial(material);
-        this.#validateListAbsence(this.#materials, material);
+        Validator.isInstance(material, Material);
+        Validator.listAbsence(this.#materials, material);
         this.#materials.push(material);
     }
 
     removeMaterial(material) {
-        let index = this.#validateListPresence(this.#materials, material);
+        let index = Validator.listPresence(this.#materials, material);
         this.#materials.splice(index, 1);
     }
 
     // obstacle methods
     addObstacle(obstacle) {
-        this.#validateIsObstacle(obstacle);
-        this.#validateListAbsence(this.#materials, obstacle);
+        Validator.isInstance(obstacle, Obstacle);
+        Validator.listAbsence(this.#obstacles, obstacle);
         this.#obstacles.push(obstacle);
     }
 
     removeObstacle(obstacle) {
-        let index = this.#validateListPresence(this.#obstacles, obstacle);
+        let index = Validator.listPresence(this.#obstacles, obstacle);
         this.#obstacles.splice(index, 1);
     }
 
     // decoration methods
     addDecoration(decoration) {
-        this.#validateIsDecoration(decoration);
-        this.#validateListAbsence(this.#decorations, decoration);
+        Validator.isInstance(decoration, Decoration);
+        Validator.listAbsence(this.#decorations, decoration);
         this.#decorations.push(decoration);
     }
 
     removeDecoration(decoration) {
-        let index = this.#validateListPresence(this.#decorations, decoration);
+        let index = Validator.listPresence(this.#decorations, decoration);
         this.#decorations.splice(index, 1);
     }
 
@@ -203,53 +234,5 @@ export default class Track {
 
     toJson(spaces) {
         return JSON.stringify(this.toObject(), null, spaces);
-    }
-
-
-    // validation
-    #validateIndexInBounds(index) {
-        if (index < 0 || this.getSize() <= index) {
-            throw new Error(`[Track] Index "${index}" is out of bounds`);
-        }
-    }
-
-    #validateIsNode(node) {
-        if( !(node instanceof TrackNode) ) {
-            throw new Error(`[Track] "${node}" is not a TrackNode`);
-        }
-    }
-
-    #validateIsMaterial(material) {
-        if( !(material instanceof Material) ) {
-            throw new Error(`[Track] "${material}" is not a Material`);
-        }
-    }
-
-    #validateIsObstacle(obstacle) {
-        if ( !(obstacle instanceof Obstacle) ) {
-            throw new Error(`[Track] "${obstacle}" is not an Obstacle`);
-        }
-    }
-
-    #validateIsDecoration(decoration) {
-        if ( !(decoration instanceof Decoration) ) {
-            throw new Error(`[Track] "${decoration}" is not an Decoration`);
-        }
-    }
-
-    #validateListPresence(list, element) {
-        let index = list.findIndex((e) => e == element);
-        if (index < 0) {
-            throw new Error(`[Track] ${typeof element} "${element}" is not a part of the track`);
-        }
-        return index;
-    }
-
-    #validateListAbsence(list, element) {
-        let index = list.findIndex((e) => e == element);
-        if (index > -1) {
-            throw new Error(`[Track] ${typeof element} "${element}" is a part of the track`);
-        }
-        return index;
     }
 }

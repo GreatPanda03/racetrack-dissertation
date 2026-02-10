@@ -21,8 +21,16 @@ app.use("/core", express.static("src/core")); // core classes etc.
 const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
 mongoose.connect(uri)
     .then((result) => app.listen(3000))
-    .catch((error) => console.log(error));
+    .catch((error) => {
+        console.log(error);
+        console.log("[CONNECTING WITHOUT DATABASE!]");
+        app.listen(3000);
+    });
 
+/*
+app.listen(3000);
+console.log("RUNNING WITHOUT DATABASE!");
+*/
 
 
 // [[ URL Endpoints ]] //
@@ -47,7 +55,6 @@ app.get("/tracks/build", (request, response) => {
 
 app.get("/tracks/build/:trackId", async (request, response) => {
     try {
-        console.log(request.params.trackId);
         let trackToLoad = await TrackModel.findById( request.params.trackId );
 
         if (trackToLoad) {
@@ -118,7 +125,7 @@ app.post("/tracks/save", async (request, response) => {
 
         if (track._id) {
             await TrackModel.findByIdAndUpdate(
-                track._id, { "$set": track }, { new: true });
+                track._id, { "$set": track }, { returnDocument: "after" });
             
         } else {
             await new TrackModel(track).save();

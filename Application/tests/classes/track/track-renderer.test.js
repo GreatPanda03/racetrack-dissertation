@@ -1,15 +1,22 @@
 import { describe, it, expect } from "vitest";
 
 import {
-    Track, TrackRenderer
+    Track, TrackForm, TrackRenderer
 } from "../../../src/core";
 
 import { JSDOM } from "jsdom";
 
 
 describe("classes.track-renderer.new", () => {
-    it("creates a new TrackRenderer instance", () => {
+    it("creates a new default TrackRenderer instance", () => {
+        let track = new Track();
+        let canvas = new JSDOM("<canvas></canvas>").window.document.getElementsByTagName("canvas")[0];
 
+        let renderer = new TrackRenderer(track, canvas);
+
+        expect( renderer.getCanvas() ).toBe( canvas );
+        expect( renderer.getTrackForm() instanceof TrackForm ).toBe( true );
+        expect( renderer.getSpacing() ).toBe( 25 );
     });
 
     it("throws an error if track is not a Track", () => {

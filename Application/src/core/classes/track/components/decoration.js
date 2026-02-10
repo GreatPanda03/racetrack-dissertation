@@ -3,6 +3,7 @@
 
 import PathNode from "../../geometry/path-node.js";
 import Polygon from "../../geometry/polygon.js";
+import Validator from "../../../utilities/validator.js";
 
 
 export default class Decoration extends Polygon {
@@ -11,13 +12,16 @@ export default class Decoration extends Polygon {
     constructor(points = [], colour = "#cc77ff") {
         super(points);
 
-        this._colour = colour;
+        this.setColour(colour);
     }
 
 
     // methods
-    getColour() { return this._colour };
-    setColour(colour) { this._colour = colour };
+    getColour() { return this._colour; };
+    setColour(colour) { 
+        Validator.isPrimitive(colour, "string");
+        this._colour = colour;
+    };
 
 
     // serialisation

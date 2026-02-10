@@ -2,28 +2,37 @@
 // * RaceInstance represents an active race session with details about 
 //     racecars and the game state
 
-// * source: "How to check if two given line segments intersect?", GeeksforGeeks, geeksforgeeks.org, [Online]. Accessed: Nov 29, 2025. Available at: https://www.geeksforgeeks.org/dsa/check-if-two-given-line-segments-intersect/
 // * source: M. Shimrat, "Algorithm 112: Position of point relative to polygon", Commun. ACM, vol. 5, no. 8, p. 434, Aug. 1962.
 
 import Vector2 from "../geometry/vector2.js";
-import TrackBoundaries from "../track/track-boundaries.js";
+import Line from "../geometry/line.js";
+import Track from "../track/track.js";
+import TrackForm from "../track/track-form.js";
 import RaceCar from "../gameplay/racecar.js";
 import RaceStats from "../gameplay/race-stats.js";
+import Validator from "../../utilities/validator.js";
 import RACECAR_STATE from "../../enums/racecar-state.js";
 import MATERIAL_INFO from "../../enums/material-info.js";
 
 
 export default class RaceInstance {
     #track;         // Track
-    #boundaries;    // TrackBoundaries
+    #form;          // TrackForm
     #racecars;      // RaceCar[]
     #raceStats;     // {RaceCar: RaceStats}
+    #spacing;       // float
 
-    constructor(track, racecars = []) {
+    constructor(track, racecars = [], spacing = 10) {
+        Validator.isInstance(track, Track);
+        Validator.isInstanceList(racecars, RaceCar);
+        Validator.isPrimitive(spacing, "number");
+        if (isNaN(spacing)) throw new Error(`[RaceInstance] Bad spacing "${spacing}"`);
+
         this.#track = track;
-        this.#boundaries = new TrackBoundaries(track);
+        this.#form = new TrackForm(track);
         this.#racecars = [];
-        this.#raceStats = {};
+        this.#raceStats = {};   // TODO: not sure if objects work as keys...
+        this.#spacing = spacing;
 
         if (racecars.length > 0) {
             for (let racecar of racecars) this.addRacecar(racecar);
@@ -33,9 +42,10 @@ export default class RaceInstance {
 
     // getters / setters
     getTrack() { return this.#track; }
-    getBoundaries() { return this.#boundaries; }
+    getForm() { return this.#form; }
     getRacecars() { return this.#racecars; }
     getRaceStats() { return this.#raceStats; }
+    getSpacing() { return this.#spacing; }
 
 
     // methods
@@ -44,13 +54,8 @@ export default class RaceInstance {
         let racecars = this.#racecars;
         let raceStats = this.#raceStats;
 
-        if (! (racecar instanceof RaceCar) ) {
-            throw new Error(`[RaceInstance] "${racecar}" is not a valid RaceCar`);
-        }
-
-        if (racecars.includes(racecar)) {
-            throw new Error(`[RaceInstance] "${racecar}" is already in the race`);
-        }
+        Validator.isInstance(racecar, RaceCar);
+        Validator.listAbsence(racecars, racecar);
 
         racecars.push(racecar);
         raceStats[racecar] = new RaceStats(track);
@@ -59,81 +64,68 @@ export default class RaceInstance {
     getRacecarStats(racecar) {
         let raceStats = this.#raceStats;
 
-        if ( !(racecar in raceStats) ) {
-            throw new Error(`[RaceInstance] "${racecar}" does not have stats`);
-        }
+        Validator.keyPresence(raceStats, racecar);
 
         return raceStats[racecar];
     }
 
     prepareRacecars() {
         let track = this.#track;
-        let raceStats = this.#raceStats;
+        let looped = track.isLooped();
         let racecars = this.#racecars;
+        let spacing = this.#spacing;
 
         let startPos = track.getPath()[0].getPosition();
-        
-        for (let racecar of racecars) {
-            racecar.setPosition(new Vector2(
-                Math.round(startPos.x() / 25), // TODO: use grid spacing
-                Math.round(startPos.y() / 25)
-            ));
 
-            raceStats[racecar].addToPath(racecar.getPosition());
+        if (!looped) { // starts before directional dot
+            let end = track.getPath()[1].getPosition();
+            let unit = end.sub(startPos).unit();
+            startPos = startPos.add(unit.scale(spacing));
+        }
+
+        for (let racecar of racecars) {
+            racecar.setPosition(startPos.scale(1 / spacing).round());
         }
     }
 
+    // [source 1] - collisions
     moveRacecar(racecar, acceleration) {
-        if ( !(racecar instanceof RaceCar) ) {
-            throw new Error(`[RaceInstance] "${racecar}" is not a valid RaceCar`);
-        }
-
-        if ( !(acceleration instanceof Vector2) ) {
-            throw new Error(`[RaceInstance] "${acceleration}" is not a valid Vector2`);
-        }
+        Validator.isInstance(racecar, RaceCar);
+        Validator.isInstance(acceleration, Vector2);
 
         let track = this.#track;
-        let boundaries = this.#boundaries;
-        let stats = this.#raceStats[racecar];
+        let form = this.#form;
+        let spacing = this.#spacing;
+        let stats = this.getRacecarStats(racecar);
 
-        if (!stats) {
-            throw new Error(`[RaceInstance] "${racecar}" has no stats to update for move`);
-        }
-
-        let oldPos = racecar.getPosition().scale(25);
+        let oldPos = racecar.getPosition();
 
         racecar.accelerate(acceleration);
         racecar.move();
-        stats.addToPath(racecar.getPosition());
 
-        let newPos = racecar.getPosition().scale(25);
+        let newPos = racecar.getPosition();
+        let route = new Line(oldPos.scale(spacing), newPos.scale(spacing));
+        let realPath = new Line(oldPos, newPos); // assume OK path
 
         // passing main checkpoints (must pass previous ones first)
-        // * also accumulating passes for finish line if crossed
 
         // * TODO: handle logic for 0 checkpoints - can just recross start...
         //     force at least ONE checkpoint half way around the track?
         let allPassed = true;
         let checkpoints = stats.getCheckpoints();
 
-        for (let [c1, checkpoint] of checkpoints.entries()) {
-            let index = track.getNodeIndex(checkpoint.node);
-            let left = boundaries.getLeftSide()[index].getPosition();
-            let right = boundaries.getRightSide()[index].getPosition();
+        // done backwards: suppose race car passes 4 then 3 in one go
+        // * should ONLY count 3, not 4
+        for (let c = checkpoints.length - 1; c >= 0; c--) {
+            let checkpoint = checkpoints[c];
+            if (checkpoint.passed) continue;
 
-            let crossed = TrackBoundaries.doLinesIntersect(oldPos, newPos, left, right);
+            let checkpointLine = form.getNodeSpan(checkpoint.index);
+            let crossed = route.getIntersection(checkpointLine);
 
             if (crossed) {
-                let valid = true;
-
-                for (let c2 = 0; c2 < c1 - 1; c2++) {
-                    if (!checkpoints[c2].passed) {
-                        valid = false;
-                        break;
-                    }
-                }
-
-                stats.setCheckpointPassed(checkpoint.node, valid);
+                let inOrder = (c == 0) ? true : checkpoints[c - 1].passed;
+                checkpoint.passed = inOrder;
             }
 
             if (!checkpoint.passed) {
@@ -144,56 +136,35 @@ export default class RaceInstance {
         // passing the finish line with all checkpoints crossed (win condition)
         if (allPassed) {
             let index = track.isLooped() ? 0 : track.getSize() - 1;
+            let finishLine = form.getNodeSpan(index);
 
-            let left = boundaries.getLeftSide()[index].getPosition();
-            let right = boundaries.getRightSide()[index].getPosition();
-
-            let crossed = TrackBoundaries.doLinesIntersect(
-                oldPos, newPos, left, right);
+            let crossed = route.getIntersection(finishLine);
 
             if (crossed) {
                 stats.setState(RACECAR_STATE.Finished);
-                return;
+                realPath = new Line(oldPos, crossed.scale(1 / spacing));
             }
         }
 
-        // [source 2] track boundary collision detection
+        // track boundary collision detection
         // * check for crashes last, in case crossing the finish line
-        for (let boundary of boundaries.getBoundaries()) {
-            let crossed = TrackBoundaries.doLinesIntersect(oldPos, newPos, boundary[0], boundary[1]);
-            if (crossed) stats.setState(RACECAR_STATE.Crashed);
+        if (stats.getState() != RACECAR_STATE.Finished) {
+            for (let boundary of form.getBoundaries()) {
+                let crossed = route.getIntersection(boundary);
+                
+                if (crossed) {
+                    stats.setState(RACECAR_STATE.Crashed);
+                    realPath = new Line(oldPos, crossed.scale(1 / spacing));
+                }
+            }
         }
-
-        // TODO: if the crash boundary / finish line is crossed, adjust time accordingly
-
-        /*
-
-        * source: https://www.youtube.com/watch?v=bvlIYX9cgls
-        * - calculates an alpha and a beta, then determines whether they intersect or not
-        *     based on the values they have...
-        * ... but since i already check for an intersection, i can just use whatever value
-        *   either alpha or beta produce
-        * 
-        * alpha = (p22.x - p21.x) * (p21.y - p11.y) - (p22.y - p21.y) * (p21.x - p11.x)
-        *       / (p22.x - p21.x) * (p12.y - p11.y) - (p22.y - p21.y) * (p12.x - p11.x)
-        * 
-        * direction = p21.sub(p11)
-        * 
-        * :. distance travelled = alpha * direction
-
         
-        * source: https://www.youtube.com/watch?v=-fCvkUZPxX4
-        * 
-        * using the distance over acceleration, calculate the time
-        * :. d = 0.5 * a * t^2
-        * => t = sqrt(2d / a)
-        * 
-        * ... then add this result onto the final time!
-        * (or deduct from 1s if i can't figure out how to NOT do the last stat update)
-
-        */
+        // logging the final path for stats
+        stats.addMove(realPath, racecar.getVelocity());
+        racecar.setPosition(realPath.end);
     }
 
+    // [source 1] - containment
     getPossibleMoves(racecar) {
 
         /*
@@ -211,8 +182,9 @@ export default class RaceInstance {
         */
 
         // determining the current material (if any)
-        let pos = racecar.getPosition().scale(25);
-        let ray = new Vector2(10000, 0);
+        let spacing = this.#spacing;
+        let pos = racecar.getPosition().scale(spacing);
+        let ray = new Line(pos, new Vector2(10000, 0));
 
         let track = this.#track; 
         let materials = track.getMaterials();
@@ -223,7 +195,7 @@ export default class RaceInstance {
             let edges = material.getEdges();
             
             for (let edge of edges) {
-                let crossed = TrackBoundaries.doLinesIntersect(pos, ray, edge[0], edge[1]);
+                let crossed = ray.getIntersection(edge);
                 if (crossed) crosses += 1;
             }
 
@@ -235,7 +207,7 @@ export default class RaceInstance {
 
         // gathering possible moves based on material
         let moves = [];
-        let acc = racecar.getMaxAcceleration().x();
+        let acc = racecar.getMaxAcceleration().x;
         let effect;
 
         if (onMaterial) {
@@ -271,8 +243,8 @@ export default class RaceInstance {
             let finalVelocity = velocity.add(move.Offset);
 
             if (
-                   Math.abs(finalVelocity.x()) > maxSpeed.x()
-                || Math.abs(finalVelocity.y()) > maxSpeed.y()
+                   Math.abs(finalVelocity.x) > maxSpeed.x
+                || Math.abs(finalVelocity.y) > maxSpeed.y
             ) {
                 move.Active = false;
             }

@@ -1,31 +1,29 @@
 // manages instances of RaceStats objects
 // * RaceStats stores live race statistics about a player
 
+// * source: holdensclass (2019), "Acceleration Equation x = vit + 1/2at^2 in use and how to rearrange", [Online Video]. Available at: https://www.youtube.com/watch?v=-fCvkUZPxX4. Accessed: Feb. 8, 2026.
 
-// [[ Imports ]] //
 import Vector2 from "../geometry/vector2.js";
+import Line from "../geometry/line.js";
 import Track from "../track/track.js";
 import RACECAR_STATE from "../../enums/racecar-state.js";
+import Validator from "../../utilities/validator.js";
 
 
-
-// [[ Main Class ]] //
 export default class RaceStats {
     #track;         // Track
-    #path;          // [[Vector2, Vector2], ...]
+    #moves;         // [[path: Line, velocity: Velocity], ...]
     #distance;      // float
     #time;          // float
     #topSpeed;      // float
     #checkpoints    // [{node: TrackNode, passed: boolean}, ...]
-    #state;         // RacecarState (enum)
+    #state;         // RACECAR_STATE (enum)
 
     constructor(track) {
-        if ( !(track instanceof Track) ) {
-            throw new Error(`[RaceStats] "${track}" is not a Track`);
-        }
+        Validator.isInstance(track, Track);
         
         this.#track = track;
-        this.#path = []
+        this.#moves = []
         this.#distance = 0;
         this.#time = 0;
         this.#topSpeed = 0;
@@ -38,7 +36,7 @@ export default class RaceStats {
             let node = path[n];
 
             if (node.isCheckpoint()) {
-                this.#checkpoints.push({node: node, passed: false});
+                this.#checkpoints.push({index: n, passed: false});
             }
         }
     }
@@ -46,82 +44,60 @@ export default class RaceStats {
 
     // getters / setters
     getTrack() { return this.#track; }
-    getPath() { return this.#path; }
+    getMoves() { return this.#moves; }
     getDistance() { return this.#distance; }
     getTime() { return this.#time; }
     getTopSpeed() { return this.#topSpeed; }
     getCheckpoints() { return this.#checkpoints; }
 
     getState() { return this.#state; }
-    setState(active) { this.#state = active; }
+    setState(state) {
+        Validator.valuePresence(RACECAR_STATE, state);
+        this.#state = state;
+    }
 
 
     // methods
-    addToPath(point) {
-        if ( !(point instanceof Vector2) ) {
-            throw new Error(`[RaceStats] "${point}" is not a valid point`);
-        }
+    addMove(line, velocity) {
+        Validator.isInstance(line, Line);
+        Validator.isInstance(velocity, Vector2);
 
-        this.#path.push(point);
+        this.#moves.push({Path: line, Velocity: velocity});
 
-        let size = this.#path.length;
-        if (size <= 1) return;
+        // TODO: should TECHNICALLY use [source 1]...
+        // * velocity change isn't instantaneous! 
 
-        let oldPos = this.#path[size - 2];
-        let newPos = this.#path[size - 1];
-
-        let speed = newPos.sub(oldPos).mag();
+        let distance = line.end.sub(line.start).mag();
+        let speed = velocity.mag();
         let topSpeed = this.#topSpeed;
         
         this.#distance += speed
-        this.#time += 1;
+        this.#time += speed > 0 ? distance / speed : 1;
         this.#topSpeed = speed > topSpeed ? speed : topSpeed;
     }
-
-    popFromPath() {
-        return this.#path.pop();
-    }
-
-    setCheckpointPassed(checkpoint, passed) {
-        let info = this.#getCheckpointInfo(checkpoint);
-        info.passed = passed;
-    }
-
-    isCheckpointPassed(checkpoint) {
-        let info = this.#getCheckpointInfo(checkpoint);
-        return info.passed;
-    }
-
-    getMoves() {
-        return Math.max(this.#path.length - 1, 0); // first point of path is not a move
-    }
-
+    
     calculateStats() {
-        let path = this.#path;
+        let moves = this.#moves;
 
-        let distance = 0;
+        let totalDistance = 0;
+        let totalTime = 0;
         let topSpeed = 0;
 
-        for (let p = 0; p < path.length - 1; p++) {
-            let speed = path[p + 1].sub(path[p]).mag(); // divided by t
-            distance += speed
-            topSpeed = speed > topSpeed ? speed : topSpeed;
+        for (let move of moves) {
+            let line = move.Path;
+            let velocity = move.Velocity;
+
+            let distance = line.end.sub(line.start).mag();
+            let speed = velocity.mag();
+            let time = speed > 0 ? distance / speed : 1;
+
+            totalDistance += distance;
+            totalTime += time;
+            topSpeed = Math.max(speed, topSpeed);
         }
         
-        this.#distance = distance;
-        this.#time = this.getMoves();
+        this.#distance = totalDistance;
+        this.#time = totalTime;
         this.#topSpeed = topSpeed;
-    }
-
-
-    // validation
-    #getCheckpointInfo(node) {
-        for (let checkpoint of this.#checkpoints) {
-            if (checkpoint.node == node) {
-                return checkpoint;
-            }
-        }
-        
-        throw new Error(`[RaceStats] "${node}" is not a recognised checkpoint`);
     }
 }

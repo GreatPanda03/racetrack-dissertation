@@ -277,11 +277,27 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 <summary>Track Saving & Listing</summary>
 
 - As of the last entry:
-    - Implemented v1.4.0 - v1.5.0 (see changelog)
+    - Implemented v1.4.0 - v1.6.0 (see changelog)
     - Prepared draft slide deck for interview to review in the meeting
 
-- Supervisor meeting will be held on **2026/02/05 THU**
-    - ...
+- Supervisor meeting held on **2026/02/05 THU**
+    - Discussed presentation slides improvement (split up slides, add pictures, avoid redundancy to save time, may be good to interweave demo!)
 
 </details>
 
+---
+
+### 2026/03/05 MAR
+<details>
+<summary>V2 Completion & Project Interview</summary>
+
+- As of the last entry:
+    - Implemented v1.7.0 (see changelog)
+
+- Interview will be held on **2026/02/11 WED**
+    - ...
+
+- Supervisor meeting will be held on **2026/03/05 MAR**
+    - ...
+
+</details>

@@ -13,6 +13,44 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.7.0
+**Date:** 2026/02/10
+<details>
+<summary>V1 Cleanup - Testing & Bug Fixes (Part 1)</summary>
+
+**Additions / Changes:**
+1. (DEV) Mass unit testing of all V1 features to prepare for V2!
+2. Added Save confirmation when leaving the track builder with unsaved changes
+3. Added toasts for clearer Save / Apply confirmations
+4. Added a grid visual toggle to the track builder
+5. Limited node-related position rounding to JSON conversion
+    * So that JSON numbers aren't using unnecessary decimals, but also not to interfere with established (and otherwise correct) unit tests...
+6. Added a new track, "The Spotted Starfish"
+7. Moves which cause crashes are now shown as part of a race car's path
+8. (DEV) Other development overhauls:
+    * Reworked line intersection calculation (now returns intersection point)
+    * Officially introduced Validator class into validation
+    * Vector2 getters now use `get` syntax (use `vector.x` & `vector.y` instead of `vector.x()` & `vector.y()`)
+    * Added Line class for better line definition and replaced line-like structured with it
+    * Consolidated `TrackBoundaries` into `TrackForm`, which now stores `nodeSpans` and `boundaries` (no more `leftSide` and `rightSide`)
+    * Adjusted checkpoint checks to be `O(n)` rather than `O(n^2)` (only need to check previous node)
+    * Grid spacing can now be defined for races (changed to 10px by default from 25px, not yet user facing)
+
+**Bugs Fixed:**
+1. Fixed final time to account for the exact moment a finish or crash is made
+2. Fixed race cars to start from a safe space for unlooped tracks (race cars now start right before the directional dot on unlooped tracks)
+3. Fixed tooltips persisting after selecting buttons in the track builder
+4. Fixed excess drawing artefacts at the end of unlooped tracks of certain lengths (misdiagnosed as occurring for 2-node-long tracks)
+5. Fixed flipping unlooped tracks causing nodes to shift one more node along than expected
+6. Fixed live race stats panel overlapping the canvas when the screen is too narrow (now absolutely positioned beside canvas, bandaid...)
+7. Fixed option to restart showing when completing the race (no longer shows)
+8. Fixed details of final node not updating when making track looped again if it's selected
+
+**NOTE:** Aware that some test cases don't work and that many aren't yet covered, and that edge cases are missing - WIP!!!
+</details>
+
+---
+
 ### Version: 1.6.0
 **Date:** 2026/02/01
 <details>
@@ -28,7 +66,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
     * Re-added the canvas pan tool button (non-functional)
     * Changed material droplet icons to match the respective material colour
     * Swapped columns of build and manipulation options
-5. Recentring the track now accounts for polygons
+5. Recentring the track now accounts for polygons 
 6. (DEV) Re-organised track builder code
 
 **Bugs Fixed:**
@@ -64,7 +102,9 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 <br>No existing bugs fixed.
 
 **Bugs Discovered:**
-1. Aware that some UI elements "overlap" when the screen is too narrow
+1. Aware that some UI elements "spill over" when the screen is too narrow, namely:
+    * Tracks List track details popup
+    * Live race stats panel
 
 </details>
 
@@ -116,7 +156,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 1. Amended gravel slowing race cars down to a complete stop (if at 0 m/s, acts like Curb)
 
 **Bugs Discovered:**
-1. Aware that flipping an unlooped track causes the nodes to shift 1 node more than required
+1. (FIXED 1.7.0) Aware that flipping an unlooped track causes the nodes to shift 1 node more than required
 
 </details>
 
@@ -149,7 +189,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 <br>No existing bugs fixed.
 
 **Bugs Discovered:**
-1. Aware of rendering issue at the end of the final node for 2-node unlooped tracks
+1. (FIXED 1.7.0) Aware of rendering issue at the end of the final node for 2-node unlooped tracks
 
 </details>
 
@@ -226,7 +266,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 3. Final node of unlooped tracks has a locked checkpoint value (forced to be `true`)
 
 **Bugs Discovered:**
-1. Aware that builder button tooltips persist after selection until clicking elsewhere
+1. (FIXED 1.7.0) Aware that builder button tooltips persist after selection until clicking elsewhere
 
 </details>
 
@@ -250,8 +290,8 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 3. Amended crashing for spots close to but within track limits
 
 **Bugs Discovered:**
-1. Aware that race cars can start behind starting lines for unlooped tracks which makes them unplayable due to instant crashing (not an issue for existing tracks yet)
-2. Aware that race car's dont crash/finish at the track boundary/finish line (linked to longer race time when crossing the finish line)
+1. (FIXED 1.7.0) Aware that race cars can start behind starting lines for unlooped tracks which makes them unplayable due to instant crashing (not an issue for existing tracks yet)
+2. (FIXED 1.7.0) Aware that race car's dont crash/finish at the track boundary/finish line (linked to longer race time when crossing the finish line)
 
 </details>
 
@@ -279,7 +319,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 **Bugs Discovered:**
 1. (FIXED 0.6.0) Aware that crashes sometimes happen when very close to the track edge
-2. Final time should end sooner when making the final move across the finish line
+2. (FIXED 1.7.0) Final time should end sooner when making the final move across the finish line
 
 </details>
 

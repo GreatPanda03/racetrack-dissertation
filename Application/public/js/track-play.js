@@ -25,9 +25,9 @@ var trackCanvas = document.getElementById("track-canvas");
 var playCanvas = document.getElementById("play-canvas");
 
 var spacing = 25; // pixels between each grid cell
-var spotRadius = 10;
-var racecarRadius = 7;
-var pointRadius = 3;
+var spotRadius = (spacing / 2) * 0.85;
+var racecarRadius = spotRadius * 0.75;
+var pointRadius = racecarRadius * 0.35;
 var offset = new Vector2();
 
 var timeElapsed = 0;
@@ -36,12 +36,20 @@ var timeElapsed = 0;
 
 // [[ Gameplay & Controls ]] //
 
-// loads the given track 
+function getRelativePositionOnCanvas(canvas, x, y) {
+    let rect = canvas.getBoundingClientRect();
+
+    return new Vector2(
+        x - rect.left - offset.x, 
+        y - rect.top  - offset.y
+    );
+}
+
 function loadTrack(trackToLoad, racecarId) {
     let track = Track.toInstance(trackToLoad);
-    let racecarType = RACECAR_INFO.find((r) => r.Id == racecarId)
+    let racecarType = Object.values(RACECAR_INFO).find((r) => r.Id == racecarId)
 
-    trackRenderer = new TrackRenderer(track, trackCanvas);
+    trackRenderer = new TrackRenderer(track, trackCanvas, spacing);
     trackRenderer.setVisibility("nodes", false);
     trackRenderer.setVisibility("wires", false);
     trackRenderer.redrawTrack();
@@ -49,9 +57,9 @@ function loadTrack(trackToLoad, racecarId) {
     raceRenderer = new CanvasRenderer(playCanvas);
 
     let racecar = new RaceCar();
-    racecar.setType(racecarType);
+    racecar.setType(racecarType.Name);
 
-    raceInstance = new RaceInstance(track, [racecar]);
+    raceInstance = new RaceInstance(track, [racecar], spacing);
 
     renderRacecars();
 
@@ -61,8 +69,6 @@ function loadTrack(trackToLoad, racecarId) {
     updateLiveStats(racecar);
 }
 
-
-// allows the canvas to be interacted with to detect move choices
 function initialisePlayCanvas() {
     playCanvas.addEventListener("click", (e) => {
         let racecar = raceInstance.getRacecars()[0];
@@ -98,18 +104,18 @@ function initialisePlayCanvas() {
         let state = raceInstance.getRacecarStats(racecar).getState();
 
         if (state == RACECAR_STATE.Racing) {
-            displayMoves(
-                racecar, raceInstance.getPossibleMoves(racecar));
+            displayMoves(racecar, 
+                raceInstance.getPossibleMoves(racecar));
         
         } else {
             let stats = raceInstance.getRacecarStats(racecar);
             endRace(stats, state)
         }
+
+        console.log(raceInstance.getRacecarStats(racecar).getCheckpoints());
     });
 }
 
-
-// prepares the race results popup functionality
 function initialiseResultsPopup() {
     let buildBtn = document.getElementById("results-build");
     let retryBtn = document.getElementById("results-retry");
@@ -118,20 +124,21 @@ function initialiseResultsPopup() {
 
         // TODO: generalise this
         let racecar = raceInstance.getRacecars()[0];
-        let raceStats = raceInstance.getRacecarStats(racecar);
+        let stats = raceInstance.getRacecarStats(racecar);
 
-        if (raceStats.getState() == RACECAR_STATE.Crashed) {
-            raceStats.popFromPath();
-            raceStats.setState(RACECAR_STATE.Racing);
+        if (stats.getState() == RACECAR_STATE.Crashed) {
+            stats.setState(RACECAR_STATE.Racing);
             
-            let path = raceStats.getPath();
-            let lastPos = path[path.length - 1];
+            let moves = stats.getMoves();
+            let lastPath = moves[moves.length - 1].Path;
+            let lastPos = lastPath.start;
 
             racecar.setPosition(lastPos);
             racecar.setVelocity(new Vector2());
 
             renderRacecars();
             displayMoves(racecar, raceInstance.getPossibleMoves(racecar));
+            updateLiveStats(racecar);
         }
     });
 
@@ -147,15 +154,14 @@ function initialiseResultsPopup() {
     });
 }
 
-
-// officially ends the race
 function endRace(stats, state) {
     let titleText;
 
     let popup = document.getElementById("modal-race-results");
     let results = popup.getElementsByClassName("results")[0];
+    let retryBtn = document.getElementById("results-retry");
 
-    let moves = stats.getMoves();
+    let moveCount = stats.getMoves().length;
     let distance = stats.getDistance().toFixed(3);
     let time = stats.getTime().toFixed(3);
     let topSpeed = stats.getTopSpeed().toFixed(3);
@@ -163,7 +169,7 @@ function endRace(stats, state) {
 
     results.innerHTML = 
         `<p>
-                <b>Total Moves:</b> ${moves}
+                <b>Total Moves:</b> ${moveCount}
             <br><b>Distance:</b> ${distance} m
             <br><b>Time:</b> ${time} s
             <br><b>Top Speed:</b> ${topSpeed} m/s
@@ -175,14 +181,18 @@ function endRace(stats, state) {
 
         let modal = new bootstrap.Modal(popup);
         modal.show();
+        
         titleText = "You Crashed!";
+        retryBtn.hidden = false;
 
     } else if (state == RACECAR_STATE.Finished) {
         popup.querySelector(".modal-footer").hidden = true;
 
         let modal = new bootstrap.Modal(popup);
         modal.show();
+        
         titleText = "You Finished the Race!";
+        retryBtn.hidden = true;
     }
 
     let buildBtn = document.getElementById("results-build");
@@ -199,23 +209,27 @@ function endRace(stats, state) {
 
 // [[ Canvas Visualisations ]] // 
 
-// renders the race car to the track
 function renderRacecars() {
     raceRenderer.clearCanvas();
     
     for (let racecar of raceInstance.getRacecars()) {
         let pos = racecar.getPosition().scale(spacing);
-        let raceStats = raceInstance.getRacecarStats(racecar);
+        let stats = raceInstance.getRacecarStats(racecar);
 
-        raceRenderer.drawCircle(pos, racecarRadius, "#A00");  // racecar
+        raceRenderer.drawCircle(pos, racecarRadius, "#A00");
 
-        let racecarPath = raceStats.getPath();              // racecar path (first dot)
-        let firstDot = racecarPath[0].scale(spacing); 
-        raceRenderer.drawCircle(firstDot, pointRadius, "#A00");
+        let moves = stats.getMoves();
 
-        for (let p = 0; p < racecarPath.length - 1; p ++) {
-            let start = racecarPath[p].scale(spacing);
-            let end = racecarPath[p + 1].scale(spacing);
+        if (moves.length > 0) {
+            let path = moves[0].Path;
+            let start = path.start.scale(spacing);
+            raceRenderer.drawCircle(start, pointRadius, "#A00");
+        }
+
+        for (let move of moves) { // race car path
+            let path = move.Path;
+            let start = path.start.scale(spacing);
+            let end = path.end.scale(spacing);
 
             raceRenderer.drawLine(start, end, 1, "#A00");
             raceRenderer.drawCircle(end, pointRadius, "#A00");
@@ -223,8 +237,6 @@ function renderRacecars() {
     }
 }
 
-
-// displays the available subsequent velocities for the player
 function displayMoves(racecar, moves) {
     let centre = racecar.getPosition().add(racecar.getVelocity());
 
@@ -237,14 +249,14 @@ function displayMoves(racecar, moves) {
 }
 
 
-// updates the race header
+
+// [[ Race Stats ]] //
+
 function updateRaceHeader() {
     let raceTime = document.getElementById("race-time");
     raceTime.innerHTML = `<b>Time:</b> ${timeElapsed} seconds`;
 }
 
-
-// displays the player's live race stats
 function updateLiveStats(racecar) {
     let statsBody = document.getElementById("stats-body");
     let stats = raceInstance.getRacecarStats(racecar);
@@ -252,16 +264,20 @@ function updateLiveStats(racecar) {
 
     let velocity = racecar.getVelocity();
     
-    let avgSpeed = stats.getDistance() / stats.getTime();
+    let moveCount = stats.getMoves().length;
+    let distance = stats.getDistance().toFixed(3);
+    let topSpeed = stats.getTopSpeed().toFixed(3);
+    let avgSpeed = (distance / stats.getTime()).toFixed(3);
+
     avgSpeed = isNaN(avgSpeed) ? 0 : avgSpeed;
 
     content += `
-        <span> <b>Velocity:</b> (${velocity.x()}, ${-velocity.y()}) m/s </span>
+        <span> <b>Velocity:</b> (${velocity.x}, ${-velocity.y}) m/s </span>
         <hr>
-        <span> <b>Moves:</b> ${stats.getMoves()} </span>
-        <span> <b>Distance:</b> ${stats.getDistance().toFixed(3)} m </span>
-        <span> <b>Top Speed:</b> ${stats.getTopSpeed().toFixed(3)} m/s </span>
-        <span> <b>Avg. Speed:</b> ${avgSpeed.toFixed(3)} m/s </span>
+        <span> <b>Moves:</b> ${moveCount} </span>
+        <span> <b>Distance:</b> ${distance} m </span>
+        <span> <b>Top Speed:</b> ${topSpeed} m/s </span>
+        <span> <b>Avg. Speed:</b> ${avgSpeed} m/s </span>
         <hr>
     `;
 
@@ -296,18 +312,6 @@ function updateLiveStats(racecar) {
     }
 
     statsBody.innerHTML = content;
-}
-
-
-// returns the position of the mouse relative to the canvas
-// * TODO: make this a generic utility function?
-function getRelativePositionOnCanvas(canvas, x, y) {
-    let rect = canvas.getBoundingClientRect();
-
-    return new Vector2(
-        x - rect.left - offset.x(), 
-        y - rect.top  - offset.y()
-    );
 }
 
 

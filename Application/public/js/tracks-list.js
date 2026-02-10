@@ -11,6 +11,7 @@ import {
 
 // [[ Variables ]] // 
 var selectedTrack;
+var spacing = 25;
 
 
 
@@ -93,10 +94,10 @@ function loadAllRaceCarTypes() {
 
     racecarInput.innerHTML = "";
 
-    for (let racecar of RACECAR_INFO) {
+    for (let info of Object.values(RACECAR_INFO)) {
         let option = document.createElement("option");
-        option.value = racecar.Id;
-        option.innerHTML = racecar.Name;
+        option.value = info.Id;
+        option.innerHTML = info.Name;
         racecarInput.appendChild(option);
     }
 
@@ -146,7 +147,7 @@ function createTrackEntry(track) {
 
     title.innerHTML = track.getName();
 
-    let renderer = new TrackRenderer(track, canvas);
+    let renderer = new TrackRenderer(track, canvas, spacing);
     renderer.setVisibility("nodes", false);
     renderer.setVisibility("wires", false);
     renderer.setScale(canvas.width / 750);
@@ -173,7 +174,7 @@ function showTrackDetails(track) {
 
     let canvas = document.getElementById("details-canvas");
 
-    let renderer = new TrackRenderer(track, canvas);
+    let renderer = new TrackRenderer(track, canvas, spacing);
     renderer.setVisibility("nodes", false);
     renderer.setVisibility("wires", false);
     renderer.setScale(canvas.width / 750);
@@ -194,14 +195,14 @@ function updateRaceCarDetails() {
     let racecarInput = document.getElementById("details-racecar-input");
     let id = racecarInput.value;
 
-    let racecar = RACECAR_INFO.find((r) => r.Id == id);
+    let racecar = Object.values(RACECAR_INFO).find((r) => r.Id == id);
 
     let detailsBody = document.getElementById("details-racecar-info");
 
     detailsBody.innerHTML = `
         <span> ${racecar.Description} </span>
-        <span> <b>Max X/Y Speed:</b> ${racecar.MaxSpeed.x()} / ${racecar.MaxSpeed.y()} m/s </span>
-        <span> <b>Max X/Y Accel.:</b> ${racecar.MaxAcceleration.x()} / ${racecar.MaxAcceleration.y()} m/s² </span>
+        <span> <b>Max X/Y Speed:</b> ${racecar.MaxSpeed.x} / ${racecar.MaxSpeed.y} m/s </span>
+        <span> <b>Max X/Y Accel.:</b> ${racecar.MaxAcceleration.x} / ${racecar.MaxAcceleration.y} m/s² </span>
     `;
 }
 
@@ -215,7 +216,7 @@ function loadTrack(track) {
     let trackId = track.getId();
     let racecarId = document.getElementById("details-racecar-input").value;
 
-    let racecar = RACECAR_INFO.find(r => r.Id == racecarId);
+    let racecar = Object.values(RACECAR_INFO).find((r) => r.Id == racecarId);
     if (!racecar) {
         throw new Error(`[Gameplay] "${id}" is not a recognised race car ID`);
     }

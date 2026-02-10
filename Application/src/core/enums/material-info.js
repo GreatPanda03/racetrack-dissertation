@@ -9,14 +9,14 @@ import Vector2 from "../classes/geometry/vector2.js";
 
 
 const MATERIAL_INFO = {
-    Curb: {
+    ["Curb"]: {
         Id: 1,
         Name: "Curb",
         Description: "Limits the moves the player can make",
         Colour: "#AAA",
 
         Effect: (racecar, x, y) => {
-            let acc = racecar.getMaxAcceleration().x();
+            let acc = racecar.getMaxAcceleration().x;
             return {
                 Offset: new Vector2(x, y),
                 Active: Math.abs(x) + Math.abs(y) <= acc
@@ -24,7 +24,7 @@ const MATERIAL_INFO = {
         },
     },
 
-    Gravel: {
+    ["Gravel"]: {
         Id: 2,
         Name: "Gravel",
         Description: "Forces the player to slow down (acts like Curb if at 0 m/s)",
@@ -42,7 +42,7 @@ const MATERIAL_INFO = {
         }
     },
 
-    Water: {
+    ["Water"]: {
         Id: 3,
         Name: "Water",
         Description: "Forces the player to travel at the same velocity (acts like Curb if at 0 m/s)",
@@ -58,7 +58,7 @@ const MATERIAL_INFO = {
         },
     },
 
-    Booster: {
+    ["Booster"]: {
         Id: 4,
         Name: "Booster",
         Description: "Accelerates the player in the direction of travel",
@@ -66,8 +66,8 @@ const MATERIAL_INFO = {
 
         Effect: (racecar, x, y) => {
             let velocity = racecar.getVelocity();
-            let X = Math.sign(velocity.x());
-            let Y = Math.sign(velocity.y());
+            let X = Math.sign(velocity.x);
+            let Y = Math.sign(velocity.y);
 
             return {
                 Offset: new Vector2(X + x, Y + y),
@@ -75,6 +75,6 @@ const MATERIAL_INFO = {
             }
         },
     }
-}
+};
 
 export default MATERIAL_INFO;

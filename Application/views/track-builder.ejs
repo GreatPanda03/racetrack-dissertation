@@ -18,7 +18,6 @@
                 </p>
                 <p>
                     Tracks are defined as a series of points, starting from Point 1.
-                    When 3+ points are placed, a path is formed between all points.
                     The builder also comes with a grid, showing where race cars can drive to.
                     Race cars can only drive to a point on top of the track path, otherwise they crash!
                 </p>
@@ -133,7 +132,16 @@
                                         <i data-lucide="slash" style="position: absolute; top: 0; left: 0; rotate: -90deg;"></i>
                                     </i>
                                     <span><br>Decor</span>
-                                </button>                                
+                                </button>
+                                
+                                <button id="visuals-grid" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Grid">
+                                    <i class="button-on" data-lucide="grid-3x3"></i>
+                                    <i class="button-off hidden" style="position: relative">
+                                        <i data-lucide="grid-3x3"></i>
+                                        <i data-lucide="slash" style="position: absolute; top: 0; left: 0; rotate: -90deg;"></i>
+                                    </i>
+                                    <span><br>Grid</span>
+                                </button>    
                             </div>
 
                             <!-- build tools -->
@@ -347,8 +355,6 @@
                                 </div>
                             </form>
                         </div>
-
-                        <span id="details-error" style="color: #F00"></span>
                     </div>
                     <div class="modal-footer">
                         <button id="details-apply" class="btn btn-success">
@@ -372,8 +378,6 @@
                         <div>
                             <textarea id="import-input"></textarea>
                         </div>
-
-                        <span id="import-error" style="color: #F00"></span>
                     </div>
                     <div class="modal-footer">
                         <button id="import-submit" class="btn btn-success">
@@ -397,8 +401,6 @@
                         <div>
                             <textarea id="export-output" readonly></textarea>
                         </div>
-
-                        <span id="export-error" style="color: #0A0"></span>
                     </div>
                     <div class="modal-footer">
                         <button id="export-copy" class="btn btn-success">
@@ -408,7 +410,19 @@
                     </div>
                 </div>
             </div>
-        </div>  
+        </div>
+
+        <!-- toast notification (updated by script) -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="toast-icon p-1" data-lucide="square"></i>&nbsp;
+                    <strong class="toast-title me-auto"></strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body"></div>
+            </div>
+        </div>
 
         <footer>
             <%- include("./partials/footer.ejs") %>

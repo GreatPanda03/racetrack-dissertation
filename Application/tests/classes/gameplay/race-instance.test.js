@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
     Vector2,
-    TrackNode, Track, TrackBoundaries,
+    TrackNode, Track, TrackForm,
     RaceCar, RaceStats, RaceInstance,
     RACECAR_STATE
 } from "../../../src/core";
@@ -16,7 +16,7 @@ describe("classes.race-instance.new", () => {
         let instance = new RaceInstance(track);
 
         expect( instance.getTrack() ).toBe(track);
-        expect( instance.getBoundaries() instanceof TrackBoundaries ).toBe(true);
+        expect( instance.getForm() instanceof TrackForm ).toBe(true);
         expect( instance.getRacecars() ).toEqual([]);
         expect( instance.getRaceStats() ).toEqual({});
     });
@@ -99,11 +99,11 @@ describe("classes.race-instance.prepareRaceCars", () => {
         instance.addRacecar(racecar2);
         instance.prepareRacecars();
 
-        expect( racecar1.getPosition().x() ).toBe( -1 );
-        expect( racecar1.getPosition().y() ).toBe( 1 );
+        expect( racecar1.getPosition().x ).toBe( -1 );
+        expect( racecar1.getPosition().y ).toBe( 1 );
 
-        expect( racecar2.getPosition().x() ).toBe( -1 );
-        expect( racecar2.getPosition().y() ).toBe( 1 );
+        expect( racecar2.getPosition().x ).toBe( -1 );
+        expect( racecar2.getPosition().y ).toBe( 1 );
     });
 });
 
@@ -157,15 +157,18 @@ describe("classes.race-instance.moveRacecar.velocity", () => {
         let instance = new RaceInstance(track);
 
         let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(10, 10));
+        racecar.setMaxAcceleration(new Vector2(10, 10));
+
         instance.addRacecar(racecar);
         instance.prepareRacecars();
 
-        let move = new Vector2(2, 5);
+        let move = new Vector2(0.25, 0.25);
 
         instance.moveRacecar(racecar, move);
 
-        expect( racecar.getPosition().x() ).toBe( 1 );
-        expect( racecar.getPosition().y() ).toBe( 7 );
+        expect( racecar.getPosition().x ).toBe( -0.75 );
+        expect( racecar.getPosition().y ).toBe( 2.25 );
     });
 });
 
@@ -182,21 +185,24 @@ describe("classes.race-instance.moveRacecar.racePath", () => {
         let instance = new RaceInstance(track);
 
         let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(10, 10));
+        racecar.setMaxAcceleration(new Vector2(10, 10));
+
         instance.addRacecar(racecar);
         instance.prepareRacecars();
 
-        let move = new Vector2(2, 5);
-
-        instance.moveRacecar(racecar, move);
+        instance.moveRacecar(racecar, new Vector2(0.25, 0.25));
 
         let stats = instance.getRacecarStats(racecar);
-        let path = stats.getPath();
+        let moves = stats.getMoves();
 
-        expect( path[0].x() ).toBe( -1 );
-        expect( path[0].y() ).toBe( 2 );
+        let path = moves[0].Path;
 
-        expect( path[1].x() ).toBe( 1 );
-        expect( path[1].y() ).toBe( 7 );
+        expect( path.start.x ).toBe( -1 );
+        expect( path.start.y ).toBe( 2 );
+
+        expect( path.end.x ).toBe( -0.75 );
+        expect( path.end.y ).toBe( 2.25 );
     });
 });
 
@@ -213,6 +219,9 @@ describe("classes.race-instance.moveRacecar.checkpoint", () => {
         let instance = new RaceInstance(track);
 
         let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(10, 10));
+        racecar.setMaxAcceleration(new Vector2(10, 10));
+
         instance.addRacecar(racecar);
         instance.prepareRacecars();
 
@@ -282,9 +291,9 @@ describe("classes.race-instance.moveRacecar.finish", () => {
 
         // straight-line track (unlooped)
         // * starting from (-2, 0), ending at (2, 0)
-        // * expected to take 4 moves travelling at (1, 0) /s
+        // * expected to take 4 moves travelling at (1, 0) m/s
         // * also accounts for first checkpoint!
-        instance.moveRacecar(racecar, new Vector2(1, 0));
+        instance.moveRacecar(racecar, new Vector2(1, 0)); // acceleration
         instance.moveRacecar(racecar, new Vector2(0, 0));
         instance.moveRacecar(racecar, new Vector2(0, 0));
         instance.moveRacecar(racecar, new Vector2(0, 0));

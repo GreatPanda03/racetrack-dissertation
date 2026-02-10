@@ -2,6 +2,7 @@
 // * a CanvasRenderer is a basic class that has a canvas which can be drawn to
 
 import Vector2 from "../geometry/vector2.js";
+import Validator from "../../utilities/validator.js";
 
 
 export default class CanvasRenderer {
@@ -11,9 +12,7 @@ export default class CanvasRenderer {
     _scale;         // float
 
     constructor(canvas) {
-        if (canvas == null || canvas.tagName != "CANVAS") {
-            throw new Error(`[TrackRenderer] "${canvas}" is not a valid Canvas`)
-        }
+        Validator.isDomElement(canvas, "CANVAS");
 
         this._canvas = canvas;
         this._ctx = canvas.getContext("2d");
@@ -24,16 +23,19 @@ export default class CanvasRenderer {
 
     // getters / setters
     getOffset() { return this._offset; }
-    setOffset(offset) { this._offset = offset; }
+    setOffset(offset) {
+        Validator.isInstance(offset, Vector2);
+        this._offset = offset;
+    }
 
     getScale() { return this._scale; }
-    setScale(scale) { 
+    setScale(scale) {
+        Validator.isPrimitive(scale, "number");
         this._scale = scale;
         this._ctx.setTransform(1, 0, 0, 1, 0, 0);
         this._ctx.scale(scale, scale);
 
-        // NOTE: scale is cumulative (multiplicative?),
-        //   so must be reset
+        // NOTE: scale is multiplicative, so must be FULLY reset
     }
 
     
@@ -43,8 +45,8 @@ export default class CanvasRenderer {
         ctx.strokeStyle = colour;
         ctx.lineWidth = width;
         ctx.beginPath();
-        ctx.moveTo(p1.x(), p1.y());
-        ctx.lineTo(p2.x(), p2.y());
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
         ctx.closePath();
     }
@@ -52,7 +54,7 @@ export default class CanvasRenderer {
     drawCircle(centre, radius, colour, fill = true) {
         let ctx = this._ctx;
         ctx.beginPath();
-        ctx.ellipse(centre.x(), centre.y(), radius, radius, 0, 2 * Math.PI, 0);
+        ctx.ellipse(centre.x, centre.y, radius, radius, 0, 2 * Math.PI, 0);
         
         if (fill) {
             ctx.fillStyle = colour;
@@ -76,11 +78,11 @@ export default class CanvasRenderer {
         if (edges.length == 0) return;
 
         let start = edges[0][0];
-        ctx.moveTo(start.x(), start.y());
+        ctx.moveTo(start.x, start.y);
 
         for (let edge of polygon.getEdges()) {
             let pos = edge[1];
-            ctx.lineTo(pos.x(), pos.y());
+            ctx.lineTo(pos.x, pos.y);
         }
 
         if (fill) {
@@ -112,7 +114,7 @@ export default class CanvasRenderer {
         ctx.strokeStyle = "#FFF";
         ctx.lineWidth = 1;
         ctx.textAlign = "center";
-        ctx.strokeText(text, position.x(), position.y() + (size * 0.3));
+        ctx.strokeText(text, position.x, position.y + (size * 0.3));
     }
 
     clearCanvas() {
@@ -122,8 +124,8 @@ export default class CanvasRenderer {
         let correction = 1 / this._scale;
 
         ctx.clearRect(
-            -offset.x(), 
-            -offset.y(), 
+            -offset.x, 
+            -offset.y, 
             canvas.width * correction,
             canvas.height * correction
         );

@@ -4,21 +4,26 @@
 
 import PathNode from "../../geometry/path-node.js";
 import Polygon from "../../geometry/polygon.js";
+import MATERIAL_INFO from "../../../enums/material-info.js";
+import Validator from "../../../utilities/validator.js";
 
 
 export default class Material extends Polygon {
     _type;
 
-    constructor(points = [], type) {
+    constructor(points = [], type = MATERIAL_INFO.Curb.Name) {
         super(points);
-
-        this._type = type;
+        
+        this.setType(type);
     }
 
 
     // methods
     getType() { return this._type; }
-    setType(type) { this._type = type; }
+    setType(type) { 
+        Validator.keyPresence(MATERIAL_INFO, type);
+        this._type = type; 
+    }
 
 
     // serialisation
@@ -33,7 +38,7 @@ export default class Material extends Polygon {
         let material = new Material();
 
         material._points = object.points.map(p => PathNode.toInstance(p));
-        material._type = object.type;
+        material.setType(object.type)
 
         return material;
     }

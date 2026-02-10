@@ -2,96 +2,123 @@
 // * TrackForm stores a construction of the track and its extents
 
 import Vector2 from "../geometry/vector2.js";
+import Line from "../geometry/line.js";
 import PathNode from "../geometry/path-node.js";
-import TrackNode from "./components/track-node.js";
 import Track from "./track.js";
 import SplineUtil from "../../utilities/spline-util.js";
+import Validator from "../../utilities/validator.js";
 
 
 export default class TrackForm {
-    _track;         // Track
-    _leftSide;      // TrackNode[]
-    _rightSide;     // TrackNode[]
+    #nodeSpans;     // Line[]
+    #boundaries;    // Line[]
 
     constructor(track) {
-        if ( !(track instanceof Track) ) {
-            throw new Error(`[TrackForm] "${track}" is not a valid Track`);
-        }
-
-        this._track = track;
-        this._leftSide = [];
-        this._rightSide = [];
-
-        this.updateNodeExtents();
+        Validator.isInstance(track, Track);
+        
+        this.calculateNodeSpans(track);
+        this.calculateBoundaries(track, 0.1);
     }
 
 
     // getters / setters
-    getTrack() { return this._track; }
-    getLeftSide() { return this._leftSide; }
-    getRightSide() { return this._rightSide; }
+    getNodeSpans() { return this.#nodeSpans; }
+    getBoundaries() { return this.#boundaries; }
 
 
     // methods
-    getSegmentExtents(node) {
-        if ( !(node instanceof TrackNode) ) {
-            throw new Error(`[TrackForm] "${node}" is not a TrackNode`);
-        }
+    getNodeSpan(index) {
+        Validator.inListBounds(this.#nodeSpans, index);
+        return this.#nodeSpans[index];
+    }
 
-        let track = this._track;
+    getSplitNodeSpans() {
+        let spans = this.#nodeSpans;
+        let left = spans.map(s => s.start);
+        let right = spans.map(s => s.end);
+
+        return [left, right];
+    }
+
+    calculateNodeSpans(track) {
+        // the "wingspan" of each track node
+        Validator.isInstance(track, Track);
+
+        this.#nodeSpans = [];
 
         let path = track.getPath();
-        let index = track.getNodeIndex(node);
-        let midPos = node.getPosition();
-        let width = node.getWidth();
         let looped = track.isLooped();
 
-        let w2 = width / 2;
+        for (let n = 0; n < path.length; n++) {
+            let node = path[n];
+            let middle = node.getPosition();
+            let width = node.getWidth();
+            
+            let w2 = width / 2;
 
-        let t = index;
-        let gradient = SplineUtil.getGradientAtT(path, t, looped);
-        let unit = gradient.unit();
+            let gradient = SplineUtil.getGradientAtT(path, n, looped);
+            let unit = gradient.unit();
 
-        let leftPos = new Vector2(
-            midPos.x() - w2 * -unit.y(),
-            midPos.y() - w2 *  unit.x());
+            let left = new Vector2(
+                middle.x - w2 * -unit.y,
+                middle.y - w2 *  unit.x);
 
-        let rightPos = new Vector2(
-            midPos.x() + w2 * -unit.y(),
-            midPos.y() + w2 *  unit.x());
+            let right = new Vector2(
+                middle.x + w2 * -unit.y,
+                middle.y + w2 *  unit.x);
 
-        return [leftPos, rightPos];
+            let span = new Line(left, right);
+            this.#nodeSpans.push(span);
+        }
     }
 
-    addSegment(node) {
-        // * as of v1.0.0 - not really used, redundant (keep for reference)
-        if ( !(node instanceof TrackNode) ) {
-            throw new Error(`[TrackForm] "${node}" is not a TrackNode`);
+    calculateBoundaries(track, res = 0.1) {
+        // the actual collidable boundaries of the track (should correspond to spline)
+        // * "res" = resolution - determines how "fine" the boundaries are
+        Validator.isInstance(track, Track);
+        Validator.isPrimitive(res, "number");
+        if (isNaN(res)) throw new Error(`[TrackForm] ${res} is not a valid resolution`);
+
+        this.#boundaries = [];
+
+        let size = track.getSize();
+        if (size == 0) return;
+        
+        let obstacles = track.getObstacles();
+        let looped = track.isLooped();
+
+        let left = [], right = [];
+
+        for (let n = 0; n < track.getPath().length; n++) {
+            let extents = this.getNodeSpan(n);
+            left.push( new PathNode(extents.start) );
+            right.push( new PathNode(extents.end) );
         }
 
-        let track = this._track;
-        let leftSide = this._leftSide;
-        let rightSide = this._rightSide;
+        // track edges (same idea as drawing track path)
+        let tmax = looped ? size : size - 1
 
-        let index = track.getNodeIndex(node);
-        let [leftPos, rightPos] = this.getSegmentExtents(node);
+        for (let t = 0; t < tmax; t += res) {
+            let left1  = SplineUtil.getPointAtT(left , t      , looped);
+            let left2  = SplineUtil.getPointAtT(left , t + res, looped);
+            let right1 = SplineUtil.getPointAtT(right, t      , looped);
+            let right2 = SplineUtil.getPointAtT(right, t + res, looped);
 
-        this._leftSide = leftSide.toSpliced(index, 0, new PathNode(leftPos));
-        this._rightSide = rightSide.toSpliced(index, 0, new PathNode(rightPos));
-    }
-
-    updateNodeExtents() {
-        this._leftSide = [];
-        this._rightSide = [];
-
-        let track = this._track;
-        let path = track.getPath();
-
-        for (let node of path) {
-            let [leftPos, rightPos] = this.getSegmentExtents(node);
-
-            this._leftSide.push(new PathNode(leftPos));
-            this._rightSide.push(new PathNode(rightPos));
+            this.#boundaries.push( new Line(left1, left2) );
+            this.#boundaries.push( new Line(right1, right2) );
         }
+
+        // start / finish line are boundaries for unlooped tracks
+        if (!looped) {
+            let start = new Line(left[0].getPosition(), right[0].getPosition());
+            let end = new Line(left[size - 1].getPosition(), right[size - 1].getPosition());
+
+            this.#boundaries.unshift(start);
+            this.#boundaries.push(end);
+        }
+
+        // obstacles
+        let obstacleEdges = obstacles.map((o) => o.getEdges()).flat();
+        this.#boundaries = this.#boundaries.concat( obstacleEdges );
     }
 }
