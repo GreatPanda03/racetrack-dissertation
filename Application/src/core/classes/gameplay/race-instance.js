@@ -25,18 +25,19 @@ export default class RaceInstance {
     constructor(track, racecars = [], spacing = 10) {
         Validator.isInstance(track, Track);
         Validator.isInstanceList(racecars, RaceCar);
-        Validator.isPrimitive(spacing, "number");
-        if (isNaN(spacing)) throw new Error(`[RaceInstance] Bad spacing "${spacing}"`);
+        Validator.isNumeric(spacing);
 
         this.#track = track;
         this.#form = new TrackForm(track);
         this.#racecars = [];
         this.#raceStats = {};   // TODO: not sure if objects work as keys...
-        this.#spacing = spacing;
+        this.setSpacing(spacing);
 
         if (racecars.length > 0) {
-            for (let racecar of racecars) this.addRacecar(racecar);
-            this.prepareRacecars();
+            for (let racecar of racecars) {
+                this.addRacecar(racecar);
+                this.moveRacecarToStart(racecar);
+            }
         }
     }
 
@@ -46,6 +47,11 @@ export default class RaceInstance {
     getRacecars() { return this.#racecars; }
     getRaceStats() { return this.#raceStats; }
     getSpacing() { return this.#spacing; }
+
+    setSpacing(spacing) {
+        Validator.isNumeric(spacing);
+        this.#spacing = spacing;
+    }
 
 
     // methods
@@ -69,10 +75,9 @@ export default class RaceInstance {
         return raceStats[racecar];
     }
 
-    prepareRacecars() {
+    moveRacecarToStart(racecar) {
         let track = this.#track;
         let looped = track.isLooped();
-        let racecars = this.#racecars;
         let spacing = this.#spacing;
 
         let startPos = track.getPath()[0].getPosition();
@@ -83,9 +88,7 @@ export default class RaceInstance {
             startPos = startPos.add(unit.scale(spacing));
         }
 
-        for (let racecar of racecars) {
-            racecar.setPosition(startPos.scale(1 / spacing).round());
-        }
+        racecar.setPosition(startPos.scale(1 / spacing).round());
     }
 
     // [source 1] - collisions
@@ -195,7 +198,8 @@ export default class RaceInstance {
             let edges = material.getEdges();
             
             for (let edge of edges) {
-                let crossed = ray.getIntersection(edge);
+                let line = new Line(edge[0], edge[1]);
+                let crossed = ray.getIntersection(line);
                 if (crossed) crosses += 1;
             }
 

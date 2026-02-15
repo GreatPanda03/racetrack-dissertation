@@ -112,6 +112,9 @@ function loadAllTracks(tracks) {
     let playerTracks = document.getElementById("player-tracks-list");
     let personalTracks = document.getElementById("personal-tracks-list");
 
+    console.log(tracks);
+    console.log(tracks.length);
+
     tracks = tracks.map(t => Track.toInstance(JSON.parse(t)));
 
     function createEntryForList(list, track) {

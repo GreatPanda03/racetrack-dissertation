@@ -18,10 +18,10 @@ describe("classes.decoration.new", () => {
         let colour = "#ff0000";
         let points = [new PathNode( new Vector2(3, 5) )];
 
-        let material = new Decoration(points, colour);
+        let decoration = new Decoration(points, colour);
 
-        expect( material.getPoints() ).toBe( points );
-        expect( material.getColour() ).toBe( colour );
+        expect( decoration.getPoints() ).toBe( points );
+        expect( decoration.getColour() ).toBe( colour );
     });
 
     it("throws an error if the given colour isn't a string", () => {

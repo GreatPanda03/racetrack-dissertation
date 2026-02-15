@@ -114,6 +114,7 @@ export default class Track {
     }
 
     getNode(index) {
+        Validator.isNumeric(index);
         Validator.inListBounds(this.#path, index);
         return this.#path[index];
     }
@@ -141,6 +142,8 @@ export default class Track {
     }
 
     addNodeAtIndex(node, index) {
+        Validator.isInstance(node, TrackNode);
+        Validator.isNumeric(index);
         this.#path = this.#path.toSpliced(index, 0, node);
     }
 

@@ -30,7 +30,7 @@ describe("classes.vector2.new", () => {
 });
 
 describe("classes.vector2.add", () => {
-    it("calculates the sum of two Vector2 (tests commutativity)", () => {
+    it("calculates the sum of two Vector2 values", () => {
         let a = new Vector2(3, 2);
         let b = new Vector2(-1, 3);
 
@@ -57,7 +57,7 @@ describe("classes.vector2.add", () => {
 });
 
 describe("classes.vector2.sub", () => {
-    it("calculates the difference of two Vector2s (tests anticommutativity)", () => {
+    it("calculates the difference of two Vector2 values", () => {
         let a = new Vector2(5, -2);
         let b = new Vector2(-3, 1);
 
@@ -85,7 +85,7 @@ describe("classes.vector2.scale", () => {
         let a = new Vector2(-7, 12.5);
 
         let result1 = a.scale(5);
-        let result2 = result1.scale(0.2);
+        let result2 = result1.scale(1 / 5);
 
         expect( result1.x ).toBeCloseTo( -35 );
         expect( result1.y ).toBeCloseTo( 62.5 );
@@ -105,11 +105,11 @@ describe("classes.vector2.scale", () => {
 
 describe("classes.vector2.mag", () => {
     it("calculates the magnitude of a positive Vector2 (X, Y)", () => {
-        expect( new Vector2(5, 3).mag() ).toBeCloseTo( 5.83095189485, 5 );
+        expect( new Vector2(5, 3).mag() ).toBeCloseTo( 5.83095189485 );
     });
 
     it("calculates the magnitude of a negative Vector2 (-X, -Y)", () => {
-        expect( new Vector2(-5, -3).mag() ).toBeCloseTo( 5.83095189485, 5 );
+        expect( new Vector2(-5, -3).mag() ).toBeCloseTo( 5.83095189485 );
     });
 
     it("calculates the magnitude of a zero Vector2 (0, 0)", () => {
@@ -136,6 +136,13 @@ describe("classes.vector2.unit", () => {
 
         expect( unit.x ).toBeCloseTo( -0.83205029433 );
         expect( unit.y ).toBeCloseTo( -0.55470019622 );
+    });
+
+    it("returns 0 if the Vector2 is (0, 0)", () => {
+        let unit = new Vector2(0, 0).unit();
+
+        expect( unit.x ).toBe( 0 );
+        expect( unit.y ).toBe( 0 );
     });
 });
 

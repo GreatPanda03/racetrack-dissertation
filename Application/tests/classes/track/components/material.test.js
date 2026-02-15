@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
-    Vector2, PathNode,
+    Vector2, PathNode, Polygon,
     Material,
     MATERIAL_INFO
 } from "../../../../src/core";
@@ -13,6 +13,7 @@ describe("classes.material.new", () => {
 
         expect( material.getType() ).toBe( "Curb" );
         expect( material.getPoints().length ).toBe( 0 );
+        expect( material instanceof Polygon ).toBe( true );
     });
 
     it("creates an empty Material out of Curb", () => {

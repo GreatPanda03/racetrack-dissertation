@@ -42,7 +42,7 @@ describe("classes.polygon.addPoint", () => {
         expect( points[1] ).toBe( A );
     });
 
-    it ("throws an error if the given point is not a valid PathNode", () => {
+    it ("throws an error if the given point is not a PathNode", () => {
         let polygon = new Polygon();
 
         expect( () => polygon.addPoint() ).toThrowError();
@@ -81,7 +81,7 @@ describe("classes.polygon.removePoint", () => {
 });
 
 describe("classes.polygon.getEdges", () => {
-    it("returns the edges of the polygon as vectors", () => {
+    it("returns the edges of the polygon as Vector2 values", () => {
         let A = new PathNode( new Vector2(1, 3) );
         let B = new PathNode( new Vector2(7, -2) );
         let C = new PathNode( new Vector2(1.5, -5.6) );

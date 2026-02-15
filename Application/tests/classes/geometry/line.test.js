@@ -5,7 +5,29 @@ import {
 } from "../../../src/core";
 
 
-describe("classes.track-boundaries.getIntersection", () => {
+describe("classes.line.new", () => {
+    it("creates a new line out of the two given Vector2 values", () => {
+        let line = new Line(new Vector2(5, -3), new Vector2(-4.5, 2.75));
+
+        expect( line.start.x ).toBe( 5 );
+        expect( line.start.y ).toBe( -3 );
+
+        expect( line.end.x ).toBe( -4.5 );
+        expect( line.end.y ).toBe( 2.75 );
+    });
+
+    it("throws an error if no Vector2 start or end is provided", () => {
+        expect( () => new Line(null, new Vector2()) ).toThrowError();
+        expect( () => new Line("a", new Vector2()) ).toThrowError();
+        expect( () => new Line(new Object(), new Vector2()) ).toThrowError();
+
+        expect( () => new Line(new Vector2(), null) ).toThrowError();
+        expect( () => new Line(new Vector2(), "a") ).toThrowError();
+        expect( () => new Line(new Vector2(), new Object()) ).toThrowError();
+    })
+})
+
+describe("classes.line.getIntersection", () => {
     it("returns the intersection between intersecting lines", () => {
         let point1 = Line.getIntersection( // angled lines
             new Line( new Vector2(5, 3), new Vector2(-1, 2) ),
@@ -121,19 +143,54 @@ describe("classes.track-boundaries.getIntersection", () => {
     });
 });
 
-describe("classes.track-boundaries.containsPoint", () => {
-    it("returns whether a point is on a line", () => {
-        let line1 = new Line( new Vector2(-1, -1), new Vector2(5, 3) );
-        let line2 = new Line( new Vector2(-1, -1), new Vector2(5, 3) );
-        let line3 = new Line( new Vector2(-1, -1), new Vector2(5, 3) );
+describe("classes.line.getIntersection (static)", () => {
+    // simply calls A.getIntersection(B);
+
+    it("throws an error if no Line values are provided", () => {
+        let line = new Line(new Vector2(), new Vector2());
+
+        expect( () => Line.getIntersection( null, line ) ).toThrowError();
+        expect( () => Line.getIntersection( "a", line ) ).toThrowError();
+        expect( () => Line.getIntersection( new Object(), line ) ).toThrowError();
+
+        expect( () => Line.getIntersection( line, null ) ).toThrowError();
+        expect( () => Line.getIntersection( line, "a" ) ).toThrowError();
+        expect( () => Line.getIntersection( line, new Object() ) ).toThrowError();
+    });
+});
+
+describe("classes.line.containsPoint", () => {
+    it("returns true when a point is on a line", () => {
+        let line = new Line( new Vector2(-1, -1), new Vector2(5, 3) );
 
         // line points on the left edge, middle, and right edge
-        let result1 = line1.containsPoint(new Vector2(-1, -1));
-        let result2 = line2.containsPoint(new Vector2(2, 1));
-        let result3 = line3.containsPoint(new Vector2(5, 3));
+        let result1 = line.containsPoint(new Vector2(-1, -1));
+        let result2 = line.containsPoint(new Vector2(2, 1));
+        let result3 = line.containsPoint(new Vector2(5, 3));
 
         expect( result1 ).toBe( true );
         expect( result2 ).toBe( true );
         expect( result3 ).toBe( true );
+    });
+
+    it("returns false when a point is not on a line", () => {
+        let line = new Line( new Vector2(-1, -1), new Vector2(5, 3) );
+
+        // line points on the left edge, middle, and right edge
+        let result1 = line.containsPoint(new Vector2(0, -1));
+        let result2 = line.containsPoint(new Vector2(3, 1));
+        let result3 = line.containsPoint(new Vector2(11, 7));
+
+        expect( result1 ).toBe( false );
+        expect( result2 ).toBe( false );
+        expect( result3 ).toBe( false );
+    });
+
+    it("throws an error if no Vector2 is provided as a point", () => {
+        let line = new Line(new Vector2(), new Vector2());
+
+        expect( () => line.containsPoint(null) ).toThrowError();
+        expect( () => line.containsPoint("a") ).toThrowError();
+        expect( () => line.containsPoint(new Object()) ).toThrowError();
     });
 });

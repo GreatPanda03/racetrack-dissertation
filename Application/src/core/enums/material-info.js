@@ -3,9 +3,6 @@
 //     from the race car's velocity is affected, and whether it's viable
 
 import Vector2 from "../classes/geometry/vector2.js";
-// * TODO: seems smelly to include imports here...
-//     but it makes sense to define the effects here too (although that's done in race instance)
-// * maybe move there? leave here for now though
 
 
 const MATERIAL_INFO = {
@@ -16,12 +13,12 @@ const MATERIAL_INFO = {
         Colour: "#AAA",
 
         Effect: (racecar, x, y) => {
-            let acc = racecar.getMaxAcceleration().x;
+            let acc = Math.abs(racecar.getMaxAcceleration().x);
             return {
                 Offset: new Vector2(x, y),
                 Active: Math.abs(x) + Math.abs(y) <= acc
             }
-        },
+        }
     },
 
     ["Gravel"]: {
@@ -37,7 +34,7 @@ const MATERIAL_INFO = {
 
             return {
                 Offset: offset,
-                Active: (velocity.add(offset)).mag() <= threshold
+                Active: (velocity.add(offset)).mag() < threshold
             }
         }
     },
@@ -55,7 +52,7 @@ const MATERIAL_INFO = {
                 Active: (x == 0 && y == 0)
                     || (velocity.mag() == 0 && new Vector2(x, y).mag() <= 1)
             }
-        },
+        }
     },
 
     ["Booster"]: {
@@ -73,7 +70,7 @@ const MATERIAL_INFO = {
                 Offset: new Vector2(X + x, Y + y),
                 Active: true
             }
-        },
+        }
     }
 };
 

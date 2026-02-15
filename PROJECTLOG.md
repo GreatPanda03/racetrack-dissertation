@@ -292,10 +292,8 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 <summary>V2 Completion & Project Interview</summary>
 
 - As of the last entry:
-    - Implemented v1.7.0 (see changelog)
-
-- Interview will be held on **2026/02/11 WED**
-    - ...
+    - Implemented v1.7.0 - v1.8.0 (see changelog)
+    - Interview held on **2026/02/11 WED**
 
 - Supervisor meeting will be held on **2026/03/05 MAR**
     - ...
