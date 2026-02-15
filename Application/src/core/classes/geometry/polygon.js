@@ -14,11 +14,11 @@ export default class Polygon {
 
 
     // getters / setters
+    getPoints() { return this._points; }
     setPoints(points) {
-        for (let point of points) Validator.isInstance(point, PathNode);
+        Validator.isInstanceList(points, PathNode);
         this._points = points;
     }
-    getPoints() { return this._points; }
 
 
     // methods

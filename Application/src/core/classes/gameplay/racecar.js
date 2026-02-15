@@ -55,6 +55,7 @@ export default class RaceCar {
     getStyle() { return this.#style; }
     setStyle(style) { this.#style = style; }
 
+    
     // methods
     accelerate(speedup) {
         Validator.isInstance(speedup, Vector2);

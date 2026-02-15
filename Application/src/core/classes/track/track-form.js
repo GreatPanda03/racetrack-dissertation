@@ -76,8 +76,7 @@ export default class TrackForm {
         // the actual collidable boundaries of the track (should correspond to spline)
         // * "res" = resolution - determines how "fine" the boundaries are
         Validator.isInstance(track, Track);
-        Validator.isPrimitive(res, "number");
-        if (isNaN(res)) throw new Error(`[TrackForm] ${res} is not a valid resolution`);
+        Validator.isNumeric(res);
 
         this.#boundaries = [];
 
@@ -118,7 +117,8 @@ export default class TrackForm {
         }
 
         // obstacles
-        let obstacleEdges = obstacles.map((o) => o.getEdges()).flat();
-        this.#boundaries = this.#boundaries.concat( obstacleEdges );
+        let obstacleEdges = obstacles.map(o => o.getEdges()).flat();
+        let edgeLines = obstacleEdges.map(e => new Line(e[0], e[1]));
+        this.#boundaries = this.#boundaries.concat(edgeLines);
     }
 }

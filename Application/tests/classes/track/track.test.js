@@ -14,12 +14,12 @@ describe("classes.track.new", () => {
         expect( typeof track.getDescription() ).toBe( "string" );
         expect( typeof track.getAuthorId() ).toBe( "string" );
         expect( typeof track.getAuthor() ).toBe( "string" );
-        expect( track.getTags() ).toEqual( [] );
+        expect( track.getTags().length ).toEqual( 0 );
 
-        expect( track.getPath() ).toEqual( [] );
-        expect( track.getMaterials() ).toEqual( [] );
-        expect( track.getObstacles() ).toEqual( [] );
-        expect( track.getDecorations() ).toEqual( [] );
+        expect( track.getPath().length ).toBe( 0 );
+        expect( track.getMaterials().length ).toBe( 0 );
+        expect( track.getObstacles().length ).toBe( 0 );
+        expect( track.getDecorations().length ).toBe( 0 );
 
         expect( typeof track.isLooped() ).toBe( "boolean" );
     });
@@ -46,7 +46,16 @@ describe("classes.track.getNode", () => {
         track.setPath([new TrackNode(), target, new TrackNode()]);
 
         expect( track.getNode(1) ).toBe( target );
-    })
+    });
+
+    it("throws an error if the index is not a number", () => {
+        let track = new Track();
+        track.setPath([new TrackNode()]);
+
+        expect( () => track.getNode(null) ).toThrowError();
+        expect( () => track.getNode("5") ).toThrowError();
+        expect( () => track.getNode(true) ).toThrowError();
+    });
 
     it("throws an error if the index is out of bounds", () => {
         let track = new Track();
@@ -54,7 +63,7 @@ describe("classes.track.getNode", () => {
 
         expect( () => track.getNode(2) ).toThrowError();
         expect( () => track.getNode(-1) ).toThrowError();
-    })
+    });
 })
 
 describe("classes.track.getNodeIndex", () => {
@@ -64,7 +73,7 @@ describe("classes.track.getNodeIndex", () => {
         
         track.setPath([new TrackNode(), new TrackNode(), target, new TrackNode()]);
         
-        expect( track.getNodeIndex(target) ).toBe(2);
+        expect( track.getNodeIndex(target) ).toBe( 2 );
     });
 
     it("throws an error when the node isn't in the track", () => {
@@ -177,7 +186,7 @@ describe("classes.track.addNodeAtIndex", () => {
         expect( track.getPath()[index] ).toBe(node);
     });
 
-    it("adds a new node to the start of the track if the index is below the track bounds", () => {
+    it("adds a new node to the start of the track if the index is beyond the track bounds", () => {
         let track = new Track();
         let target = new TrackNode();
 
@@ -187,14 +196,30 @@ describe("classes.track.addNodeAtIndex", () => {
         expect( track.getPath()[track.getSize() - 1] ).toBe(target);
     });
 
-    it("adds a new node to the end of the track if the index is beyond the track bounds", () => {
+    it("adds a new node to the end of the track if the index is below the track bounds", () => {
         let track = new Track();
         let target = new TrackNode();
 
         track.setPath([new TrackNode(), new TrackNode(), new TrackNode()]);
         track.addNodeAtIndex(target, -2);
 
-        expect( track.getPath()[0] ).toStrictEqual(target);
+        expect( track.getPath()[0] ).toStrictEqual( target );
+    });
+
+    it("throws an error if the given node is not a TrackNode", () => {
+        let track = new Track();
+
+        expect( () => track.addNodeAtIndex(null, 3) ).toThrowError();
+        expect( () => track.addNodeAtIndex("a", 3) ).toThrowError();
+        expect( () => track.addNodeAtIndex(new Object(), 3) ).toThrowError();
+    });
+
+    it("throws an error if the given index isn't a number", () => {
+        let track = new Track();
+
+        expect( () => track.addNodeAtIndex(node, null) ).toThrowError();
+        expect( () => track.addNodeAtIndex(node, "a") ).toThrowError();
+        expect( () => track.addNodeAtIndex(node, new Object()) ).toThrowError();
     });
 });
 
@@ -314,7 +339,7 @@ describe("classes.track.removeObstacle", () => {
         expect( track.getObstacles().length ).toBe( 0 );
     });
 
-    it("throws an error if the decoration isn't on the track", () => {
+    it("throws an error if the obstacle isn't on the track", () => {
         let track = new Track();
 
         expect( () => track.removeObstacle() ).toThrowError();
@@ -378,7 +403,8 @@ describe("classes.track.removeDecoration", () => {
 
 describe("classes.track (serialisation)", () => {
     it("can convert itself to an object and back to an instance", () => {
-        let instance = new Track([new TrackNode()]);
+        let instance = new Track();
+        instance.setPath([new TrackNode()]);
         instance.addMaterial(new Material([], MATERIAL_INFO.Curb.Name));
         instance.addObstacle(new Obstacle());
         instance.addDecoration(new Decoration());

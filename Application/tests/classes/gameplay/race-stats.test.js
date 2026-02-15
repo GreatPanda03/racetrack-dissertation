@@ -63,9 +63,11 @@ describe("classes.race-stats.addMove", () => {
         let track = new Track();
         let stats = new RaceStats(track);
 
-        expect( () => stats.addMove(null, new Vector2()) ).toThrowError();
-        expect( () => stats.addMove("a", new Vector2()) ).toThrowError();
-        expect( () => stats.addMove(new TrackNode(), new Vector2()) ).toThrowError();
+        let velocity = new Vector2();
+
+        expect( () => stats.addMove(null, velocity) ).toThrowError();
+        expect( () => stats.addMove("a", velocity) ).toThrowError();
+        expect( () => stats.addMove(new TrackNode(), velocity) ).toThrowError();
     });
 
     it("throws an error when the given velocity isn't a Vector2", () => {
@@ -101,6 +103,7 @@ describe("classes.race-stats.calculateStats", () => {
         // ... but checking this produces the same result
         stats.calculateStats();
 
+        expect( stats.getMoves().length ).toBe( 5 );
         expect( stats.getDistance() ).toBeCloseTo( 14.481591098 );
         expect( stats.getTime() ).toBe( 5 );
         expect( stats.getTopSpeed() ).toBeCloseTo( 4.472135955 );

@@ -9,6 +9,12 @@ export default class Validator {
         }
     }
 
+    static isNumeric(value) {
+        if (typeof value !== "number" || isNaN(value)) {
+            throw new Error(`[Validator] "${value}" is not of a number`);
+        }
+    }
+
     static isInstance(value, type) {
         if ( !(value instanceof type) ) {
             throw new Error(`[Validator] "${value.constructor.name}" is not of class "${type.name}"`);

@@ -13,6 +13,28 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 1.8.0
+**Date:** 2026/02/15
+<details>
+<summary>V1 - Cleanup - More Testing (Part 2)</summary>
+
+**Additions / Changes:**
+1. (DEV) Expanded test suite for V1 features
+2. Added a fallback to use the track repository when unable to connect to DB (for at least some playability)
+    * NOTE: all data-related features won't work in this state!
+3. Adjusted how Gravel works (now only allows moves **<** current speed, from being **<=** current speed)
+
+**Bugs Fixed:**
+1. Fixed Curb not supplying the correct moves (used MaxAcceleration.x, which is typically negative, for <= comparison)
+2. Fixed being "locked out" of making moves when all available ones are off screen (now autoplays the move if that happens)
+
+**Bugs Discovered:**
+1. Aware that some `MATERIAL_INFO` tests aren't working (this is a test setup issue, the functionality works in practice)
+
+</details>
+
+---
+
 ### Version: 1.7.0
 **Date:** 2026/02/10
 <details>
@@ -104,7 +126,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 **Bugs Discovered:**
 1. Aware that some UI elements "spill over" when the screen is too narrow, namely:
     * Tracks List track details popup
-    * Live race stats panel
+    * (FIXED v1.7.0) Live race stats panel
 
 </details>
 
@@ -132,7 +154,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 1. (DEV) Fixed "toJson" object methods using the wrong argument type for pretty-printing (oops...)
 
 **Bugs Discovered:**
-1. Aware that moves appear entirely off track when race cars are near the edge at high speed
+1. (FIXED v1.8.0) Aware that moves appear entirely off track when race cars are near the edge at high speed
 
 </details>
 
@@ -230,7 +252,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 1. Fixed deleted node details still showing after deletion
 
 **Bugs Discovered:**
-1. Aware that SplineUtil unit tests fail due to Vector2 rounding for nodes (< 0.1 inaccuracy in all cases, so not a big issue)
+1. (FIXED v1.7.0) Aware that SplineUtil unit tests fail due to Vector2 rounding for nodes (< 0.1 inaccuracy in all cases, so not a big issue)
 
 </details>
 

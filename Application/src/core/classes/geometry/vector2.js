@@ -9,12 +9,8 @@ export default class Vector2 {
     #y;     // float
     
     constructor(x = 0, y = 0) {
-        Validator.isPrimitive(x, "number");
-        Validator.isPrimitive(y, "number");
-
-        if (isNaN(x) || isNaN(y)) {
-            throw new Error(`[Vector2] Invalid Vector2 (${x}, ${y})`);
-        }
+        Validator.isNumeric(x);
+        Validator.isNumeric(y);
 
         this.#x = x;
         this.#y = y;
@@ -30,19 +26,17 @@ export default class Vector2 {
     add(b) {
         Validator.isInstance(b, Vector2)
         let a = this;
-        return new Vector2(
-            a.x + b.x, a.y + b.y);
+        return new Vector2(a.x + b.x, a.y + b.y);
     }
 
     sub(b) {
         Validator.isInstance(b, Vector2)
         let a = this;
-        return new Vector2(
-            a.x - b.x, a.y - b.y);
+        return new Vector2(a.x - b.x, a.y - b.y);
     }
 
     scale(s) {
-        Validator.isPrimitive(s, "number")
+        Validator.isNumeric(s);
         let v = this;
         return new Vector2(v.x * s, v.y * s);
     }
@@ -64,8 +58,7 @@ export default class Vector2 {
     clamp(xMin, xMax, yMin, yMax) {
         return new Vector2(
             Math.min(Math.max(this.#x, xMin), xMax),
-            Math.min(Math.max(this.#y, yMin), yMax)
-        );
+            Math.min(Math.max(this.#y, yMin), yMax));
     }
 
 

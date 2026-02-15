@@ -16,7 +16,7 @@ describe("classes.track-renderer.new", () => {
 
         expect( renderer.getCanvas() ).toBe( canvas );
         expect( renderer.getTrackForm() instanceof TrackForm ).toBe( true );
-        expect( renderer.getSpacing() ).toBe( 25 );
+        expect( renderer.getSpacing() ).toBe( 10 );
     });
 
     it("throws an error if track is not a Track", () => {

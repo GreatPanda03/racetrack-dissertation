@@ -8,6 +8,8 @@ const { version } = require("./package.json");
 const mongoose = require("mongoose");
 const TrackModel = require("./models/track");
 
+const { gameTracks } = require("./src/track-repository");
+var usingDb = true;
 
 
 // [[ App Set Up ]] //
@@ -24,12 +26,14 @@ mongoose.connect(uri)
     .catch((error) => {
         console.log(error);
         console.log("[CONNECTING WITHOUT DATABASE!]");
+        usingDb = false;
         app.listen(3000);
     });
 
 /*
 app.listen(3000);
 console.log("RUNNING WITHOUT DATABASE!");
+usingDb = false;
 */
 
 
@@ -54,8 +58,30 @@ app.get("/tracks/build", (request, response) => {
 
 
 app.get("/tracks/build/:trackId", async (request, response) => {
-    try {
-        let trackToLoad = await TrackModel.findById( request.params.trackId );
+    if (usingDb) {
+        try {
+            let trackToLoad = await TrackModel.findById( request.params.trackId );
+
+            if (trackToLoad) {
+                let author = trackToLoad.author;
+                
+                if (author == "" || author == "Game") {
+                    response.redirect("/tracks/list");
+                    return;
+                }
+
+                response.render("track-builder", { title: "Track Builder", trackToLoad });
+
+            } else {
+                response.redirect("/tracks/build");
+            } 
+        } catch(error) {
+            console.log(`[Track Builder] Couldn't load track: "${error}"`);
+            response.redirect("/tracks/list");
+        }
+    
+    } else {
+        let trackToLoad = gameTracks.find(t => JSON.parse(t)._id == request.params.trackId );
 
         if (trackToLoad) {
             let author = trackToLoad.author;
@@ -66,33 +92,53 @@ app.get("/tracks/build/:trackId", async (request, response) => {
             }
 
             response.render("track-builder", { title: "Track Builder", trackToLoad });
-
-        } else {
-            response.redirect("/tracks/build");
         }
-        
-    } catch(error) {
-        console.log(`[Track Builder] Couldn't load track: "${error}"`);
-        response.redirect("/tracks/list");
     }
 });
 
 
 app.get("/tracks/list", async (request, response) => {
-    try {
-        let data = await TrackModel.find();
-        let tracks = data.map(d => JSON.stringify(d));
-        response.render("tracks-list", { title: "Tracks List", tracks });
-    
-    } catch(error) {
-        console.log(`[Tracks List] Listing failed: "${error}"`);
-        response.status(500).json({ success: false, error });
+    if (usingDb) {
+        try {
+            let data = await TrackModel.find();
+            let tracks = data.map(d => JSON.stringify(d));
+            response.render("tracks-list", { title: "Tracks List", tracks });
+        
+        } catch(error) {
+            console.log(`[Tracks List] Listing failed: "${error}"`);
+            response.status(500).json({ success: false, error });
+        }
+
+    } else {
+        response.render("tracks-list", { title: "Tracks List", tracks: gameTracks });
     }
 });
 
 
 app.get("/tracks/play/:trackId/:racecarId", async (request, response) => {
-    try {
+    if (usingDb) {
+        try {
+            let trackId = request.params.trackId;
+            let racecarId = request.params.racecarId;
+
+            if ( !(trackId && racecarId) ) {
+                response.status(400).json({ success: false, error: "Track / race car ID missing" });
+            }
+
+            let track = await TrackModel.findById( trackId );
+
+            if (track) {
+                response.render("track-play", { title: "Race", track, racecarId });   
+            } else {
+                response.redirect("/tracks/list");
+            }
+
+        } catch(error) {
+            console.log(`[Gameplay] Loading failed: "${error}"`);
+            response.status(500).json({ success: false, error });
+        }
+
+    } else {
         let trackId = request.params.trackId;
         let racecarId = request.params.racecarId;
 
@@ -100,42 +146,44 @@ app.get("/tracks/play/:trackId/:racecarId", async (request, response) => {
             response.status(400).json({ success: false, error: "Track / race car ID missing" });
         }
 
-        let track = await TrackModel.findById( trackId );
+        let track = gameTracks.find(t => JSON.parse(t)._id == trackId );
 
         if (track) {
-            response.render("track-play", { title: "Race", track, racecarId });   
+            response.render("track-play", { title: "Race", track: JSON.parse(track), racecarId });   
         } else {
             response.redirect("/tracks/list");
         }
-
-    } catch(error) {
-        console.log(`[Gameplay] Loading failed: "${error}"`);
-        response.status(500).json({ success: false, error });
     }
 });
 
 
 app.post("/tracks/save", async (request, response) => {
-    try {
-        let track = request.body;
+    if (usingDb) {
+        try {
+            let track = request.body;
 
-        if (!track) {
-            throw new Error(`[Track Builder] Track save failed: no track data provided`);
+            if (!track) {
+                throw new Error(`[Track Builder] Track save failed: no track data provided`);
+            }
+
+            if (track._id) {
+                await TrackModel.findByIdAndUpdate(
+                    track._id, { "$set": track }, { returnDocument: "after" });
+                
+            } else {
+                await new TrackModel(track).save();
+            }
+
+            response.status(200).json({ success: true });
+
+        } catch(error) {
+            console.log(`[Track Builder] Track save failed: "${error}"`);
+            response.status(400).json({ success: false, error });
         }
 
-        if (track._id) {
-            await TrackModel.findByIdAndUpdate(
-                track._id, { "$set": track }, { returnDocument: "after" });
-            
-        } else {
-            await new TrackModel(track).save();
-        }
-
-        response.status(200).json({ success: true });
-
-    } catch(error) {
-        console.log(`[Track Builder] Track save failed: "${error}"`);
-        response.status(400).json({ success: false, error });
+    } else {
+        console.log("[Track Builder] Couldn't save - not using database");
+        response.status(404).json({ success: false, error: "Not using database" });
     }
 });
 

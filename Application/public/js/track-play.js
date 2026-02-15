@@ -24,10 +24,10 @@ var raceRenderer = null;
 var trackCanvas = document.getElementById("track-canvas");
 var playCanvas = document.getElementById("play-canvas");
 
-var spacing = 25; // pixels between each grid cell
-var spotRadius = (spacing / 2) * 0.85;
-var racecarRadius = spotRadius * 0.75;
-var pointRadius = racecarRadius * 0.35;
+var spacing = 25;                           // pixels between each grid cell
+var spotRadius = (spacing / 2) * 0.85;      // move choices
+var racecarRadius = spotRadius * 0.75;      // race car visual
+var pointRadius = racecarRadius * 0.35;     // path joints
 var offset = new Vector2();
 
 var timeElapsed = 0;
@@ -92,27 +92,35 @@ function initialisePlayCanvas() {
 
         if (!target) return;
 
-        // move car to location & update stats
-        raceInstance.moveRacecar(racecar, target);
-        renderRacecars();
+        // move race car to location & update stats
+        // * applies the current selected move, and any further moves
+        //     if all subsequent ones are offscreen (to prevent locking)
+        let stats = raceInstance.getRacecarStats(racecar);
 
-        timeElapsed += 1;
-        updateRaceHeader();
-        updateLiveStats(racecar);
+        while (true) {
+            raceInstance.moveRacecar(racecar, target);
+            renderRacecars();
 
-        // determining next step
-        let state = raceInstance.getRacecarStats(racecar).getState();
+            timeElapsed += 1;
+            updateRaceHeader();
+            updateLiveStats(racecar);            
 
-        if (state == RACECAR_STATE.Racing) {
-            displayMoves(racecar, 
-                raceInstance.getPossibleMoves(racecar));
-        
-        } else {
-            let stats = raceInstance.getRacecarStats(racecar);
-            endRace(stats, state)
+            if (stats.getState() == RACECAR_STATE.Racing) {
+                let nextMoves = raceInstance.getPossibleMoves(racecar);
+
+                if (isOnScreenMoveAvailable(racecar, nextMoves)) {
+                    displayMoves(racecar, nextMoves);
+                    break;
+
+                } else {
+                    target = new Vector2(0, 0);
+                }
+            
+            } else {
+                endRace(stats);
+                break;
+            }
         }
-
-        console.log(raceInstance.getRacecarStats(racecar).getCheckpoints());
     });
 }
 
@@ -129,6 +137,7 @@ function initialiseResultsPopup() {
         if (stats.getState() == RACECAR_STATE.Crashed) {
             stats.setState(RACECAR_STATE.Racing);
             
+            // restart from the last move
             let moves = stats.getMoves();
             let lastPath = moves[moves.length - 1].Path;
             let lastPos = lastPath.start;
@@ -154,7 +163,7 @@ function initialiseResultsPopup() {
     });
 }
 
-function endRace(stats, state) {
+function endRace(stats) {
     let titleText;
 
     let popup = document.getElementById("modal-race-results");
@@ -175,6 +184,8 @@ function endRace(stats, state) {
             <br><b>Top Speed:</b> ${topSpeed} m/s
             <br><b>Average Speed:</b> ${averageSpeed} m/s
         </p>`;
+
+    let state = stats.getState();
 
     if (state == RACECAR_STATE.Crashed) {
         popup.querySelector(".modal-footer").hidden = false;
@@ -246,6 +257,29 @@ function displayMoves(racecar, moves) {
 
         raceRenderer.drawCircle(pos, spotRadius, move.Active ? "#A00" : "#999", false);
     }
+}
+
+function isOnScreenMoveAvailable(racecar, moves) {
+    let centre = racecar.getPosition().add(racecar.getVelocity());
+
+    console.log("---");
+
+    for (let move of moves) {
+        if (!move.Active) continue;
+
+        let gridPos = centre.add(move.Offset);
+        let pos = gridPos.scale(spacing);
+
+        console.log(pos, trackCanvas.width, trackCanvas.height);
+
+        if (   0 < (pos.x + spotRadius) && (pos.x - spotRadius) < trackCanvas.width
+            && 0 < (pos.y + spotRadius) && (pos.y - spotRadius) < trackCanvas.height)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
