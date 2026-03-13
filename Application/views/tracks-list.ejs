@@ -61,40 +61,74 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+
+                    <!-- canvas, track details, & leaderboard -->
                     <div class="d-flex flex-row gap-3">
                         <div class="canvas-wrapped">
                             <canvas id="details-canvas" width="450" height="450"></canvas>
                         </div>
-                        <div>
-                            <div id="details-info" class="d-flex flex-column gap-1 mb-3">
+                        <div class="container">
+                            <div id="details-info">
                                 <!-- script generated -->
                             </div>
                             <hr>
-                            <div id="details-racecar">
-                                <label class="mb-1"><b>Race Car</b></label>
-                                <select id="details-racecar-input" class="form-select mb-1">
-                                    <!-- script generated -->
-                                </select>
-                                <div id="details-racecar-info" class="d-flex flex-column gap-1">
-                                    <!-- script generated -->
+                        </div>
+                    </div>
+
+                    <!-- racer options -->
+                    <div id="options-racers">
+                        <div id="player-racers" class="d-flex flex-column gap-3">
+                            <div>
+                                <div id="player-racers-header" class="mb-1">
+                                    <b id="player-racers-label">Player Racers</b>
+                                    <button id="player-racers-add" class="btn btn-primary p-1"
+                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer"
+                                    >
+                                        <i data-lucide="circle-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="player-racers-body">
+                                    <span class="empty-list" hidden>No player racers</span>
+                                    <div id="player-racers-list" class="d-flex gap-2 overflow-auto">
+                                        <!-- script generated -->
+                                    </div>
                                 </div>
                             </div>
-                            <hr>
-                            <div class="d-flex justify-content-around gap-3">
-                                <button id="details-play" class="btn btn-success">
-                                    <i data-lucide="play"></i>
-                                    Play
-                                </button>
-                                <button id="details-edit" class="btn btn-primary">
-                                    <i data-lucide="hammer"></i>
-                                    Edit
-                                </button>
-                                <button id="details-delete" class="btn btn-danger">
-                                    <i data-lucide="trash-2"></i>
-                                    Delete
-                                </button>
+
+                            <div>
+                                <div id="robot-racers-header" class="mb-1">
+                                    <b id="robot-racers-label">Robot Racers</b>
+                                    <button id="robot-racers-add" class="btn btn-primary p-1"
+                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer"
+                                    >
+                                        <i data-lucide="circle-plus"></i>
+                                    </button>
+                                </div>
+                                <div id="robot-racers-body">
+                                    <span class="empty-list" hidden>No robot racers</span>
+                                    <div id="robot-racers-list" class="d-flex gap-2 overflow-auto">
+                                        <!-- script generated -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-around gap-3">
+                        <button id="details-play" class="btn btn-success">
+                            <i data-lucide="play"></i>
+                            Play
+                        </button>
+                        <button id="details-edit" class="btn btn-primary">
+                            <i data-lucide="hammer"></i>
+                            Edit
+                        </button>
+                        <button id="details-delete" class="btn btn-danger">
+                            <i data-lucide="trash-2"></i>
+                            Delete
+                        </button>
                     </div>
                 </div>
             </div>
@@ -115,6 +149,49 @@
                 </div>
             </div>
         </div>
+    </template>
+
+    <!-- racer entry template -->
+    <template id="racer-entry-template">
+        <div class="racer-entry container border border-secondary rounded">
+            <div class="racer-header d-flex gap-1">
+                <i data-lucide="circle" class="racer-colour p-1"></i>
+                <div class="racer-details">
+                    Racer 1
+                </div>
+            </div>
+            <div class="racer-options" style="width: 200px;">
+                <button class="btn-racer-colour btn btn-secondary p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Set Colour">
+                    <div class="d-flex align-items-center">
+                        <input type="color">     
+                        <i data-lucide="brush"></i>
+                    </div>
+                </button>
+                <div class="div-racer-cartype btn-group dropend p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Set Car Type">
+                    <button class="btn-racer-cartype btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i data-lucide="wrench"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <!-- script generated -->
+                    </ul>
+                </div>
+                <button class="btn-racer-remove btn btn-danger p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Remove Player">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- race car type info -->
+    <template id="car-type-item-template">
+        <li class="dropdown-item">
+            <div class="d-flex justify-content-between gap-3">
+                <span class="car-type-name"></span>
+                <i class="car-type-info" data-lucide="info" data-bs-toggle="tooltip" data-bs-placement="right"
+                    data-bs-html="true" title="test">
+                </i>
+            </div>
+        </li>
     </template>
 
     <script>

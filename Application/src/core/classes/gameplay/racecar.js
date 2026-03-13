@@ -2,6 +2,7 @@
 
 import Vector2 from "../geometry/vector2.js";
 import RACECAR_INFO from "../../enums/racecar-info.js";
+import RACER_TYPE from "../../enums/racer-type.js";
 import Validator from "../../utilities/validator.js";
 
 
@@ -11,18 +12,25 @@ export default class RaceCar {
     #velocity;
     #maxSpeed;
     #maxAcceleration;
+    #carType;
+    #racerType;
+    #colour;
     #style;
 
     constructor(
         position = new Vector2(),
         velocity = new Vector2(),
         maxSpeed = new Vector2(10, 10),
-        maxAcceleration = new Vector2(1, 1)
+        maxAcceleration = new Vector2(1, 1),
+        colour = "#A00"
     ) {
         this.setPosition(position);
         this.setVelocity(velocity);
         this.setMaxSpeed(maxSpeed);
         this.setMaxAcceleration(maxAcceleration);
+        this.setCarType("The Race Car");
+        this.setRacerType(RACER_TYPE.Robot);
+        this.setColour(colour);
         this.style = null;
     }
 
@@ -52,31 +60,51 @@ export default class RaceCar {
         this.#maxAcceleration = acceleration;
     };
 
+    getCarType() { return this.#carType; }
+    setCarType(type) {
+        Validator.keyPresence(RACECAR_INFO, type);
+
+        this.#carType = type;
+
+        let info = RACECAR_INFO[type];
+        this.setMaxSpeed(info.MaxSpeed);
+        this.setMaxAcceleration(info.MaxAcceleration);
+    }
+
+    getRacerType() { return this.#racerType; }
+    setRacerType(racerType) {
+        Validator.valuePresence(RACER_TYPE, racerType);
+        this.#racerType = racerType;
+    }
+
+    getColour() { return this.#colour; }
+    setColour(colour) {
+        Validator.isPrimitive(colour, "string");
+        this.#colour = colour;
+    }
+
     getStyle() { return this.#style; }
     setStyle(style) { this.#style = style; }
 
     
     // methods
-    accelerate(speedup) {
+    getClampedSpeedup(speedup) {
         Validator.isInstance(speedup, Vector2);
 
         let aMax = this.#maxAcceleration;
         let vMax = this.#maxSpeed;
 
-        this.#velocity = this.#velocity // limit acc. and vel.
+        return this.#velocity // limit acc. and vel.
             .add(speedup.clamp(-aMax.x, aMax.x, -aMax.y, aMax.y))
             .clamp(-vMax.x, vMax.x, -vMax.y, vMax.y);
     }
 
-    move() {
-        this.#position = this.#position.add(this.#velocity);
+    accelerate(speedup) {
+        let newVelocity = this.getClampedSpeedup(speedup);
+        this.#velocity = newVelocity;
     }
 
-    setType(type) {
-        Validator.keyPresence(RACECAR_INFO, type);
-
-        let info = RACECAR_INFO[type];
-        this.setMaxSpeed(info.MaxSpeed);
-        this.setMaxAcceleration(info.MaxAcceleration);
+    move() {
+        this.#position = this.#position.add(this.#velocity);
     }
 }

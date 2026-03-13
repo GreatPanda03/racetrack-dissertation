@@ -21,7 +21,7 @@ describe("classes.racecar.accelerate", () => {
     it("accelerates the race car by the given acceleration", () => {
         let racecar = new RaceCar();
 
-        racecar.setType("The Race Car");
+        racecar.setCarType("The Race Car");
 
         racecar.setVelocity(new Vector2(5, -3));
         racecar.accelerate(new Vector2(1, -1));
@@ -33,7 +33,7 @@ describe("classes.racecar.accelerate", () => {
     it("limits the speedup when above the race car's max acceleration", () => {
         let racecar = new RaceCar();
 
-        racecar.setType("The Race Car");
+        racecar.setCarType("The Race Car");
 
         racecar.setVelocity(new Vector2(5, -3));
         racecar.accelerate(new Vector2(3, -3));
@@ -45,7 +45,7 @@ describe("classes.racecar.accelerate", () => {
     it("limits the final velocity when above the race car's max velocity", () => {
         let racecar = new RaceCar();
 
-        racecar.setType("The Race Car");
+        racecar.setCarType("The Race Car");
 
         racecar.setVelocity(new Vector2(-10, 10));
         racecar.accelerate(new Vector2(-1, 1));
@@ -81,7 +81,7 @@ describe("classes.racecar.setType", () => {
     it("sets the race car's stats according to the given type", () => {
         let racecar = new RaceCar();
 
-        racecar.setType("The Motorbike");
+        racecar.setCarType("The Motorbike");
 
         expect( racecar.getMaxSpeed().x ).toBe( 15 );
         expect( racecar.getMaxSpeed().y ).toBe( 15 );
@@ -93,6 +93,6 @@ describe("classes.racecar.setType", () => {
     it("throws an error if the given race car type isn't recognised", () => {
         let racecar = new RaceCar();
 
-        expect( () => racecar.setType("NOT A REAL CAR!!!") ).toThrowError();
+        expect( () => racecar.setCarType("NOT A REAL CAR!!!") ).toThrowError();
     });
 });

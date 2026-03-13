@@ -6,29 +6,35 @@
 import Vector2 from "../geometry/vector2.js";
 import Line from "../geometry/line.js";
 import Track from "../track/track.js";
+import RaceCar from "../gameplay/racecar.js";
 import RACECAR_STATE from "../../enums/racecar-state.js";
 import Validator from "../../utilities/validator.js";
 
 
 export default class RaceStats {
     #track;         // Track
+    #racecar;       // RaceCar
     #moves;         // [[path: Line, velocity: Velocity], ...]
     #distance;      // float
     #time;          // float
     #topSpeed;      // float
     #checkpoints    // [{node: TrackNode, passed: boolean}, ...]
     #state;         // RACECAR_STATE (enum)
+    #crashes;       // int
 
-    constructor(track) {
+    constructor(track, racecar) {
         Validator.isInstance(track, Track);
+        Validator.isInstance(racecar, RaceCar);
         
         this.#track = track;
-        this.#moves = []
+        this.#racecar = racecar;
+        this.#moves = [];
         this.#distance = 0;
         this.#time = 0;
         this.#topSpeed = 0;
         this.#checkpoints = [];
         this.#state = RACECAR_STATE.Racing;
+        this.#crashes = 0;
 
         let path = track.getPath();
 
@@ -44,6 +50,7 @@ export default class RaceStats {
 
     // getters / setters
     getTrack() { return this.#track; }
+    getRacecar() { return this.#racecar; }
     getMoves() { return this.#moves; }
     getDistance() { return this.#distance; }
     getTime() { return this.#time; }
@@ -56,6 +63,9 @@ export default class RaceStats {
         this.#state = state;
     }
 
+    getCrashes() { return this.#crashes; }
+    addCrash() { this.#crashes += 1; }
+    
 
     // methods
     addMove(line, velocity) {
@@ -66,14 +76,6 @@ export default class RaceStats {
 
         // TODO: should TECHNICALLY use [source 1]...
         // * velocity change isn't instantaneous! 
-
-        let distance = line.end.sub(line.start).mag();
-        let speed = velocity.mag();
-        let topSpeed = this.#topSpeed;
-        
-        this.#distance += speed
-        this.#time += speed > 0 ? distance / speed : 1;
-        this.#topSpeed = speed > topSpeed ? speed : topSpeed;
     }
     
     calculateStats() {

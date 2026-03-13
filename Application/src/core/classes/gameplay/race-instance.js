@@ -19,7 +19,7 @@ export default class RaceInstance {
     #track;         // Track
     #form;          // TrackForm
     #racecars;      // RaceCar[]
-    #raceStats;     // {RaceCar: RaceStats}
+    #raceStats;     // RaceStats[]
     #spacing;       // float
 
     constructor(track, racecars = [], spacing = 10) {
@@ -30,7 +30,7 @@ export default class RaceInstance {
         this.#track = track;
         this.#form = new TrackForm(track);
         this.#racecars = [];
-        this.#raceStats = {};   // TODO: not sure if objects work as keys...
+        this.#raceStats = [];
         this.setSpacing(spacing);
 
         if (racecars.length > 0) {
@@ -64,15 +64,22 @@ export default class RaceInstance {
         Validator.listAbsence(racecars, racecar);
 
         racecars.push(racecar);
-        raceStats[racecar] = new RaceStats(track);
+        raceStats.push(new RaceStats(track, racecar));
     }
 
     getRacecarStats(racecar) {
         let raceStats = this.#raceStats;
+        let stats = raceStats.find(s => s.getRacecar() == racecar);
+    
+        if (!stats) throw new Error("[RaceInstance] No stats associated with the given racecar");
 
-        Validator.keyPresence(raceStats, racecar);
+        return stats;
+    }
 
-        return raceStats[racecar];
+    isAnyRacecarInState(state) {
+        Validator.valuePresence(RACECAR_STATE, state);
+
+        return this.#raceStats.some(rs => rs.getState() == state);
     }
 
     moveRacecarToStart(racecar) {
@@ -89,82 +96,6 @@ export default class RaceInstance {
         }
 
         racecar.setPosition(startPos.scale(1 / spacing).round());
-    }
-
-    // [source 1] - collisions
-    moveRacecar(racecar, acceleration) {
-        Validator.isInstance(racecar, RaceCar);
-        Validator.isInstance(acceleration, Vector2);
-
-        let track = this.#track;
-        let form = this.#form;
-        let spacing = this.#spacing;
-        let stats = this.getRacecarStats(racecar);
-
-        let oldPos = racecar.getPosition();
-
-        racecar.accelerate(acceleration);
-        racecar.move();
-
-        let newPos = racecar.getPosition();
-        let route = new Line(oldPos.scale(spacing), newPos.scale(spacing));
-        let realPath = new Line(oldPos, newPos); // assume OK path
-
-        // passing main checkpoints (must pass previous ones first)
-
-        // * TODO: handle logic for 0 checkpoints - can just recross start...
-        //     force at least ONE checkpoint half way around the track?
-        let allPassed = true;
-        let checkpoints = stats.getCheckpoints();
-
-        // done backwards: suppose race car passes 4 then 3 in one go
-        // * should ONLY count 3, not 4
-        for (let c = checkpoints.length - 1; c >= 0; c--) {
-            let checkpoint = checkpoints[c];
-            if (checkpoint.passed) continue;
-
-            let checkpointLine = form.getNodeSpan(checkpoint.index);
-            let crossed = route.getIntersection(checkpointLine);
-
-            if (crossed) {
-                let inOrder = (c == 0) ? true : checkpoints[c - 1].passed;
-                checkpoint.passed = inOrder;
-            }
-
-            if (!checkpoint.passed) {
-                allPassed = false;
-            }
-        }
-
-        // passing the finish line with all checkpoints crossed (win condition)
-        if (allPassed) {
-            let index = track.isLooped() ? 0 : track.getSize() - 1;
-            let finishLine = form.getNodeSpan(index);
-
-            let crossed = route.getIntersection(finishLine);
-
-            if (crossed) {
-                stats.setState(RACECAR_STATE.Finished);
-                realPath = new Line(oldPos, crossed.scale(1 / spacing));
-            }
-        }
-
-        // track boundary collision detection
-        // * check for crashes last, in case crossing the finish line
-        if (stats.getState() != RACECAR_STATE.Finished) {
-            for (let boundary of form.getBoundaries()) {
-                let crossed = route.getIntersection(boundary);
-                
-                if (crossed) {
-                    stats.setState(RACECAR_STATE.Crashed);
-                    realPath = new Line(oldPos, crossed.scale(1 / spacing));
-                }
-            }
-        }
-        
-        // logging the final path for stats
-        stats.addMove(realPath, racecar.getVelocity());
-        racecar.setPosition(realPath.end);
     }
 
     // [source 1] - containment
@@ -255,5 +186,115 @@ export default class RaceInstance {
         }
 
         return moves;
+    }
+
+    // [source 1] - collisions
+    predictMove(racecar, acceleration) {
+        Validator.isInstance(racecar, RaceCar);
+        Validator.isInstance(acceleration, Vector2);
+
+        let track = this.#track;
+        let form = this.#form;
+        let spacing = this.#spacing;
+        let stats = this.getRacecarStats(racecar);
+
+        let oldPos = racecar.getPosition();
+        let newVel = racecar.getClampedSpeedup(acceleration);
+        let newPos = racecar.getPosition().add(newVel);
+        
+        let route = new Line( oldPos.scale(spacing), newPos.scale(spacing) );
+
+        // passing main checkpoints (must pass previous ones first)
+
+        // * TODO: handle logic for 0 checkpoints - can just recross start...
+        //     force at least ONE checkpoint half way around the track?
+
+        let state = stats.getState();
+        let checkpoints = stats.getCheckpoints();
+        let checkpointIndexes = []; // indexes of crossed checkpoints
+        let allPassed = true;
+
+        // gathering indexes of all passed checkpoints
+        for (let c = 0; c < checkpoints.length; c++) {
+            let checkpoint = checkpoints[c];
+            if (checkpoint.passed) continue;
+
+            allPassed = false;
+
+            let checkpointLine = form.getNodeSpan(checkpoint.index);
+            let crossed = route.getIntersection(checkpointLine);
+
+            if (crossed) checkpointIndexes.push(c);
+        }
+
+        // passing the finish line with all checkpoints crossed (win condition)
+        if (allPassed) {
+            let index = track.isLooped() ? 0 : track.getSize() - 1;
+            let finishLine = form.getNodeSpan(index);
+
+            let crossed = route.getIntersection(finishLine);
+
+            if (crossed) {
+                state = RACECAR_STATE.Finished;
+                newPos = crossed.scale(1 / spacing)
+            }
+        }
+
+        // track boundary collision detection
+        // * check for crashes last, in case crossing the finish line
+        if (state != RACECAR_STATE.Finished) {
+            let boundaries = form.getBoundaries();
+            let closest = Math.sqrt(750**2 * 2);
+
+            for (let boundary of boundaries) {
+                let crossed = route.getIntersection(boundary);
+                
+                if (crossed) {
+                    state = RACECAR_STATE.Crashed;
+
+                    let distance = crossed.sub(route.start).mag();
+                    
+                    if (distance < closest) {
+                        closest = distance;
+                        newPos = crossed.scale(1 / spacing);
+                    }
+                }
+            }
+        }
+
+        return {
+            Position: newPos,
+            Velocity: newVel,
+            State: state,
+            CheckpointIndexes: checkpointIndexes};
+    }
+
+    moveRacecar(racecar, acceleration) {
+        let result = this.predictMove(racecar, acceleration);
+        let position = result.Position;
+        let velocity = result.Velocity;
+        let state = result.State;
+        let cpIndexes = result.CheckpointIndexes
+
+        let path = new Line( racecar.getPosition(), position );
+
+        racecar.setPosition(position);
+        racecar.setVelocity(velocity);
+
+        let stats = this.getRacecarStats(racecar);
+        stats.setState(state);
+        stats.addMove(path, racecar.getVelocity());
+        stats.calculateStats();
+
+        // checkpoint order checked backwards: suppose race car passes 4 then 3 in one go
+        // * should ONLY count 3, not 4
+        let checkpoints = stats.getCheckpoints();
+
+        for (let i = cpIndexes.length - 1; i >= 0; i--) {
+            let c = cpIndexes[i];
+            let checkpoint = checkpoints[c];
+            let inOrder = (c == 0) ? true : checkpoints[c - 1].passed;
+            checkpoint.passed = inOrder;
+        }
     }
 }

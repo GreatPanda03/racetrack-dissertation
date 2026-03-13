@@ -73,8 +73,7 @@ export default class TrackRenderer extends CanvasRenderer {
     redrawTrack() {
         this.clearCanvas();
 
-        this._trackForm.calculateNodeSpans(this._track);
-        this._trackForm.calculateBoundaries(this._track);
+        this._trackForm = new TrackForm(this._track);
 
         let visibility = this._visibility;
 
@@ -83,8 +82,8 @@ export default class TrackRenderer extends CanvasRenderer {
             { Method: this.renderDecorations,   Key: "decorations" },
             { Method: this.renderMaterials,     Key: "materials" },
             { Method: this.renderObstacles,     Key: "obstacles" },
-            { Method: this.renderPathOutline,   Key: "path" },
             { Method: this.renderCheckpoints,   Key: "path" },
+            { Method: this.renderPathOutline,   Key: "path" },
             { Method: this.renderWires,         Key: "wires" },
             { Method: this.renderNodes,         Key: "nodes" },
             { Method: this.renderDirection,     Key: "path" },
@@ -159,16 +158,20 @@ export default class TrackRenderer extends CanvasRenderer {
 
         if (size < 2) return;
 
+        let path = track.getPath();
+        let looped = track.isLooped();
         let form = this._trackForm;
         let [left, right] = form.getSplitNodeSpans();
-        let looped = track.isLooped();
 
         let res = 0.1;
         let tmax = looped ? size : size - 1;
 
         let ctx = this._ctx;
         ctx.strokeStyle = "#555";
+        ctx.lineWidth = 1;
         
+        // TODO: make a helper function, since the same code's repeated 3x
+
         // left track edge
         // * see "renderPath" for why an integer step is used
         ctx.beginPath();
@@ -201,6 +204,25 @@ export default class TrackRenderer extends CanvasRenderer {
         
         ctx.stroke();
         ctx.closePath();
+
+        // centre line (mainly for debugging)
+        /*
+        ctx.strokeStyle = "#0A0";
+        ctx.beginPath();
+
+        for (let s = 0; s < Math.round((1 / res) * tmax); s += 1) {
+            let t = s * res;
+
+            let mid1 = SplineUtil.getPointAtT(path, t, looped);
+            let mid2 = SplineUtil.getPointAtT(path, t + res, looped);
+
+            ctx.lineTo(mid1.x, mid1.y);
+            ctx.lineTo(mid2.x, mid2.y);
+        }
+        
+        ctx.stroke();
+        ctx.closePath();
+        */
     }
 
     renderPath() {
@@ -340,9 +362,20 @@ export default class TrackRenderer extends CanvasRenderer {
         let start = path[0].getPosition();
         let end = path[1].getPosition();
         let unit = end.sub(start).unit();
-        let pos = start.add(unit.scale(50));
+        let perp = new Vector2(-unit.y, unit.x);
 
-        this.drawCircle(pos, 5, "#5AF");
+        let pos1 = start.add(unit.scale(50));
+        let pos2 = start.add(unit.scale(40)).add(perp.scale(10));
+        let pos3 = start.add(unit.scale(40)).sub(perp.scale(10));
+
+        let colour = "#999";
+
+        this.drawCircle(pos1, 2.5, colour);
+        this.drawCircle(pos2, 2.5, colour);
+        this.drawCircle(pos3, 2.5, colour);
+
+        this.drawLine(pos1, pos2, 5, colour);
+        this.drawLine(pos1, pos3, 5, colour);
     }
 
     renderGridLines() {
