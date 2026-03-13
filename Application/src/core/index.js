@@ -27,6 +27,7 @@ export { default as ACTION_TYPE } from "./enums/action-type.js";
 export { default as MATERIAL_INFO } from "./enums/material-info.js";
 export { default as RACECAR_INFO } from "./enums/racecar-info.js";
 export { default as RACECAR_STATE } from "./enums/racecar-state.js";
+export { default as RACER_TYPE } from "./enums/racer-type.js";
 export { default as TOOL_TYPE } from "./enums/tool-type.js";
 
 // utilities

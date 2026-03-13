@@ -12,7 +12,7 @@ const RACECAR_INFO = {
     ["The Race Car"]: {
         Id: 1,
         Name: "The Race Car",
-        Description: "A standard race car for all-round racing",
+        Description: "A standard race car for all-around racing",
         MaxSpeed: new Vector2(10, 10),
         MaxAcceleration: new Vector2(1, 1)
     },

@@ -11,18 +11,21 @@ import Validator from "../../utilities/validator.js";
 
 export default class TrackForm {
     #nodeSpans;     // Line[]
+    #centre;        // Line[]
     #boundaries;    // Line[]
 
     constructor(track) {
         Validator.isInstance(track, Track);
         
         this.calculateNodeSpans(track);
+        this.calculateCentre(track, 0.1);
         this.calculateBoundaries(track, 0.1);
     }
 
 
     // getters / setters
     getNodeSpans() { return this.#nodeSpans; }
+    getCentre() { return this.#centre; }
     getBoundaries() { return this.#boundaries; }
 
 
@@ -72,9 +75,36 @@ export default class TrackForm {
         }
     }
 
+    calculateCentre(track, res = 0.1) {
+        // central line as smaller line segments (kind of like track boundaries)
+        // * res - ditto as below
+
+        Validator.isInstance(track, Track);
+        Validator.isNumeric(res);
+        
+        this.#centre = [];
+
+        let path = track.getPath();
+        let size = track.getSize();
+        if (size == 0) return;
+
+        let looped = track.isLooped();
+
+        // track edges (same idea as drawing track path)
+        let tmax = looped ? size : size - 1
+
+        for (let t = 0; t < tmax; t += res) {
+            let mid1 = SplineUtil.getPointAtT(path , t      , looped);
+            let mid2 = SplineUtil.getPointAtT(path , t + res, looped);
+
+            this.#centre.push( new Line(mid1, mid2) );
+        }
+    }
+
     calculateBoundaries(track, res = 0.1) {
         // the actual collidable boundaries of the track (should correspond to spline)
         // * "res" = resolution - determines how "fine" the boundaries are
+
         Validator.isInstance(track, Track);
         Validator.isNumeric(res);
 

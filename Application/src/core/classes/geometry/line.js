@@ -91,4 +91,30 @@ export default class Line {
             && Math.min(p1.x, p2.x) <= q.x && q.x <= Math.max(p1.x, p2.x)
             && Math.min(p1.y, p2.y) <= q.y && q.y <= Math.max(p1.y, p2.y)
     }
+
+    // TODO: write unit tests
+    toPoint(point) {
+        let v1 = this.start;
+        let v2 = this.end
+        let p = point;
+
+        let distance;
+
+        let tNum = (v1.x - p.x) * (v2.x - v1.x) + (v1.y - p.y) * (v2.y - v1.y);
+        let tDen = (v2.x - v1.x)**2 + (v2.y - v1.y)**2;
+        let t = tNum / tDen;
+
+        if (0 <= t && t <= 1) {
+            let dNum = Math.abs( (v2.x - v1.x) * (v1.y - p.y) - (v2.y - v1.y) * (v1.x - p.x) );
+            let dDen = Math.sqrt(tDen);
+            distance = dNum / dDen;
+        
+        } else {
+            let d1 = Math.sqrt( (v2.x - p.x)**2 + (v2.y - p.y)**2 );
+            let d2 = Math.sqrt( (v1.x - p.x)**2 + (v1.y - p.y)**2 );
+            distance = Math.min(d1, d2);
+        }
+
+        return distance
+    }
 }

@@ -20,6 +20,7 @@ app.use(express.json());
 app.use(express.static("public")); // static resources
 app.use("/core", express.static("src/core")); // core classes etc.
 
+/*
 const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
 mongoose.connect(uri)
     .then((result) => app.listen(3000))
@@ -29,12 +30,11 @@ mongoose.connect(uri)
         usingDb = false;
         app.listen(3000);
     });
+*/
 
-/*
 app.listen(3000);
 console.log("RUNNING WITHOUT DATABASE!");
 usingDb = false;
-*/
 
 
 // [[ URL Endpoints ]] //
@@ -115,20 +115,40 @@ app.get("/tracks/list", async (request, response) => {
 });
 
 
-app.get("/tracks/play/:trackId/:racecarId", async (request, response) => {
+/* // NOTE: uncomment when using actual lobbies
+app.post("/tracks/play", async(request, response) => {
+    let { trackId, racers } = request.body;
+
+    if (!trackId || !racers) {
+        return res.status(400).json({ success: false });
+    }
+
+    let racersJson = JSON.stringify(racers);
+    let racersEncoded = encodeURIComponent(racersJson);
+
+    response.redirect(`/tracks/play/${trackId}?racers=${racersEncoded}`);
+});
+*/
+
+
+app.get("/tracks/play/:trackId", async (request, response) => {
     if (usingDb) {
         try {
             let trackId = request.params.trackId;
-            let racecarId = request.params.racecarId;
+            let racers = [];
+            
+            if (request.query.racers) {
+                racers = JSON.parse(decodeURIComponent(request.query.racers));
+            }
 
-            if ( !(trackId && racecarId) ) {
+            if (!trackId) {
                 response.status(400).json({ success: false, error: "Track / race car ID missing" });
             }
 
             let track = await TrackModel.findById( trackId );
 
             if (track) {
-                response.render("track-play", { title: "Race", track, racecarId });   
+                response.render("track-play", { title: "Race", track, racers });
             } else {
                 response.redirect("/tracks/list");
             }
@@ -140,16 +160,17 @@ app.get("/tracks/play/:trackId/:racecarId", async (request, response) => {
 
     } else {
         let trackId = request.params.trackId;
-        let racecarId = request.params.racecarId;
+        let racers = JSON.parse(request.query.racers);
 
-        if ( !(trackId && racecarId) ) {
+        if ( !(trackId) ) {
             response.status(400).json({ success: false, error: "Track / race car ID missing" });
         }
 
-        let track = gameTracks.find(t => JSON.parse(t)._id == trackId );
+        let trackJson = gameTracks.find(t => JSON.parse(t)._id == trackId );
+        let track = JSON.parse(trackJson);
 
         if (track) {
-            response.render("track-play", { title: "Race", track: JSON.parse(track), racecarId });   
+            response.render("track-play", { title: "Race", track, racers });   
         } else {
             response.redirect("/tracks/list");
         }

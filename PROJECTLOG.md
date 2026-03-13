@@ -287,15 +287,32 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 
 ---
 
-### 2026/03/05 MAR
+### 2026/03/05 THU
 <details>
 <summary>V2 Completion & Project Interview</summary>
 
 - As of the last entry:
     - Implemented v1.7.0 - v1.8.0 (see changelog)
     - Interview held on **2026/02/11 WED**
+    - ! MAJOR set back in work due to external factors...
 
-- Supervisor meeting will be held on **2026/03/05 MAR**
+- Supervisor meeting held on **2026/03/05 THU**
+    - Discussed progress made since last actual showing (about 1.5 months)
+    - Discussed possibility of cutting out secondary objectives and how to write in dissertation
+    - Future plans (remaining versions, dissertation, etc.)
+
+</details>
+
+---
+
+### 2026/03/19 THU
+<details>
+<summary>Local Multiplayer & Basic AI</summary>
+
+- As of the last entry:
+    - Implemented v2.0.0 (see changelog)
+
+- Supervisor meeting to be held on **2026/03/19 THU**
     - ...
 
 </details>

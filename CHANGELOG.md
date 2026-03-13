@@ -13,6 +13,48 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 2.0.0
+**Date:** 2026/03/13
+<details>
+<summary>V2 Transition & Local Multiplayer</summary>
+
+**Additions / Changes:**
+1. Implemented local multiplayer - race offline with more than just you!
+    * **How it works:** each player starts at the same spot and takes turns to choose their move - once everyone's chosen one, everyone moves simultaneously
+2. Implemented basic Robot Racers - no friends? No problem!
+    * **How it works:** robots are exactly like players, but take moves on their own accord - they plan ahead to find a good one, but can sometimes make mistakes
+3. Adjusted race details & options
+    * Added an option to select how many players to race with locally
+    * Added options to provide a name, colour, race car type per local player
+    * Added an option to play with Robot racers (currently no explicit difficulty options)
+4. Adjusted live race stats
+    * Separated live race stats by race car (collapsible tabs)
+    * Added race car details per player
+    * Simplified checkpoint UI to simpler checkboxes (rather than text)
+    * Added the finish line as an indicator to checkpoints
+    * Added crash count as a race stat
+5. Adjusted race results
+    * Race results display the results of all players as a table with sorting options
+6. Adjusted race track rendering
+    * Changed directional dot to be an arrow
+    * Race cars are now numbered and coloured according to local players
+
+* **Note:** will add retiring specific players in the next version
+
+**Bugs Fixed:**
+<br>No existing bugs fixed.
+
+**Bugs Discovered:**
+1. Aware that Robot moves can make the game "freeze" a little (especially when retiring) due to calculations
+2. Aware that adding racers between removals causes repeated colours (UX issue)
+3. Aware that player numbers in race results don't always match up with their real numbers
+4. Aware that final race time represents the <i>total time of the distance driven</i> (rather than <i>total elapsed time</i>)
+5. Aware that some UI content (namely in popups) still overflows when the window is too small
+
+</details>
+
+---
+
 ### Version: 1.8.0
 **Date:** 2026/02/15
 <details>
