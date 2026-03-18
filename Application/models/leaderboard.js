@@ -1,0 +1,33 @@
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
+
+const scoreSchema = new Schema({
+    time: {
+        type: Number,
+        required: true
+    },
+    moves: {
+        type: [Schema.Types.Mixed],
+        required: true
+    },
+    date: {
+        type: Date,
+        required: true
+    }
+}, { _id: false });
+
+const leaderboardSchema = new Schema({
+    _id: {
+        type: Schema.Types.ObjectId,
+        required: true
+    },
+    scores: {
+        type: Map,
+        of: scoreSchema,
+        default: {}
+    }
+});
+
+const Leaderboard = mongoose.model("Leaderboard", leaderboardSchema);
+
+module.exports = Leaderboard;

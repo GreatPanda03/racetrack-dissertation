@@ -8,6 +8,7 @@
 // [[ Imports ]] //
 import {
     Track, TrackRenderer,
+    Lobby,
     RACECAR_INFO, RACER_TYPE
 } from "/core/index.js";
 
@@ -17,7 +18,7 @@ import {
 var selectedTrack;
 var spacing = 25;
 
-var racers = [];
+var lobby;      // Lobby
 
 
 
@@ -95,7 +96,7 @@ function createTrackEntry(track) {
 // [source 1, source 2, source 3]
 const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
 
-function generateRacerColour(number) {
+function generateColour(number) {
     // generates a somewhat "distant" colour for the given
     //   racer number (based on the golden ratio) in HTML hex format
 
@@ -129,6 +130,19 @@ function generateRacerColour(number) {
     let hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 
     return hex;
+}
+
+function generateRacerColour(number) { // starting number
+    let racers = lobby.getRacers();
+    let colours = racers.map(r => r.Colour);
+    let colour;
+
+    do {
+        colour = generateColour(number);
+        number += 1;
+    } while (colours.find(c => c == colour))
+
+    return colour;
 }
 
 
@@ -204,7 +218,7 @@ function initialiseTrackDetails() {
 
 
 function showTrackDetails(track) {
-    racers = [];
+    lobby = new Lobby();
     selectedTrack = track;
 
     refreshRacerDetails();
@@ -213,6 +227,7 @@ function showTrackDetails(track) {
     let modal = new bootstrap.Modal(popup);
     modal.show();
 
+    // track info
     let infoBody = document.getElementById("details-info");
     infoBody.innerHTML = `
         <div style="text-align: start">
@@ -220,8 +235,83 @@ function showTrackDetails(track) {
             <div> <b>Description:</b> ${track.getDescription()} </div>
             <div> <b>Author:</b> ${track.getAuthor()} </div>
         </div>
+        <hr>
     `;
 
+    // leaderboard info
+    function constructLeaderboard(leaderboard) {
+        let table = document.createElement("table");
+        table.classList.add("table", "table-light", "table-bordered", "text-center");
+
+        // headers
+        let thead = document.createElement("thead");
+        let theadr = document.createElement("tr");
+        let headers = ["#", "Name", "Time (s)", "Date", "Ghost"];
+
+        for (let header of headers) {
+            let th = document.createElement("th");
+            th.classList.add("text-center");
+            th.innerHTML = header;
+            theadr.appendChild(th);
+        }
+
+        theadr.classList.add("table-secondary");
+        thead.appendChild(theadr);
+
+        // data rows
+        let tbody = document.createElement("tbody");
+        let rank = 1;
+
+        for (let [name, values] of Object.entries(leaderboard.scores)) {
+            let tr = document.createElement("tr");
+            tr.innerHTML = `<th scope="row">${rank}</th>`;
+
+            let time = values.time.toFixed(3);
+            let date = new Date(values.date).toISOString().split("T")[0];
+            let data = [name, time, date];
+
+            for (let value of data) {
+                let td = document.createElement("td");
+                td.innerHTML = value;
+                tr.appendChild(td);
+            }
+
+            let ghostBox = document.createElement("td");
+            ghostBox.innerHTML = `<label style="display: inline-block; width: 100%; height: 100%;">
+                <input class="form-check-input mt-1" type="checkbox" id="ghost-${rank}"}>
+            </label>`;
+
+            tr.appendChild(ghostBox); // add ghost to race
+            
+            tbody.appendChild(tr);
+            rank += 1;
+        }
+
+        table.appendChild(thead);
+        table.appendChild(tbody);
+
+        return table;
+    }
+
+    let leaderboard = theLeaderboards.find(l => l._id == track.getId());
+    let lbDiv = document.createElement("div");
+    let lbContent = null;
+
+    lbDiv.id = "leaderboard-div";
+    lbDiv.innerHTML += "<div class='text-center'><b>Track Times</b></div>";
+
+    if (leaderboard && Object.keys(leaderboard.scores).length > 0) {
+        lbContent = constructLeaderboard(leaderboard);
+
+    } else {
+        lbContent = document.createElement("span");
+        lbContent.innerHTML = "This track has no records - be the first to set one!";
+    }
+
+    lbDiv.appendChild(lbContent);
+    infoBody.appendChild(lbDiv);
+
+    // track preview
     let canvas = document.getElementById("details-canvas");
 
     let renderer = new TrackRenderer(track, canvas, spacing);
@@ -240,31 +330,42 @@ function showTrackDetails(track) {
 }
 
 
-function initialiseRacerDetails() {
+function addDefaultRacer(racerType) {
+    let carType = Object.keys(RACECAR_INFO)[0];
+    let colour = generateRacerColour(0);
+
+    let racer = lobby.addRacer(racerType, carType, colour);
+    racer.Level = 1;
+
+    refreshRacerDetails();
+
+    return racer;
+}
+
+
+function initialiseLobbyDetails() {
     let addPlayer = document.getElementById("player-racers-add");
     let addRobot = document.getElementById("robot-racers-add");
+    let lobbyOptions = document.getElementById("lobby-options");
 
     addPlayer.addEventListener("click", (e) => {
-        let racer = {
-            RacerType: RACER_TYPE.Player,
-            CarType: Object.keys(RACECAR_INFO)[0],
-            Colour: generateRacerColour(racers.length)};
-
-        racers.push(racer);
-
-        refreshRacerDetails();
+        addDefaultRacer(RACER_TYPE.Player);
     });
 
     addRobot.addEventListener("click", (e) => {
-        let racer = {
-            RacerType: RACER_TYPE.Robot,
-            CarType: Object.keys(RACECAR_INFO)[0],
-            Colour: generateRacerColour(racers.length)};
-
-        racers.push(racer);
-
-        refreshRacerDetails();
+        addDefaultRacer(RACER_TYPE.Robot);
     });
+
+    for (let element of lobbyOptions.children) {
+        let input = element.querySelector("input[type=checkbox");
+
+        input.addEventListener("change", (e) => {
+            let option = input.dataset.option;
+            let value = input.checked;
+
+            lobby.setOption(option, value);
+        });
+    }
 }
 
 
@@ -282,25 +383,24 @@ function refreshRacerDetails() {
     playerList.innerHTML = "";
     robotList.innerHTML = "";
 
-    let playerCount = 0;
-    let robotCount = 0;
+    let racerInfo = Object.keys(RACER_TYPE).map(k => {
+        return ({Count: 0, Name: k})
+    });
+    racerInfo.unshift(undefined); // hacky: to accommodate 1-n enum numbering
+
+    let racers = lobby.getRacers();
 
     for (let racer of racers) {
-        let name = "";
+        let racerType = racer.RacerType;
         let carType = racer.CarType;
 
-        if (racer.RacerType == RACER_TYPE.Player) {
-            playerCount += 1;
-            name = `<b>Player ${playerCount}</b> - ${carType}`;
-
-        } else if (racer.RacerType == RACER_TYPE.Robot) {
-            robotCount += 1;
-            name = `<b>Robot ${robotCount}</b> - ${carType}`;
-        }
+        let info = racerInfo[racerType];
+        info.Count += 1;
 
         let entry = createRacerEntry(racer);
 
         // naming
+        let name = `<b>${info.Name} ${info.Count}</b> - ${carType}`;
         let nameElement = entry.querySelector(".racer-details");
         nameElement.innerHTML = name;
 
@@ -329,12 +429,28 @@ function refreshRacerDetails() {
             });
         }
 
+        if (racerType == RACER_TYPE.Robot) {
+            let levelInput = entry.querySelector(".input-robot-level");
+            levelInput.value = racer.Level;
+            
+            levelInput.addEventListener("change", (e) => {
+                let level = levelInput.value;
+                level = Math.min(Math.max(level, 0), 4);
+                racer.Level = level;
+
+                refreshRacerDetails();
+            })
+
+        } else {
+            let levelDiv = entry.querySelector(".div-robot-level");
+            levelDiv.remove();
+        }
+
         // deletion
         let deleteBtn = entry.querySelector(".btn-racer-remove");
 
         deleteBtn.addEventListener("click", (e) => {
             let index = racers.findIndex(r => r == racer);
-            console.log(index);
             racers.splice(index, 1);
             refreshRacerDetails();
         });
@@ -351,8 +467,8 @@ function refreshRacerDetails() {
     let playerLabel = document.getElementById("player-racers-label");
     let robotLabel = document.getElementById("robot-racers-label");
 
-    playerLabel.innerHTML = `Players (${playerCount})`;
-    robotLabel.innerHTML = `Robots (${robotCount})`;
+    playerLabel.innerHTML = `Players (${playerList.childElementCount})`;
+    robotLabel.innerHTML = `Robots (${robotList.childElementCount})`;
 
     // widgets & icons
     lucide.createIcons();
@@ -372,8 +488,6 @@ function loadAllTracks(tracks) {
     let gameTracks = document.getElementById("game-tracks-list");
     let playerTracks = document.getElementById("player-tracks-list");
     let personalTracks = document.getElementById("personal-tracks-list");
-
-    tracks = tracks.map(t => Track.toInstance(JSON.parse(t)));
 
     function createEntryForList(list, track) {
         let entry = createTrackEntry(track);
@@ -403,13 +517,9 @@ function startLobby(track) {
         throw new Error(`[Tracks List] No track provided to play`);
     }
 
-    if (racers.length == 0) { // solo race
-        racers.push({
-            RacerType: RACER_TYPE.Player,
-            CarType: Object.keys(RACECAR_INFO)[0],
-            Colour: generateRacerColour(0)
-        });
-    }
+    if (lobby.getRacers().length == 0) { // solo race
+        addDefaultRacer(RACER_TYPE.Player);
+    }    
 
     /* NOTE: use this when using an actual lobby system 
     (async () => {
@@ -421,24 +531,42 @@ function startLobby(track) {
     })();
     */
 
-    let trackId = track.getId();
-    let racersJson = JSON.stringify(racers);
-    let racersEncoded = encodeURIComponent(racersJson);
+    let lbDiv = document.getElementById("leaderboard-div");
+    let ghostEntries = lbDiv.querySelectorAll("input[id*=ghost]:checked");
+    let leaderboard = theLeaderboards.find(l => l._id == track.getId());
 
-    window.location.href = `/tracks/play/${trackId}?racers=${racersEncoded}`;   
+    for (let ghostEntry of ghostEntries) {
+        let rank = Number(ghostEntry.id.split("-")[1]);
+        let key = Object.keys(leaderboard.scores)[rank - 1];
+
+        let ghost = addDefaultRacer(RACER_TYPE.Ghost);
+        ghost.Moves = leaderboard.scores[key].moves
+
+        lobby.push(ghost);
+    }
+
+    let trackId = track.getId();
+    let lobbyJson = JSON.stringify(lobby);
+    let lobbyEncoded = encodeURIComponent(lobbyJson);
+
+    window.location.href = `/tracks/play/${trackId}?lobby=${lobbyEncoded}`;   
 }
 
 
 
 // [[ Set Up ]] //
 
-loadAllTracks(tracks); // provided through Node
+// through ejs
+let theTracks = tracks.map(t => Track.toInstance(JSON.parse(t)));
+let theLeaderboards = leaderboards.map(l => JSON.parse(l));
+
+loadAllTracks(theTracks);
 
 initialiseTrackSearch();
 
 initialiseTrackDetails();
 
-initialiseRacerDetails();
+initialiseLobbyDetails();
 
 lucide.createIcons();
 

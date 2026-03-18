@@ -63,13 +63,9 @@
                             <i data-lucide="hammer"></i>
                             Continue Building
                         </button>
-                        <button id="results-retire" class="btn btn-danger" data-bs-dismiss="modal">
-                            <i data-lucide="flag"></i>
-                            Retire From Race
-                        </button>
                         <button id="results-retry" class="btn btn-success" data-bs-dismiss="modal">
                             <i data-lucide="wrench"></i>
-                            Retry From Crash
+                            Retry Selected From Crash
                         </button>
                     </div>
                 </div>
@@ -101,7 +97,7 @@
 
     <script>
         window.track = <%- JSON.stringify(track) %>;
-        window.racers = <%- JSON.stringify(racers) %>;
+        window.lobby = <%- JSON.stringify(lobby) %>;
     </script>
 </body>
 </html>

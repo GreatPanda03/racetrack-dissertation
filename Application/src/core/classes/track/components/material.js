@@ -43,7 +43,7 @@ export default class Material extends Polygon {
         return material;
     }
 
-    toJson(spaces) {
-        return JSON.stringify(this.toObject(), null, spaces);
+    toJSON() {
+        return this.toObject();
     }
 }

@@ -1,23 +1,23 @@
 {
   "name": "application",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "src/app.js",
   "scripts": {
     "test": "vitest"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["Computer Science", "MSc", "Dissertation", "RaceTrack"],
+  "author": "Muhammad Mogra",
   "license": "ISC",
   "description": "Tracer Racers - Vectorised 2D Racing",
   "dependencies": {
     "canvas": "^3.2.1",
     "ejs": "^3.1.10",
     "express": "^5.2.1",
-    "jsdom": "^27.0.1",
-    "mongoose": "^9.2.0",
-    "nodemon": "^3.1.11"
+    "mongoose": "^9.2.0"
   },
   "devDependencies": {
-    "vitest": "^4.0.16"
+    "nodemon": "^3.1.11",
+    "vitest": "^4.0.16",
+    "jsdom": "^27.0.1"
   }
 }

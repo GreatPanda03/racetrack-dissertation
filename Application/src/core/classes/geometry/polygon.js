@@ -72,7 +72,7 @@ export default class Polygon {
         return polygon;
     }
 
-    toJson(spaces) {
-        return JSON.stringify(this.toObject(), null, spaces);
+    toJSON() {
+        return this.toObject();
     }
 }

@@ -51,7 +51,7 @@ export default class TrackNode extends PathNode {
         return node;
     }
 
-    toJson(spaces) {
-        return JSON.stringify(this.toObject(), null, spaces);
+    toJSON() {
+        return this.toObject();
     }
 }

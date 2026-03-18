@@ -18,6 +18,7 @@ export { default as CanvasRenderer } from "./classes/rendering/canvas-renderer.j
 export { default as TrackRenderer } from "./classes/rendering/track-renderer.js";
 export { default as UndoRedoStack } from "./classes/rendering/undo-redo-stack.js";
 
+export { default as Lobby } from "./classes/gameplay/lobby.js";
 export { default as RaceCar } from "./classes/gameplay/racecar.js";
 export { default as RaceStats } from "./classes/gameplay/race-stats.js";
 export { default as RaceInstance } from "./classes/gameplay/race-instance.js";

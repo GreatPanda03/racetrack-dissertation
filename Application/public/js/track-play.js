@@ -16,8 +16,9 @@ import {
     Vector2,
     Track,
     CanvasRenderer, TrackRenderer,
-    RaceCar, RaceInstance,
-    RACECAR_STATE, RACER_TYPE
+    Lobby, RaceCar, RaceInstance,
+    RACECAR_STATE, RACER_TYPE,
+    Validator
 } from "/core/index.js";
 
 
@@ -43,7 +44,9 @@ var movesToMake = [];                       // list of moves to apply
 
 var timeElapsed = 0;
 var turn = 0;
-let autoRetry = true;   // TODO: make this an actual option
+
+var ghostMoves = [];
+var lobbyOptions = {};      // options specified in Lobby
 
 
 
@@ -61,14 +64,10 @@ function getRelativePositionOnCanvas(canvas, x, y) {
 function findNextTurn() {
     let racecars = raceInstance.getRacecars();
 
-    function incrementTurn() {
-        turn = (turn + 1) % racecars.length;
-    }
-
     while (true) {
-        incrementTurn();
+        turn += 1;
 
-        if (turn == 0) applyAllMoves();
+        if (turn >= racecars.length) applyAllMoves();
 
         // preliminary checks (no active racers, OR active crashes)
         let isAnyRacing = raceInstance.isAnyRacecarInState(RACECAR_STATE.Racing)
@@ -108,6 +107,16 @@ function findNextTurn() {
                 } else if (racerType == RACER_TYPE.Robot) {
                     let move = determineRobotMove(racecar);
                     movesToMake[turn] = move;
+                
+                } else if (racerType == RACER_TYPE.Ghost) {
+                    let index = racecars.findIndex(r => r == racecar);
+                    let moveInfo = ghostMoves[index][timeElapsed];
+
+                    let oldVel = racecar.getVelocity()
+                    let newVel = Vector2.toInstance(moveInfo.Velocity);
+                    let acc = newVel.sub(oldVel);
+
+                    movesToMake[turn] = acc;
                 }
 
             } else {
@@ -117,8 +126,14 @@ function findNextTurn() {
     }
 }
 
-function loadTrack(trackToLoad, racers) {
+function loadTrack(trackToLoad, lobbyToLoad) {
     let track = Track.toInstance(trackToLoad);
+    let lobby = Lobby.toInstance(lobbyToLoad);
+
+    lobbyOptions = lobby.getOptions();
+    lobbyOptions.RobotLevels = lobby.getRacers()
+        .filter(r => r.RacerType == RACER_TYPE.Robot)
+        .map(r => r.Level);
 
     // track rendering
     trackRenderer = new TrackRenderer(track, trackCanvas, spacing);
@@ -130,8 +145,9 @@ function loadTrack(trackToLoad, racers) {
 
     // race car set up
     let racecars = [];
+    let racers = lobby.getRacers();
 
-    for (let racer of racers) {
+    racers.forEach((racer, r) => {
         let {RacerType, Colour, CarType} = racer;
 
         let racecar = new RaceCar();
@@ -139,11 +155,15 @@ function loadTrack(trackToLoad, racers) {
         racecar.setCarType(CarType);
         racecar.setColour(Colour);
         racecars.push(racecar);
-    }
+
+        if (RacerType == RACER_TYPE.Ghost) {
+            ghostMoves[r] = racer.Moves;
+        }
+    });
 
     // instance creation
     raceInstance = new RaceInstance(track, racecars, spacing);
-    timeElapsed = -1; // -1: hacky, to not start at "1" (TODO)
+    timeElapsed = 0;
     turn = -1;
 
     findNextTurn();
@@ -181,9 +201,31 @@ function initialisePlayCanvas() {
 
 function initialiseResultsPopup() {
     let buildBtn = document.getElementById("results-build");
-    let retireBtn = document.getElementById("results-retire");
     let retryBtn = document.getElementById("results-retry");
     let closeBtn = document.getElementById("results-close");
+
+    function runRetryAndRetirement() {
+        let racecars = raceInstance.getRacecars();
+        
+        let toRetry = [];
+        let toRetire = [];
+
+        let popup = document.getElementById("modal-race-results");
+        let results = popup.getElementsByClassName("results")[0];
+        let checkboxes = results.querySelectorAll("[id*='retry-racecar-']");
+
+        for (let box of checkboxes) {
+            let index = box.dataset.number;
+            let racecar = racecars[index];
+            box.checked ? toRetry.push(racecar) : toRetire.push(racecar);
+        }
+
+        retryRacecars(toRetry);
+        retireRacecars(toRetire);
+
+        turn = -1; // TODO: hacky way to set turn to start
+        findNextTurn();   
+    }
 
     buildBtn.addEventListener("click", (e) => {
         let buildUrl = `/tracks/build/${raceInstance.getTrack().getId()}`;
@@ -196,19 +238,12 @@ function initialiseResultsPopup() {
         }
     });
 
-    retireBtn.addEventListener("click", (e) => {
-        retireRacecars();
-    });
-
     retryBtn.addEventListener("click", (e) => {
-        retryRacecars();
-
-        turn = -1; // TODO: hacky way to set turn to start
-        findNextTurn();
+        runRetryAndRetirement();
     });
 
-    closeBtn.addEventListener("click", (e) => {
-        retireRacecars();
+    closeBtn.addEventListener("click", (e) => {      
+        if (!retryBtn.hidden) runRetryAndRetirement();
     });
 }
 
@@ -219,6 +254,11 @@ function determineRobotMove(racecar) {
     let canvas = trackRenderer.getCanvas();
 
     let finalMove;
+    
+    let racecars = raceInstance.getRacecars();
+    let robots = racecars.filter(r => r.getRacerType() == RACER_TYPE.Robot);
+    let index = robots.findIndex(r => r == racecar);
+    let level = lobbyOptions.RobotLevels[index];
 
     function getClosestSegmentIndex(position) {
         let closest = -1;
@@ -280,27 +320,25 @@ function determineRobotMove(racecar) {
         [RACECAR_STATE.Finished]:  100
     } 
 
-    let deterministic = false;
-    let maxDepth = 3;
+    let deterministic = level >= 4;
+    let maxDepth;
     let depth;
     let randomRisk;
     // # of predicted moves beyond the first move
 
     if (deterministic) {
+        maxDepth = 3;
         depth = 3;
-        randomRisk = 3;
+        randomRisk = 0;
     } else {
-        depth = Math.floor(Math.random() * maxDepth);
-        randomRisk = 1 / 10**maxDepth;
+        maxDepth = level;
+        depth = Math.ceil(Math.random() * maxDepth);
+        randomRisk = 1 / 2**(level == 0 ? 1 : level);
     }
 
     function runRecursion(d) {
         let moves = raceInstance.getPossibleMoves(racecar);
         let bestScore = -100;
-
-        if (Math.random() < randomRisk) {
-            return 10; // false favour
-        }
 
         for (let move of moves) {
             if (!move.Active) continue;
@@ -323,6 +361,10 @@ function determineRobotMove(racecar) {
                 }
 
                 score += runRecursion(d - 1);
+                
+                if (Math.random() < randomRisk) {
+                    score += Math.abs(score) * 0.25;
+                }
 
                 racecar.setPosition(originalPos); // hacky reset per move (TODO)
                 racecar.setVelocity(originalVel);
@@ -365,9 +407,15 @@ function applyAllMoves() {
         let playersCrashed = crashed.some(
             r => r.getRacerType() == RACER_TYPE.Player);
 
-        if (!playersCrashed && autoRetry) {
-            retryRacecars();
+        let robotsCrashed = crashed.some(
+            r => r.getRacerType() == RACER_TYPE.Robot);
 
+        let autoPlayers = !playersCrashed || (playersCrashed && lobbyOptions["Auto-retry Players"]);
+        let autoRobots = !robotsCrashed || (robotsCrashed && lobbyOptions["Auto-retry Robots"]);
+
+        // retry without / with intervention
+        if (autoPlayers && autoRobots) {
+            retryRacecars(crashed);
         } else {
             endRace(RACECAR_STATE.Crashed);
         }
@@ -382,9 +430,7 @@ function applyAllMoves() {
     renderRacecars();
 }
 
-function retryRacecars() {
-    let racecars = raceInstance.getRacecars();
-
+function retryRacecars(racecars) {
     for (let racecar of racecars) {
         let stats = raceInstance.getRacecarStats(racecar);
 
@@ -402,25 +448,13 @@ function retryRacecars() {
     }
 }
 
-function retireRacecars() {
-    // defaults to retiring
-    let racecars = raceInstance.getRacecars();
-    let crash = false;
-
+function retireRacecars(racecars) {
     for (let racecar of racecars) {
         let stats = raceInstance.getRacecarStats(racecar);
 
         if (stats.getState() == RACECAR_STATE.Crashed) {
             stats.setState(RACECAR_STATE.Retired);
-            crash = true;
         }
-    }
-
-    // TODO: hacky - used to determine whether popup showed from
-    //   a crash or from the race finishing (if the former, then continue)
-    if (crash) {
-        turn = -1; // TODO: hacky way to set turn to start
-        findNextTurn();
     }
 }
 
@@ -430,26 +464,12 @@ function endRace(state) {
     let retryBtn = document.getElementById("results-retry");
 
     let racecars = raceInstance.getRacecars();
-    let playerCount = 0;
-    let robotCount = 0;
+    let ranks = getRankedRacecars();
 
-    // ranking by speed 
-    let ranks = racecars.toSorted((a, b) => {
-        let stats1 = raceInstance.getRacecarStats(a);
-        let stats2 = raceInstance.getRacecarStats(b);
-
-        let state1 = stats1.getState();
-        let state2 = stats2.getState();
-
-        let time1 = stats1.getTime();
-        let time2 = stats2.getTime();
-
-        // if racing, sort in ascending time (faster = better)
-        // if retired, sort in descending time (duration = better)
-
-        return state1 - state2 // 0 diff = false (ie. equal states)
-            || (state1 == RACECAR_STATE.Retired) ? time2 - time1 : time1 - time2;
+    let buckets = Object.keys(RACER_TYPE).map(k => {
+        return racecars.filter(r => r.getRacerType() == RACER_TYPE[k]);
     });
+    buckets.unshift(undefined); // hacky: to accommodate 1-n enum numbering
 
     // table construction
     function getResultsRow(racecar) {
@@ -469,19 +489,11 @@ function endRace(state) {
         let racerType = racecar.getRacerType();
         let colour = racecar.getColour();
         
-        let count = 0;
-
-        if (racerType == RACER_TYPE.Player) {
-            playerCount += 1;
-            count = playerCount;
-            
-        } else if (racerType == RACER_TYPE.Robot) {
-            robotCount += 1;
-            count = robotCount;
-        }
-
+        let bucket = buckets[racerType];
+        let number = bucket.findIndex(r => r == racecar) + 1;
+        
         let prefix = Object.keys(RACER_TYPE).find(k => RACER_TYPE[k] == racerType);
-        let name = `${prefix} ${count}`;
+        let name = `${prefix} ${number}`;
 
         let data = [name, time, moveCount, distance, topSpeed, averageSpeed, crashes];
 
@@ -555,7 +567,51 @@ function endRace(state) {
 
         let modal = new bootstrap.Modal(popup, {backdrop: "static"});
         modal.show();
+
+        // race cars to retire / continue
+        let toggleAll = document.createElement("div");
+        toggleAll.innerHTML = `
+            <input id="retry-all" class="form-check-input" type="checkbox" checked>
+            <label class="form-check-label ms-2" for="retry-all"><b>Select All</b></label>
+        `;
+
+        let checkboxAll = toggleAll.querySelector("#retry-all");
+        checkboxAll.addEventListener("change", (e) => {
+            let value = checkboxAll.checked;
+            let checkboxes = results.querySelectorAll("[id*='retry-racecar-']");
+            for (let checkbox of checkboxes) checkbox.checked = value;
+        });
+
+        results.append(toggleAll);
+
+        let retries = document.createElement("div");
+        retries.id = "retries-list";
+
+        let racecars = raceInstance.getRacecars();
+        let crashes = racecars.filter(r => {
+            let stats = raceInstance.getRacecarStats(r);
+            return stats.getState() == RACECAR_STATE.Crashed;
+        });
+
+        crashes.forEach((racecar, i) => {
+            let entry = document.createElement("div");
+
+            let racerType = racecar.getRacerType();
+            let bucket = buckets[racerType];
+            let number = bucket.findIndex(r => r == racecar) + 1;
         
+            let prefix = Object.keys(RACER_TYPE).find(k => RACER_TYPE[k] == racerType);
+            let name = `${prefix} ${number}`;
+            
+            let index = racecars.findIndex(r => r == racecar);
+            let checkbox = `<input id="retry-racecar-${index}" class="form-check-input" type="checkbox" data-number=${index} checked>`;
+            let label = `<label class="form-check-label ms-2" for="retry-racecar-${index}">${name}</label>`;
+
+            entry.innerHTML = `${checkbox} ${label}`;
+            results.appendChild(entry);
+        });
+        
+        // title & footer
         titleText = "A Player Crashed!";
         retryBtn.hidden = false;
 
@@ -564,6 +620,8 @@ function endRace(state) {
 
         let modal = new bootstrap.Modal(popup, {backdrop: "static"});
         modal.show();
+
+        handleLeaderScore();
         
         titleText = "The Race is Over!";
         retryBtn.hidden = true;
@@ -580,6 +638,118 @@ function endRace(state) {
     title.innerHTML = titleText;
 }
 
+function getRankedRacecars() {
+    let racecars = raceInstance.getRacecars();
+
+    let ranks = racecars.toSorted((a, b) => {
+        let stats1 = raceInstance.getRacecarStats(a);
+        let stats2 = raceInstance.getRacecarStats(b);
+
+        let retired1 = stats1.getState() == RACECAR_STATE.Retired;
+        let retired2 = stats2.getState() == RACECAR_STATE.Retired;
+
+        let time1 = stats1.getTime();
+        let time2 = stats2.getTime();
+
+        // if racing, sort in ascending time (faster = better)
+        // if retired, sort in descending time (duration = better)
+        // retirees are below active / finished racers
+
+        if (retired1 && retired2) {
+            return time2 - time1;
+
+        } else if (retired1 || retired2) {
+            return retired1 ? 1 : -1;
+        
+        } else {
+            return time1 - time2;
+        }
+    });
+
+    return ranks;
+}
+
+function handleLeaderScore() {
+    // TODO: let's say a player has a game with 2 local players
+    // * it seems "okay" for both players to be able to contribute
+    //     to a new highscore, even in multiplayer
+    // * there's no real "unfairness"
+
+    // bottom line: only applies to players, not robots
+
+    let ranks = getRankedRacecars();
+    let leader = ranks.find(r => {
+        let stats = raceInstance.getRacecarStats(r);
+        let state = stats.getState();
+        let racerType = r.getRacerType();
+
+        return state == RACECAR_STATE.Finished
+            && racerType == RACER_TYPE.Player
+    });
+    if (!leader) return;
+
+    let stats = raceInstance.getRacecarStats(leader);
+    let moves = stats.getMoves();
+    let time = stats.getTime();
+
+    saveRecordToLeaderboard(time, moves)
+}
+
+async function saveRecordToLeaderboard(time, moves) {
+    // TODO: sanitise
+    
+    let track = raceInstance.getTrack();
+    let trackId = track.getId();
+    
+    let data = {};
+    data.trackId = trackId;
+    data.time = time;
+    data.moves = moves;
+
+    try {
+        let response = await fetch("/tracks/leaderboards", {
+            method: "POST",
+            headers: new Headers({ "Content-Type": "application/json"}),
+            body: JSON.stringify(data)
+        });
+
+        let result = await response.json();
+
+        let oldTime = result.oldTime ?? null;
+        let newTime = result.newTime;
+        let better = !oldTime || newTime < oldTime;
+
+        let oldTimeF = oldTime ? oldTime.toFixed(3) : null;
+        let newTimeF = newTime.toFixed(3);
+
+        if (better) {
+            let popup = document.getElementById("modal-race-results");
+            let results = popup.getElementsByClassName("results")[0];
+            let text = "";
+
+            if (oldTimeF) {
+                let diff = (oldTime - newTime).toFixed(3);
+                text = `<b>New Record:</b> ${newTimeF} s <i>(${oldTimeF} s, +${diff} s)</i>`;
+
+            } else {
+                text = `<b>New Record:</b> ${newTimeF} s`;
+            }
+            
+            let span = document.createElement("span");
+            span.innerHTML = text
+            span.style.color = "#0A0";
+
+            results.appendChild(span);
+        }
+
+        return true;
+
+    } catch(error) {
+        console.log(error);
+        return false;
+    }
+}
+
 
 
 // [[ Canvas Visualisations ]] // 
@@ -588,8 +758,11 @@ function renderRacecars() {
     raceRenderer.clearCanvas();
 
     let racecars = raceInstance.getRacecars();
-    let playerCount = 0;
-    let robotCount = 0;
+
+    let racerInfo = Object.keys(RACER_TYPE).map(k => {
+        return ({Count: 0, Symbol: k.substring(0, 1)})
+    });
+    racerInfo.unshift(undefined); // hacky: to accommodate 1-n enum numbering
     
     racecars.forEach((racecar, r) => {
         let pos = racecar.getPosition().scale(spacing);
@@ -614,21 +787,13 @@ function renderRacecars() {
         }
 
         // race car on top
-        let symbol = "";
-        let count = 0;
         let racerType = racecar.getRacerType();
+        let info = racerInfo[racerType];
+        info.Count += 1;
 
-        if (racerType == RACER_TYPE.Player) {
-            playerCount += 1;
-            symbol = "P";
-            count = playerCount;
-            
-        } else if (racerType == RACER_TYPE.Robot) {
-            robotCount += 1
-            symbol = "R";
-            count = robotCount;
-        }
-
+        let symbol = info.Symbol;
+        let count = info.Count;
+        
         raceRenderer.drawCircle(pos, racecarRadius, colour);
         raceRenderer.drawText(`${symbol}${count}`, pos, racecarRadius + 2);
     });
@@ -734,13 +899,17 @@ function updateRaceStats() {
 
     statsList.innerHTML = "";
 
-    let playerCount = 0;
-    let robotCount = 0;
+    let racerInfo = Object.keys(RACER_TYPE).map(k => {
+        return ({Count: 0, Name: k})
+    });
+    racerInfo.unshift(undefined); // hacky: to accommodate 1-n enum numbering
     
     racecars = racecars.toSorted((a, b) => // sorted copy
         a.getRacerType() - b.getRacerType());
 
     racecars.forEach((racecar, index) => {
+        if (racecar.getRacerType() == RACER_TYPE.Ghost) return;
+
         let entry = createRaceStatsEntry(racecar);
         let header = entry.querySelector(".stats-header");
         let collapse = entry.querySelector(".accordion-collapse");
@@ -751,24 +920,14 @@ function updateRaceStats() {
         let stats = raceInstance.getRacecarStats(racecar);
         let state = stats.getState();
         
-        let racerTypeName = Object.keys(RACER_TYPE).find(k => RACER_TYPE[k] == racerType);
         let stateName = Object.keys(RACECAR_STATE).find(s => RACECAR_STATE[s] == state);
-        let number;
+        let info = racerInfo[racerType];
+        info.Count += 1;
 
-        if (racerType == RACER_TYPE.Player) {
-            playerCount += 1;
-            number = playerCount;
-        } else if (racerType == RACER_TYPE.Robot) {
-            robotCount += 1;
-            number = robotCount;
-        }
-
-        header.innerHTML = `
-            <span>
-                <b>${racerTypeName} ${number}</b> - ${carType}
-                <br><i>(${stateName})</i>
-            </span>
-        `;
+        header.innerHTML = `<span>
+            <b>${info.Name} ${info.Count}</b> - ${carType}
+            <br><i>(${stateName})</i>
+        </span>`;
 
         // accordion bindings
         let collapseId = `stats-collapse-${index}`;
@@ -787,6 +946,6 @@ initialisePlayCanvas();
 
 initialiseResultsPopup();
 
-loadTrack(window.track, window.racers);
+loadTrack(window.track, window.lobby);
 
 lucide.createIcons();

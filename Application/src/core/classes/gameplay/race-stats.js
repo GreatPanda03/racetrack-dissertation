@@ -73,9 +73,6 @@ export default class RaceStats {
         Validator.isInstance(velocity, Vector2);
 
         this.#moves.push({Path: line, Velocity: velocity});
-
-        // TODO: should TECHNICALLY use [source 1]...
-        // * velocity change isn't instantaneous! 
     }
     
     calculateStats() {
@@ -85,21 +82,41 @@ export default class RaceStats {
         let totalTime = 0;
         let topSpeed = 0;
 
+        let state = this.getState();
+
+        // total distance & speed stats
         for (let move of moves) {
             let line = move.Path;
             let velocity = move.Velocity;
 
             let distance = line.end.sub(line.start).mag();
             let speed = velocity.mag();
-            let time = speed > 0 ? distance / speed : 1;
 
             totalDistance += distance;
-            totalTime += time;
             topSpeed = Math.max(speed, topSpeed);
+        }
+
+        // total elapsed time
+        if (state == RACECAR_STATE.Racing) {
+            totalTime = moves.length;
+
+        } else {
+            let final = moves[moves.length - 1];
+            let line = final.Path;
+            let velocity = final.Velocity;
+
+            let distance = line.end.sub(line.start).mag();
+            let speed = velocity.mag();
+            let time = speed > 0 ? distance / speed : 1;
+
+            totalTime = (moves.length - 1) + time;
         }
         
         this.#distance = totalDistance;
         this.#time = totalTime;
         this.#topSpeed = topSpeed;
+
+        // TODO: should TECHNICALLY use [source 1]...
+        // * velocity change isn't instantaneous! 
     }
 }

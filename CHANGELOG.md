@@ -13,6 +13,41 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 2.1.0
+**Date:** 2026/03/18
+<details>
+<summary>Ghost Racing & Local Multiplayer Improvements</summary>
+
+**Additions / Changes:**
+1. Implemented ghost racing
+    * **How it works:** racing on tracks saves your personal best, which you can choose to race against later
+    * The option appears alongside leaderboard scores (see below)
+2. Implemented basic leaderboards
+    * Treats the user as a generic "player" (currently no sophisticated user system)
+    * All tracks start out with no assigned best times
+    * When a best time is earned, it's assigned to the leaderboard - beating the time updates it
+    * Players can choose to race against this best time as a ghost
+3. Adjusted race options
+    * Adding racers now assigns a colour which isn't already used
+    * Added an option to auto-retry for both players and robots
+    * Added robot difficulty ratings and options to set them
+4. Adjusted race results
+    * Added options to specify which racers to retire when they crash
+    * Final race time is now actually based on total elapsed time
+5. Adjusted data handling
+    * (DEV) Changed `toJson` method of classes to `toJSON` to be used for `JSON.stringify` (was meant to be like this to begin with...)
+
+**Bugs Fixed:**
+1. Fixed race result player numbers not matching up with actual player numbers
+2. Fixed elapsed time passing more than it should when retrying after a crash
+
+**Bugs Discovered:**
+<br>No additional bugs discovered.
+
+</details>
+
+---
+
 ### Version: 2.0.0
 **Date:** 2026/03/13
 <details>
@@ -46,10 +81,11 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 **Bugs Discovered:**
 1. Aware that Robot moves can make the game "freeze" a little (especially when retiring) due to calculations
-2. Aware that adding racers between removals causes repeated colours (UX issue)
-3. Aware that player numbers in race results don't always match up with their real numbers
-4. Aware that final race time represents the <i>total time of the distance driven</i> (rather than <i>total elapsed time</i>)
-5. Aware that some UI content (namely in popups) still overflows when the window is too small
+2. (FIXED v2.1.0) Aware that adding racers between removals causes repeated colours (UX issue)
+3. (FIXED v2.1.0) Aware that player numbers in race results don't always match up with their real numbers
+4. (FIXED v2.1.0) Aware that elapsed time sometimes skips a few seconds when retrying after a crash
+5. (FIXED v2.1.0) Aware that final race time represents the *total time of the distance driven* (rather than *total elapsed time*, which is misleading)
+6. Aware that some UI content (namely in popups) still overflows when the window is too small
 
 </details>
 
