@@ -294,7 +294,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - As of the last entry:
     - Implemented v1.7.0 - v1.8.0 (see changelog)
     - Interview held on **2026/02/11 WED**
-    - ! MAJOR set back in work due to external factors...
+    - ! MAJOR set back in work due to external factors (about 1 month behind schedule)...
 
 - Supervisor meeting held on **2026/03/05 THU**
     - Discussed progress made since last actual showing (about 1.5 months)
@@ -310,7 +310,7 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 <summary>Local Multiplayer & Basic AI</summary>
 
 - As of the last entry:
-    - Implemented v2.0.0 (see changelog)
+    - Implemented v2.0.0 - v2.1.0 (see changelog)
 
 - Supervisor meeting to be held on **2026/03/19 THU**
     - ...

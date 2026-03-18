@@ -341,7 +341,7 @@ function initialiseOptions_Save() {
     let saveBtn = document.getElementById("options-save");
 
     saveBtn.addEventListener("click", async () => {
-        let trackJson = track.toJson();
+        let trackJson = JSON.stringify(track);
         let success = await saveTrack(trackJson);
 
         if (success) {
@@ -637,7 +637,7 @@ function initialiseOptions_Export() {
         let modal = new bootstrap.Modal(popup);
         modal.show();
 
-        exportOutput.value = track.toJson(4);
+        exportOutput.value = JSON.stringify(track, null, 2);
     });
 
     exportCopy.addEventListener("click", (e) => {

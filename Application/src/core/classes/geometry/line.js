@@ -117,4 +117,25 @@ export default class Line {
 
         return distance
     }
+
+    // serialisation
+    toObject() {
+        return { 
+            start: this.#start.toObject(), 
+            end: this.#start.toObject() 
+        };
+    }
+
+    static toInstance(object) {
+        let line = new Line();
+
+        line.start = Vector2.toInstance(object.start);
+        line.end = Vector2.toInstance(object.end);
+
+        return line;
+    }
+
+    toJSON() {
+        return this.toObject();
+    }
 }

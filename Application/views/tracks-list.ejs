@@ -53,7 +53,7 @@
     </div>
 
     <!-- track entry details -->
-    <div id="modal-track-details" class="modal fade" tabindes="-1">
+    <div id="modal-track-details" class="modal fade" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -65,7 +65,7 @@
                     <!-- canvas, track details, & leaderboard -->
                     <div class="d-flex flex-row gap-3">
                         <div class="canvas-wrapped">
-                            <canvas id="details-canvas" width="450" height="450"></canvas>
+                            <canvas id="details-canvas" width="350" height="350"></canvas>
                         </div>
                         <div class="container">
                             <div id="details-info">
@@ -77,13 +77,24 @@
 
                     <!-- racer options -->
                     <div id="options-racers">
+                        <div id="lobby-options" class="d-flex flex-row gap-4 mb-2">
+                            <div>
+                                <input id="input-autoretry-players" class="form-check-input" type="checkbox" data-option="Auto-retry Players">
+                                <label class="form-check-label" for="input-autoretry-players">Auto-retry Players</label>
+                            </div>
+                            
+                            <div>
+                                <input id="input-autoretry-robots" class="form-check-input" type="checkbox" data-option="Auto-retry Robots">
+                                <label class="form-check-label" for="input-autoretry-robots">Auto-retry Robots</label>
+                            </div>
+                        </div>
+
                         <div id="player-racers" class="d-flex flex-column gap-3">
                             <div>
                                 <div id="player-racers-header" class="mb-1">
                                     <b id="player-racers-label">Player Racers</b>
                                     <button id="player-racers-add" class="btn btn-primary p-1"
-                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer"
-                                    >
+                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer">
                                         <i data-lucide="circle-plus"></i>
                                     </button>
                                 </div>
@@ -99,8 +110,7 @@
                                 <div id="robot-racers-header" class="mb-1">
                                     <b id="robot-racers-label">Robot Racers</b>
                                     <button id="robot-racers-add" class="btn btn-primary p-1"
-                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer"
-                                    >
+                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer">
                                         <i data-lucide="circle-plus"></i>
                                     </button>
                                 </div>
@@ -160,9 +170,9 @@
                     Racer 1
                 </div>
             </div>
-            <div class="racer-options" style="width: 200px;">
+            <div class="racer-options d-flex flex-nowrap align-items-center gap-2" style="width: 265px;">
                 <button class="btn-racer-colour btn btn-secondary p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Set Colour">
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center gap-1">
                         <input type="color">     
                         <i data-lucide="brush"></i>
                     </div>
@@ -174,6 +184,9 @@
                     <ul class="dropdown-menu">
                         <!-- script generated -->
                     </ul>
+                </div>
+                <div class="div-robot-level mr-4" style="width: 50px;">
+                    <input class="input-robot-level form-control" type="number" min="0" max="4" value="1" style="width: 50px;">
                 </div>
                 <button class="btn-racer-remove btn btn-danger p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Remove Player">
                     <i data-lucide="x"></i>
@@ -196,6 +209,7 @@
 
     <script>
         window.tracks = <%- JSON.stringify(tracks) %>;
+        window.leaderboards = <%- JSON.stringify(leaderboards) %>;
     </script>
 </body>
 </html>

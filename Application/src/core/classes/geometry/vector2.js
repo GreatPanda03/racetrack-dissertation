@@ -71,7 +71,7 @@ export default class Vector2 {
         return new Vector2(object.x, object.y);
     }
 
-    toJson(spaces) {
-        return JSON.stringify(this.round().toObject(), null, spaces);
+    toJSON() {
+        return this.toObject();
     }
 }

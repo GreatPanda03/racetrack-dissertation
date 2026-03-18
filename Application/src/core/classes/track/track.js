@@ -235,7 +235,7 @@ export default class Track {
         return track;
     }
 
-    toJson(spaces) {
-        return JSON.stringify(this.toObject(), null, spaces);
+    toJSON() {
+        return this.toObject();
     }
 }

@@ -7,9 +7,9 @@ const { version } = require("./package.json");
 
 const mongoose = require("mongoose");
 const TrackModel = require("./models/track");
+const LeaderboardModel = require("./models/leaderboard");
 
 const { gameTracks } = require("./src/track-repository");
-var usingDb = true;
 
 
 // [[ App Set Up ]] //
@@ -20,21 +20,24 @@ app.use(express.json());
 app.use(express.static("public")); // static resources
 app.use("/core", express.static("src/core")); // core classes etc.
 
-/*
-const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
-mongoose.connect(uri)
-    .then((result) => app.listen(3000))
-    .catch((error) => {
-        console.log(error);
-        console.log("[CONNECTING WITHOUT DATABASE!]");
-        usingDb = false;
-        app.listen(3000);
-    });
-*/
+// database
+var usingDb = true;
 
-app.listen(3000);
-console.log("RUNNING WITHOUT DATABASE!");
-usingDb = false;
+if (usingDb) {
+    const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
+    mongoose.connect(uri)
+        .then((result) => app.listen(3000))
+        .catch((error) => {
+            console.log(error);
+            console.log("[CONNECTING WITHOUT DATABASE!]");
+            usingDb = false;
+            app.listen(3000);
+        });
+
+} else {
+    app.listen(3000);
+    console.log("RUNNING WITHOUT DATABASE!");
+} 
 
 
 // [[ URL Endpoints ]] //
@@ -100,9 +103,14 @@ app.get("/tracks/build/:trackId", async (request, response) => {
 app.get("/tracks/list", async (request, response) => {
     if (usingDb) {
         try {
-            let data = await TrackModel.find();
-            let tracks = data.map(d => JSON.stringify(d));
-            response.render("tracks-list", { title: "Tracks List", tracks });
+            let trackData = await TrackModel.find();
+            let tracks = trackData.map(d => JSON.stringify(d));
+
+            let leaderboardData = await LeaderboardModel.find();
+            let leaderboards = leaderboardData.map(d => JSON.stringify(d));
+
+            response.render("tracks-list", {
+                title: "Tracks List", tracks, leaderboards });
         
         } catch(error) {
             console.log(`[Tracks List] Listing failed: "${error}"`);
@@ -110,7 +118,8 @@ app.get("/tracks/list", async (request, response) => {
         }
 
     } else {
-        response.render("tracks-list", { title: "Tracks List", tracks: gameTracks });
+        response.render("tracks-list", { 
+            title: "Tracks List", tracks: gameTracks, leaderboards: [] });
     }
 });
 
@@ -135,20 +144,17 @@ app.get("/tracks/play/:trackId", async (request, response) => {
     if (usingDb) {
         try {
             let trackId = request.params.trackId;
-            let racers = [];
-            
-            if (request.query.racers) {
-                racers = JSON.parse(decodeURIComponent(request.query.racers));
-            }
+            let lobby = request.query.lobby;
 
-            if (!trackId) {
-                response.status(400).json({ success: false, error: "Track / race car ID missing" });
+            if (!trackId || !lobby) {
+                response.status(400).json({ success: false, error: "Track ID / lobby data missing" });
             }
 
             let track = await TrackModel.findById( trackId );
+            lobby = JSON.parse(decodeURIComponent(lobby));
 
-            if (track) {
-                response.render("track-play", { title: "Race", track, racers });
+            if (track && lobby) {
+                response.render("track-play", { title: "Race", track, lobby });
             } else {
                 response.redirect("/tracks/list");
             }
@@ -160,17 +166,18 @@ app.get("/tracks/play/:trackId", async (request, response) => {
 
     } else {
         let trackId = request.params.trackId;
-        let racers = JSON.parse(request.query.racers);
+        let lobby = request.query.lobby;
 
-        if ( !(trackId) ) {
-            response.status(400).json({ success: false, error: "Track / race car ID missing" });
+        if (!trackId || !lobby) {
+            response.status(400).json({ success: false, error: "Track ID / lobby data missing" });
         }
 
         let trackJson = gameTracks.find(t => JSON.parse(t)._id == trackId );
         let track = JSON.parse(trackJson);
-
-        if (track) {
-            response.render("track-play", { title: "Race", track, racers });   
+        lobby = JSON.parse(decodeURIComponent(lobby));
+        
+        if (track && lobby) {
+            response.render("track-play", { title: "Race", track, lobby });   
         } else {
             response.redirect("/tracks/list");
         }
@@ -189,10 +196,10 @@ app.post("/tracks/save", async (request, response) => {
 
             if (track._id) {
                 await TrackModel.findByIdAndUpdate(
-                    track._id, { "$set": track }, { returnDocument: "after" });
+                    track._id, { "$set": track });
                 
             } else {
-                await new TrackModel(track).save();
+                await new TrackModel(track).save(); // generate OID
             }
 
             response.status(200).json({ success: true });
@@ -225,6 +232,63 @@ app.get("/tracks/delete/:trackId", async (request, response) => {
     
     } catch(error) {
         console.log(`[Tracks List] Deletion failed: "${error}"`);
+    }
+});
+
+
+app.get("/tracks/leaderboards", async(request, response) => {
+    if (usingDb) {
+        // TODO: ...
+    }
+});
+
+
+app.get("/tracks/leaderboards/:trackId", async(request, response) => {
+    if (usingDb) {
+        // TODO: ...
+    }
+})
+
+
+app.post("/tracks/leaderboards", async (request, response) => {
+    if (!usingDb) return;
+
+    try {
+        let { trackId, time, moves } = request.body;
+
+        if (!trackId || !time || !moves) {
+            throw new Error("Missing trackId, time, or moves");
+        }
+
+        let name = "player";
+        let playerPath = `scores.${name}`;
+
+        let filter = { _id: trackId };
+
+        let update = [{ // single op: only update for first / better times
+            $set: {
+                [playerPath]: {
+                    $cond: [
+                        { $or: [{ $not: ["$scores.player"] }, { $gt: ["$scores.player.time", time] }] },
+                        { time, moves, date: new Date() },
+                        "$scores.player"
+                    ]
+                }
+            }
+        }];
+
+        let options = { upsert: true, updatePipeline: true, returnDocument: "before" };
+
+        let lbBefore = await LeaderboardModel.findOneAndUpdate(
+            filter, update, options);
+
+        let oldTime = lbBefore?.scores.get(name).time;
+
+        response.status(200).json({ success: true, oldTime, newTime: time });
+
+    } catch (error) {
+        console.log(`[Leaderboards] Failed to save: ${error}`);
+        response.status(400).json({ success: false, error });
     }
 });
 

@@ -36,7 +36,7 @@ export default class PathNode {
         return node;
     }
 
-    toJson(spaces) {
-        return JSON.stringify(this.toObject(), null, spaces);
+    toJSON() {
+        return this.toObject();
     }
 }
