@@ -63,10 +63,16 @@ describe("classes.track-form.new", () => {
         expect( span4.end.x ).toBeCloseTo( 134.5587606 );
         expect( span4.end.y ).toBeCloseTo( -98.5964589 );
 
-        // boundary check
+        // centre & boundary check
+        // - centre:   nodes * (1 / resolution)
+        // - boundaries:   centre * 2    (since two sides)
+
+        let points = path.length * (1 / 0.1);
+        let centre = form.getCentre();
         let boundaries = form.getBoundaries();
-        expect( boundaries.length ).toBe( path.length * (1 / 0.1) * 2 );
-        // > nodes * (1 / resolution), then x2 for each side
+
+        expect( centre.length ).toBe( points );
+        expect( boundaries.length ).toBe( points * 2 );
     });
 
     it("throws an error if no valid Track is provided", () => {

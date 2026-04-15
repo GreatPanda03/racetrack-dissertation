@@ -1,6 +1,8 @@
 // class to manage CanvasRenderer instances
 // * a CanvasRenderer is a basic class that has a canvas which can be drawn to
 
+// * source 1: Stack Overflow, "How do i tint an image with HTML5 Canvas?", Stack Exchange, stackexchange.com, [Online]. Available at: https://stackoverflow.com/questions/2688961. Accessed: Mar. 19, 2026.
+
 import Vector2 from "../geometry/vector2.js";
 import Validator from "../../utilities/validator.js";
 
@@ -115,6 +117,37 @@ export default class CanvasRenderer {
         ctx.lineWidth = 1;
         ctx.textAlign = "center";
         ctx.strokeText(text, position.x, position.y + (size * 0.3));
+    }
+
+    // [source 1]
+    drawImage(image, x, y, width, height, angle, colour) {
+        let ctx = this._ctx;
+
+        // canvas base
+        let copy = document.createElement("canvas");
+        copy.width = image.naturalWidth;
+        copy.height = image.naturalHeight;
+        
+        let cctx = copy.getContext("2d");
+
+        // base image
+        cctx.drawImage(image, 0, 0);
+
+        // tinted colour
+        cctx.globalCompositeOperation = "multiply";
+        cctx.fillStyle = colour;
+        cctx.fillRect(0, 0, copy.width, copy.height);
+
+        // cut out fill spillover
+        cctx.globalCompositeOperation = "destination-in";
+        cctx.drawImage(image, 0, 0);
+
+        // rotation
+        ctx.save();
+        ctx.translate(x + width / 2, y + height / 2);
+        ctx.rotate(angle);
+        ctx.drawImage(copy, -width / 2, -height / 2, width, height);
+        ctx.restore();
     }
 
     clearCanvas() {

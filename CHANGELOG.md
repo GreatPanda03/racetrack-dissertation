@@ -13,6 +13,29 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 2.2.0
+**Date:** 2026/04/15
+<details>
+<summary>V2 Testing & Cleanup</summary>
+
+**Additions / Changes:**
+1. (DEV) Amended broken tests / added missing tests as of v2 changes
+2. Race cars are now represented by coloured sprites (only generic race car so far)
+3. Scores are now saved according per player and race car type, sorted in ascending order by time
+
+**Bugs Fixed:**
+1. Fixed Race Car Type not being saved for ghosts (important!)
+2. Fixed track saving not storing all fields, causing list & others to break for newly saved tracks (missing `strict` property for schema)
+3. Fixed `Line` objectifying `start` for `end`, instead of `end` for `end`
+4. Fixed point-to-line miscalculation (used a correct and easier to read version)
+
+**Bugs Discovered:**
+<br>No new bugs discovered.
+
+</details>
+
+---
+
 ### Version: 2.1.0
 **Date:** 2026/03/18
 <details>

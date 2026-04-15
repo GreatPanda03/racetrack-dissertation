@@ -50,6 +50,7 @@ function matchesActivity(moves, activity) {
             console.log(move.Offset.toObject());
             console.log(move.Active);
             console.log(r, c);
+            console.log(activity);
             console.log(activity[r][c]);
 
             return false;
@@ -158,7 +159,7 @@ describe("enums.material-info (Gravel)", () => {
         racecar.setMaxAcceleration(new Vector2(-acc, acc));
 
         let activity = [
-            [0, 0, 0, 0, 0, 0, 0, 0, 0]   // -4
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],   // -4
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
             [1, 1, 1, 0, 0, 0, 0, 0, 0],
@@ -253,9 +254,9 @@ describe("enums.material-info (Booster)", () => {
             [1, 1, 1]];
 
         let offsets = [
-            [new Vector2(0, -2), new Vector2(), new Vector2()],
-            [new Vector2(), new Vector2(), new Vector2()],
-            [new Vector2(), new Vector2(), new Vector2()]];
+            [new Vector2(0, -2), new Vector2(1, -2), new Vector2(2, -2)],
+            [new Vector2(0, -1), new Vector2(1, -1), new Vector2(2, -1)],
+            [new Vector2(0,  0), new Vector2(1,  0), new Vector2(2,  0)]];
 
         let moves = gatherMoves(racecar, MATERIAL_INFO.Booster.Effect);
 

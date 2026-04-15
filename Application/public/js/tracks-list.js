@@ -18,7 +18,8 @@ import {
 var selectedTrack;
 var spacing = 25;
 
-var lobby;      // Lobby
+var lobby;              // Lobby
+var ghostData = [];     // Ghosts to include in race
 
 
 
@@ -239,14 +240,14 @@ function showTrackDetails(track) {
     `;
 
     // leaderboard info
-    function constructLeaderboard(leaderboard) {
+    function constructLeaderboard(scores) {
         let table = document.createElement("table");
         table.classList.add("table", "table-light", "table-bordered", "text-center");
 
         // headers
         let thead = document.createElement("thead");
         let theadr = document.createElement("tr");
-        let headers = ["#", "Name", "Time (s)", "Date", "Ghost"];
+        let headers = ["#", "Name", "Time (s)", "Car Type", "Date", "Ghost"];
 
         for (let header of headers) {
             let th = document.createElement("th");
@@ -262,13 +263,15 @@ function showTrackDetails(track) {
         let tbody = document.createElement("tbody");
         let rank = 1;
 
-        for (let [name, values] of Object.entries(leaderboard.scores)) {
+        for (let row of scores) {
             let tr = document.createElement("tr");
             tr.innerHTML = `<th scope="row">${rank}</th>`;
 
-            let time = values.time.toFixed(3);
-            let date = new Date(values.date).toISOString().split("T")[0];
-            let data = [name, time, date];
+            let name = row.player;
+            let time = row.time.toFixed(3);
+            let carType = row.carType || Object.keys(RACECAR_INFO)[0];
+            let date = new Date(row.date).toISOString().split("T")[0];
+            let data = [name, time, carType, date];
 
             for (let value of data) {
                 let td = document.createElement("td");
@@ -280,6 +283,18 @@ function showTrackDetails(track) {
             ghostBox.innerHTML = `<label style="display: inline-block; width: 100%; height: 100%;">
                 <input class="form-check-input mt-1" type="checkbox" id="ghost-${rank}"}>
             </label>`;
+
+            let inputBox = ghostBox.querySelector(".form-check-input");
+
+            inputBox.addEventListener("change", (e) => {
+                if (inputBox.checked) {
+                    ghostData.push(row);
+
+                } else {
+                    let index = ghostData.findIndex(g => g.name == name && g.carType == carType);
+                    if (index) ghostData.splice(index, 1);
+                }
+            });
 
             tr.appendChild(ghostBox); // add ghost to race
             
@@ -294,6 +309,7 @@ function showTrackDetails(track) {
     }
 
     let leaderboard = theLeaderboards.find(l => l._id == track.getId());
+
     let lbDiv = document.createElement("div");
     let lbContent = null;
 
@@ -301,7 +317,17 @@ function showTrackDetails(track) {
     lbDiv.innerHTML += "<div class='text-center'><b>Track Times</b></div>";
 
     if (leaderboard && Object.keys(leaderboard.scores).length > 0) {
-        lbContent = constructLeaderboard(leaderboard);
+
+        // flattens all entries and sorts them purely by time
+        let sortedScores = Object.entries(leaderboard.scores)
+            .flatMap(([player, cars]) =>
+                Object.entries(cars).map(([carType, score]) => ({
+                    player, carType, ...score
+                }))
+            )
+            .sort((a, b) => a.time - b.time);
+
+        lbContent = constructLeaderboard(sortedScores);
 
     } else {
         lbContent = document.createElement("span");
@@ -531,18 +557,11 @@ function startLobby(track) {
     })();
     */
 
-    let lbDiv = document.getElementById("leaderboard-div");
-    let ghostEntries = lbDiv.querySelectorAll("input[id*=ghost]:checked");
-    let leaderboard = theLeaderboards.find(l => l._id == track.getId());
-
-    for (let ghostEntry of ghostEntries) {
-        let rank = Number(ghostEntry.id.split("-")[1]);
-        let key = Object.keys(leaderboard.scores)[rank - 1];
-
+    for (let data of ghostData) {
         let ghost = addDefaultRacer(RACER_TYPE.Ghost);
-        ghost.Moves = leaderboard.scores[key].moves
-
-        lobby.push(ghost);
+        ghost.Colour = "#777";
+        ghost.Moves = data.moves
+        ghost.CarType = data.carType || Object.keys(RACECAR_INFO)[0];
     }
 
     let trackId = track.getId();
@@ -557,6 +576,7 @@ function startLobby(track) {
 // [[ Set Up ]] //
 
 // through ejs
+
 let theTracks = tracks.map(t => Track.toInstance(JSON.parse(t)));
 let theLeaderboards = leaderboards.map(l => JSON.parse(l));
 

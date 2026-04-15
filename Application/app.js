@@ -254,24 +254,31 @@ app.post("/tracks/leaderboards", async (request, response) => {
     if (!usingDb) return;
 
     try {
-        let { trackId, time, moves } = request.body;
+        let { trackId, time, carType, moves } = request.body;
 
         if (!trackId || !time || !moves) {
             throw new Error("Missing trackId, time, or moves");
         }
 
         let name = "player";
-        let playerPath = `scores.${name}`;
+        let scorePath = `scores.${name}.${carType}`;
 
         let filter = { _id: trackId };
 
-        let update = [{ // single op: only update for first / better times
-            $set: {
-                [playerPath]: {
+        let update = [{ 
+            $set: { // single op: only update for first / better times
+                [scorePath]: {
                     $cond: [
-                        { $or: [{ $not: ["$scores.player"] }, { $gt: ["$scores.player.time", time] }] },
-                        { time, moves, date: new Date() },
-                        "$scores.player"
+                        {
+                            $or: [
+                                { $not: [`$${scorePath}`] },
+                                { $gt: [`$${scorePath}.time`, time] }
+                            ]
+                        },
+                        {
+                            time, moves, date: new Date()
+                        },
+                        `$${scorePath}`
                     ]
                 }
             }
@@ -282,7 +289,7 @@ app.post("/tracks/leaderboards", async (request, response) => {
         let lbBefore = await LeaderboardModel.findOneAndUpdate(
             filter, update, options);
 
-        let oldTime = lbBefore?.scores.get(name).time;
+        let oldTime = lbBefore?.scores?.get(name)?.get(carType)?.time ?? null;
 
         response.status(200).json({ success: true, oldTime, newTime: time });
 

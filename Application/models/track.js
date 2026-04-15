@@ -14,7 +14,7 @@ const trackSchema = new Schema({
         type: String,
         required: true
     }
-});
+}, { strict: false });
 
 const Track = mongoose.model("Track", trackSchema);
 
