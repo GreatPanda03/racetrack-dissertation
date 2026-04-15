@@ -55,7 +55,7 @@ describe("classes.race-instance.new", () => {
         expect( instance.getTrack() ).toBe(track);
         expect( instance.getForm() instanceof TrackForm ).toBe(true);
         expect( instance.getRacecars() ).toEqual([]);
-        expect( instance.getRaceStats() ).toEqual({});
+        expect( instance.getRaceStats() ).toEqual([]);
     });
 });
 
@@ -117,6 +117,26 @@ describe("classes.race-instance.getRacecarStats", () => {
     });
 });
 
+describe("classes.race-instance.isAnyRacecarInState", () => {
+    it("returns whether any race car is in a race car state", () => {
+        let track = new Track();
+        
+        track.setPath([
+            new TrackNode(new Vector2(-20, 30), 50, false),
+            new TrackNode(new Vector2(50, 63), 50, false),
+            new TrackNode(new Vector2(-100, -100), 50, false)
+        ]);
+
+        let racecar1 = new RaceCar();
+        let racecar2 = new RaceCar();
+        let racecars = [racecar1, racecar2];
+
+        let instance = new RaceInstance(track, racecars, 25);
+
+        expect( instance.isAnyRacecarInState(RACECAR_STATE.Racing) ).toBe( true );
+    })
+});
+
 describe("classes.race-instance.moveRacecarToStart", () => {
     it("positions all race cars at the starting line", () => {
         let track = new Track();
@@ -143,6 +163,222 @@ describe("classes.race-instance.moveRacecarToStart", () => {
         expect( racecar2.getPosition().y ).toBe( 1 );
     });
 });
+
+
+describe("classes.race-instance.getPossibleMoves", () => {
+    it("returns all moves in the race car's acceleration range as available moves (at rest, unaffected)", () => {
+        let track = new Track();
+
+        track.setPath([
+            new TrackNode(new Vector2(-50, 0), 25, false),
+            new TrackNode(new Vector2(0, 0), 25, true),
+            new TrackNode(new Vector2(50, 0), 25, true)
+        ]);
+
+        track.setLooped(false);
+
+        let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(10, 10));
+        racecar.setMaxAcceleration(new Vector2(1, 1));
+
+        let instance = new RaceInstance(track, [racecar], 25);
+
+        let moves = instance.getPossibleMoves(racecar);
+        
+        let activity = [
+            [1, 1, 1],
+            [1, 1, 1],
+            [1, 1, 1]];
+
+        expect( matchesActivity(moves, activity) ).toBe( true );
+    });
+
+    it("returns all moves in the race car's acceleration range as available moves (moving, unaffected)", () => {
+        let track = new Track();
+
+        track.setPath([
+            new TrackNode(new Vector2(-50, 0), 25, false),
+            new TrackNode(new Vector2(0, 0), 25, true),
+            new TrackNode(new Vector2(50, 0), 25, true)
+        ]);
+
+        track.setLooped(false);
+
+        let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(10, 10));
+        racecar.setMaxAcceleration(new Vector2(1, 1));
+
+        let instance = new RaceInstance(track, [racecar], 25);
+
+        instance.moveRacecar(racecar, new Vector2(1, 0));
+
+        let moves = instance.getPossibleMoves(racecar);
+        
+        let activity = [
+            [1, 1, 1],
+            [1, 1, 1],
+            [1, 1, 1]];
+
+        expect( matchesActivity(moves, activity) ).toBe( true );
+    });
+
+    it("limits the race car's moves when at max velocity", () => {
+        let track = new Track();
+
+        track.setPath([
+            new TrackNode(new Vector2(-50, 0), 25, false),
+            new TrackNode(new Vector2(0, 0), 25, true),
+            new TrackNode(new Vector2(50, 0), 25, true)
+        ]);
+
+        track.setLooped(false);
+
+        let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(10, 10));
+        racecar.setMaxAcceleration(new Vector2(1, 1));
+
+        let instance = new RaceInstance(track, [racecar], 25);
+
+        racecar.setPosition(new Vector2(0, 0));
+        racecar.setVelocity(new Vector2(-10, -10));
+
+        let moves = instance.getPossibleMoves(racecar);
+        
+        let activity = [
+            [0, 0, 0],
+            [0, 1, 1],
+            [0, 1, 1]];
+
+        expect( matchesActivity(moves, activity) ).toBe( true );
+    });
+
+    it("affects the race car's moves when on top of a material", () => {
+        let track = new Track();
+
+        track.setPath([
+            new TrackNode(new Vector2(-50, 0), 25, false),
+            new TrackNode(new Vector2(0, 0), 25, true),
+            new TrackNode(new Vector2(50, 0), 25, true)
+        ]);
+
+        let curb = new Material([
+            new PathNode(new Vector2(-5, -50)),
+            new PathNode(new Vector2( 5, -50)),
+            new PathNode(new Vector2( 5,  50)),
+            new PathNode(new Vector2(-5,  50))
+        ], MATERIAL_INFO.Curb.Name);
+
+        track.addMaterial(curb);
+        track.setLooped(false);
+
+        let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(10, 10));
+        racecar.setMaxAcceleration(new Vector2(1, 1));
+
+        let instance = new RaceInstance(track, [racecar], 25);
+
+        instance.moveRacecar(racecar, new Vector2(1, 0)); // inside material
+
+        let moves = instance.getPossibleMoves(racecar);
+        
+        let activity = [
+            [0, 1, 0],
+            [1, 1, 1],
+            [0, 1, 0]];
+
+        expect( matchesActivity(moves, activity) ).toBe( true );
+    });
+
+    it("compounds the limits of the race car's max velocity and material", () => {
+        let track = new Track();
+
+        track.setPath([
+            new TrackNode(new Vector2(-50, 0), 25, false),
+            new TrackNode(new Vector2(0, 0), 25, true),
+            new TrackNode(new Vector2(50, 0), 25, true)
+        ]);
+
+        let curb = new Material([
+            new PathNode(new Vector2(-5, -50)),
+            new PathNode(new Vector2( 5, -50)),
+            new PathNode(new Vector2( 5,  50)),
+            new PathNode(new Vector2(-5,  50))
+        ], MATERIAL_INFO.Curb.Name);
+
+        track.addMaterial(curb);
+        track.setLooped(false);
+
+        let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(1, 1));
+        racecar.setMaxAcceleration(new Vector2(1, 1));
+
+        let instance = new RaceInstance(track, [racecar], 25);
+
+        instance.moveRacecar(racecar, new Vector2(1, 0)); // inside material
+
+        let moves = instance.getPossibleMoves(racecar);
+        
+        let activity = [ // note right column of 0s - limited velocity!
+            [0, 1, 0],
+            [1, 1, 0],
+            [0, 1, 0]];
+
+        expect( matchesActivity(moves, activity) ).toBe( true );
+    });
+
+    it("only considers the first material when the race car is on two overlapping materials", () => {
+        // i.e. [Material1, Material2] <- only applies Material1's effects
+
+        let track = new Track();
+
+        track.setPath([
+            new TrackNode(new Vector2(-50, 0), 25, false),
+            new TrackNode(new Vector2(0, 0), 25, true),
+            new TrackNode(new Vector2(50, 0), 25, true)
+        ]);
+
+        let curb = new Material([
+            new PathNode(new Vector2(-5, -50)),
+            new PathNode(new Vector2( 5, -50)),
+            new PathNode(new Vector2( 5,  50)),
+            new PathNode(new Vector2(-5,  50))
+        ], MATERIAL_INFO.Curb.Name);
+
+        let water = new Material([
+            new PathNode(new Vector2(-5, -50)),
+            new PathNode(new Vector2( 5, -50)),
+            new PathNode(new Vector2( 5,  50)),
+            new PathNode(new Vector2(-5,  50))
+        ], MATERIAL_INFO.Water.Name);
+
+        track.addMaterial(curb);
+        track.addMaterial(water);
+        track.setLooped(false);
+
+        let racecar = new RaceCar();
+        racecar.setMaxSpeed(new Vector2(10, 10));
+        racecar.setMaxAcceleration(new Vector2(1, 1));
+
+        let instance = new RaceInstance(track, [racecar], 25);
+
+        instance.moveRacecar(racecar, new Vector2(1, 0)); // inside material
+
+        let moves = instance.getPossibleMoves(racecar);
+        
+        let activity = [
+            [0, 1, 0],
+            [1, 1, 1],
+            [0, 1, 0]];
+
+        expect( matchesActivity(moves, activity) ).toBe( true );
+    });
+});
+
+describe("classes.predictMove", () => {
+    it("predicts where the race car is going to go", () => {
+        // already tested by "moveRacecar" (see tests below)
+    })
+})
 
 describe("classes.race-instance.moveRaceCar (parameters)", () => {
     it("throws an error when the race car isn't a valid RaceCar", () => {
@@ -565,211 +801,3 @@ describe("classes.race-instance.moveRacecar (finish)", () => {
     });
 });
 
-describe("classes.race-instance.getPossibleMoves", () => {
-    it("returns all moves in the race car's acceleration range as available moves (at rest, unaffected)", () => {
-        let track = new Track();
-
-        track.setPath([
-            new TrackNode(new Vector2(-50, 0), 25, false),
-            new TrackNode(new Vector2(0, 0), 25, true),
-            new TrackNode(new Vector2(50, 0), 25, true)
-        ]);
-
-        track.setLooped(false);
-
-        let racecar = new RaceCar();
-        racecar.setMaxSpeed(new Vector2(10, 10));
-        racecar.setMaxAcceleration(new Vector2(1, 1));
-
-        let instance = new RaceInstance(track, [racecar], 25);
-
-        let moves = instance.getPossibleMoves(racecar);
-        
-        let activity = [
-            [1, 1, 1],
-            [1, 1, 1],
-            [1, 1, 1]];
-
-        expect( matchesActivity(moves, activity) ).toBe( true );
-    });
-
-    it("returns all moves in the race car's acceleration range as available moves (moving, unaffected)", () => {
-        let track = new Track();
-
-        track.setPath([
-            new TrackNode(new Vector2(-50, 0), 25, false),
-            new TrackNode(new Vector2(0, 0), 25, true),
-            new TrackNode(new Vector2(50, 0), 25, true)
-        ]);
-
-        track.setLooped(false);
-
-        let racecar = new RaceCar();
-        racecar.setMaxSpeed(new Vector2(10, 10));
-        racecar.setMaxAcceleration(new Vector2(1, 1));
-
-        let instance = new RaceInstance(track, [racecar], 25);
-
-        instance.moveRacecar(racecar, new Vector2(1, 0));
-
-        let moves = instance.getPossibleMoves(racecar);
-        
-        let activity = [
-            [1, 1, 1],
-            [1, 1, 1],
-            [1, 1, 1]];
-
-        expect( matchesActivity(moves, activity) ).toBe( true );
-    });
-
-    it("limits the race car's moves when at max velocity", () => {
-        let track = new Track();
-
-        track.setPath([
-            new TrackNode(new Vector2(-50, 0), 25, false),
-            new TrackNode(new Vector2(0, 0), 25, true),
-            new TrackNode(new Vector2(50, 0), 25, true)
-        ]);
-
-        track.setLooped(false);
-
-        let racecar = new RaceCar();
-        racecar.setMaxSpeed(new Vector2(10, 10));
-        racecar.setMaxAcceleration(new Vector2(1, 1));
-
-        let instance = new RaceInstance(track, [racecar], 25);
-
-        racecar.setPosition(new Vector2(0, 0));
-        racecar.setVelocity(new Vector2(-10, -10));
-
-        let moves = instance.getPossibleMoves(racecar);
-        
-        let activity = [
-            [0, 0, 0],
-            [0, 1, 1],
-            [0, 1, 1]];
-
-        expect( matchesActivity(moves, activity) ).toBe( true );
-    });
-
-    it("affects the race car's moves when on top of a material", () => {
-        let track = new Track();
-
-        track.setPath([
-            new TrackNode(new Vector2(-50, 0), 25, false),
-            new TrackNode(new Vector2(0, 0), 25, true),
-            new TrackNode(new Vector2(50, 0), 25, true)
-        ]);
-
-        let curb = new Material([
-            new PathNode(new Vector2(-5, -50)),
-            new PathNode(new Vector2( 5, -50)),
-            new PathNode(new Vector2( 5,  50)),
-            new PathNode(new Vector2(-5,  50))
-        ], MATERIAL_INFO.Curb.Name);
-
-        track.addMaterial(curb);
-        track.setLooped(false);
-
-        let racecar = new RaceCar();
-        racecar.setMaxSpeed(new Vector2(10, 10));
-        racecar.setMaxAcceleration(new Vector2(1, 1));
-
-        let instance = new RaceInstance(track, [racecar], 25);
-
-        instance.moveRacecar(racecar, new Vector2(1, 0)); // inside material
-
-        let moves = instance.getPossibleMoves(racecar);
-        
-        let activity = [
-            [0, 1, 0],
-            [1, 1, 1],
-            [0, 1, 0]];
-
-        expect( matchesActivity(moves, activity) ).toBe( true );
-    });
-
-    it("compounds the limits of the race car's max velocity and material", () => {
-        let track = new Track();
-
-        track.setPath([
-            new TrackNode(new Vector2(-50, 0), 25, false),
-            new TrackNode(new Vector2(0, 0), 25, true),
-            new TrackNode(new Vector2(50, 0), 25, true)
-        ]);
-
-        let curb = new Material([
-            new PathNode(new Vector2(-5, -50)),
-            new PathNode(new Vector2( 5, -50)),
-            new PathNode(new Vector2( 5,  50)),
-            new PathNode(new Vector2(-5,  50))
-        ], MATERIAL_INFO.Curb.Name);
-
-        track.addMaterial(curb);
-        track.setLooped(false);
-
-        let racecar = new RaceCar();
-        racecar.setMaxSpeed(new Vector2(1, 1));
-        racecar.setMaxAcceleration(new Vector2(1, 1));
-
-        let instance = new RaceInstance(track, [racecar], 25);
-
-        instance.moveRacecar(racecar, new Vector2(1, 0)); // inside material
-
-        let moves = instance.getPossibleMoves(racecar);
-        
-        let activity = [ // note right column of 0s - limited velocity!
-            [0, 1, 0],
-            [1, 1, 0],
-            [0, 1, 0]];
-
-        expect( matchesActivity(moves, activity) ).toBe( true );
-    });
-
-    it("only considers the first material when the race car is on two overlapping materials", () => {
-        // i.e. [Material1, Material2] <- only applies Material1's effects
-
-        let track = new Track();
-
-        track.setPath([
-            new TrackNode(new Vector2(-50, 0), 25, false),
-            new TrackNode(new Vector2(0, 0), 25, true),
-            new TrackNode(new Vector2(50, 0), 25, true)
-        ]);
-
-        let curb = new Material([
-            new PathNode(new Vector2(-5, -50)),
-            new PathNode(new Vector2( 5, -50)),
-            new PathNode(new Vector2( 5,  50)),
-            new PathNode(new Vector2(-5,  50))
-        ], MATERIAL_INFO.Curb.Name);
-
-        let water = new Material([
-            new PathNode(new Vector2(-5, -50)),
-            new PathNode(new Vector2( 5, -50)),
-            new PathNode(new Vector2( 5,  50)),
-            new PathNode(new Vector2(-5,  50))
-        ], MATERIAL_INFO.Water.Name);
-
-        track.addMaterial(curb);
-        track.addMaterial(water);
-        track.setLooped(false);
-
-        let racecar = new RaceCar();
-        racecar.setMaxSpeed(new Vector2(10, 10));
-        racecar.setMaxAcceleration(new Vector2(1, 1));
-
-        let instance = new RaceInstance(track, [racecar], 25);
-
-        instance.moveRacecar(racecar, new Vector2(1, 0)); // inside material
-
-        let moves = instance.getPossibleMoves(racecar);
-        
-        let activity = [
-            [0, 1, 0],
-            [1, 1, 1],
-            [0, 1, 0]];
-
-        expect( matchesActivity(moves, activity) ).toBe( true );
-    });
-});

@@ -14,7 +14,7 @@ const scoreSchema = new Schema({
         type: Date,
         required: true
     }
-}, { _id: false });
+}, { strict: false, _id: false });
 
 const leaderboardSchema = new Schema({
     _id: {
@@ -23,7 +23,10 @@ const leaderboardSchema = new Schema({
     },
     scores: {
         type: Map,
-        of: scoreSchema,
+        of: {
+            type: Map,
+            of: scoreSchema
+        },
         default: {}
     }
 });

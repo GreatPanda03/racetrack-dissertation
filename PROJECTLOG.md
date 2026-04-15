@@ -312,7 +312,40 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - As of the last entry:
     - Implemented v2.0.0 - v2.1.0 (see changelog)
 
-- Supervisor meeting to be held on **2026/03/19 THU**
+- Supervisor meeting held on **2026/03/19 THU**
+    - Showed local multiplayer progress
+        - Lobby options, AI difficulty & algorithm, leaderboards, other UI improvements
+    - Discussed future plans
+        - Will likely cut out online multiplayer from V3 depending on time (I think it's better to have a polished project than a half-done one)
+        - Will continue with testing
+        - Will make a start on a very basic draft dissertation
+
+</details>
+
+---
+
+### 2026/04/02 THU
+<details>
+<summary>Local Multiplayer Improvements & Testing</summary>
+
+- As of last entry...
+    - No much progress for development... hiatus
+    - Made a small start on dissertation
+
+- Supervisor meeting held on **2026/04/02 THU**
+    - Discussed dissertation format
+    - Will prepare basic viva slides for the next meeting
+
+---
+
+### 2026/04/16 THU
+<details>
+<summary>Online Multiplayer & Dissertation</summary>
+
+- As of the last entry:
+    - Implemented v2.2.0 (see changelog)
+
+- Supervisor meeting to be held on **2026/04/02 THU**
     - ...
 
 </details>

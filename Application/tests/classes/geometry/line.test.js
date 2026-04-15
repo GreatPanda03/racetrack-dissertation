@@ -194,3 +194,41 @@ describe("classes.line.containsPoint", () => {
         expect( () => line.containsPoint(new Object()) ).toThrowError();
     });
 });
+
+describe("classes.line.toPoint", () => {
+    it("calculates the shortest distance from a line to a point within its range", () => {
+        let line = new Line( new Vector2(-1, -1), new Vector2(5, 3) );
+        let point = new Vector2(2, 3);
+        
+        let distance = line.toPoint(point);
+
+        expect( distance ).toBeCloseTo(1.66410058868, 5);
+    });
+
+    it("calculates the shortest distance from a line to a point beyond its range", () => {
+        let line = new Line( new Vector2(4, -1), new Vector2(2, 3) );
+        let point = new Vector2(4, 5);
+        
+        let distance = line.toPoint(point);
+
+        expect( distance ).toBeCloseTo(2.82842712475, 5);
+    });
+
+    it("throws an error if no valid point is given", () => {
+        let line = new Line( new Vector2(4, -1), new Vector2(2, 3) );
+
+        expect( () => line.toPoint(null) ).toThrowError();
+        expect( () => line.toPoint("a") ).toThrowError();
+        expect( () => line.toPoint(new Object()) ).toThrowError();
+    });
+});
+
+describe("classes.line (serialisation)", () => {
+    it("can convert itself to an object and back to an instance", () => {
+        let instance = new Line( new Vector2(-1, -1), new Vector2(5, 3) );
+
+        expect(() => {
+            Line.toInstance( instance.toObject() );
+        }).not.toThrowError();
+    });
+});

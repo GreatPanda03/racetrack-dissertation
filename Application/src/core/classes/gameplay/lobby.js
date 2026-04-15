@@ -41,10 +41,11 @@ export default class Lobby {
 
     removeRacer(racer) {
         let index = Validator.listPresence(this.#racers, racer);
-        racer.splice(index, 1);
+        this.#racers.splice(index, 1);
     }
 
     setOption(option, value) {
+        Validator.keyPresence(this.#options, option);
         this.#options[option] = value;
     }
 

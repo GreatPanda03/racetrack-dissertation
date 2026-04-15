@@ -48,6 +48,7 @@ var turn = 0;
 var ghostMoves = [];
 var lobbyOptions = {};      // options specified in Lobby
 
+var racecarSprite;
 
 
 // [[ Gameplay & Controls ]] //
@@ -689,13 +690,14 @@ function handleLeaderScore() {
     if (!leader) return;
 
     let stats = raceInstance.getRacecarStats(leader);
-    let moves = stats.getMoves();
+    let carType = leader.getCarType();
     let time = stats.getTime();
+    let moves = stats.getMoves();
 
-    saveRecordToLeaderboard(time, moves)
+    saveRecordToLeaderboard(time, carType, moves)
 }
 
-async function saveRecordToLeaderboard(time, moves) {
+async function saveRecordToLeaderboard(time, carType, moves) {
     // TODO: sanitise
     
     let track = raceInstance.getTrack();
@@ -704,6 +706,7 @@ async function saveRecordToLeaderboard(time, moves) {
     let data = {};
     data.trackId = trackId;
     data.time = time;
+    data.carType = carType;
     data.moves = moves;
 
     try {
@@ -729,10 +732,10 @@ async function saveRecordToLeaderboard(time, moves) {
 
             if (oldTimeF) {
                 let diff = (oldTime - newTime).toFixed(3);
-                text = `<b>New Record:</b> ${newTimeF} s <i>(${oldTimeF} s, +${diff} s)</i>`;
+                text = `<b>New Record (${carType}):</b> ${newTimeF} s <i>(${diff} s faster, from ${oldTimeF} s)</i>`;
 
             } else {
-                text = `<b>New Record:</b> ${newTimeF} s`;
+                text = `<b>New Record (${carType}):</b> ${newTimeF} s`;
             }
             
             let span = document.createElement("span");
@@ -786,15 +789,63 @@ function renderRacecars() {
             raceRenderer.drawCircle(end, pointRadius, colour);
         }
 
-        // race car on top
+        // race car on top        
+        let useImage = true;
+
+        if (!useImage) {
+            raceRenderer.drawCircle(pos, racecarRadius, colour);
+        
+        } else {
+            let imageSize = new Vector2(40, 40 * (364 / 677));
+            let imagePos = pos.sub(imageSize.scale(0.5));
+            let angle = 0
+
+            let velocity = racecar.getVelocity();
+
+            // orienting the car according to velocity,
+            //   or the last "direction" if stationary,
+            //   or the track direction if starting
+            if (velocity.mag() > 0) {
+                let velocity = racecar.getVelocity();
+                angle = Math.atan2(velocity.y, velocity.x);
+
+            } else {
+                if (moves.length > 0) {
+                    let move = moves[moves.length - 1];
+
+                    for (let m = moves.length - 1; m >= 0; m--) {
+                        let vel = moves[m].Velocity;
+
+                        if (vel.mag() > 0) {
+                            move = moves[m];
+                            break;
+                        }
+                    }
+
+                    let path = move.Path;
+                    let diff = path.end.sub(path.start);
+                    angle = Math.atan2(diff.y, diff.x);
+
+                } else {
+                    let track = raceInstance.getTrack();
+                    let tpath = track.getPath();
+                    let direction = tpath[1].getPosition().sub(tpath[0].getPosition());
+                    angle = Math.atan2(direction.y, direction.x);
+                }
+            }
+
+            raceRenderer.drawImage(racecarSprite, imagePos.x, imagePos.y, 
+                imageSize.x, imageSize.y, angle, colour);
+        }
+
+        // race car label
         let racerType = racecar.getRacerType();
         let info = racerInfo[racerType];
         info.Count += 1;
 
         let symbol = info.Symbol;
         let count = info.Count;
-        
-        raceRenderer.drawCircle(pos, racecarRadius, colour);
+
         raceRenderer.drawText(`${symbol}${count}`, pos, racecarRadius + 2);
     });
 }
@@ -942,10 +993,15 @@ function updateRaceStats() {
 
 // [[ Set Up ]] //
 
-initialisePlayCanvas();
+racecarSprite = new Image();
+racecarSprite.src = "http://localhost:3000/images/race-car-sprite-nobg.png";
 
-initialiseResultsPopup();
+racecarSprite.onload = () => { // TODO: make this independent
+    initialisePlayCanvas();
 
-loadTrack(window.track, window.lobby);
+    initialiseResultsPopup();
 
-lucide.createIcons();
+    loadTrack(window.track, window.lobby);
+
+    lucide.createIcons();
+}

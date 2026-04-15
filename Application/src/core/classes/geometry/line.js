@@ -3,6 +3,7 @@
 
 // * source: F. Antonio, "IV.6 - FASTER LINE SEGMENT INTERSECTION", in Graphics Gems III (IBM Version), D. Kirk, Ed. San Francisco: Morgan Kaufmann, 1992, pp. 199–202.
 // * source: "How can you determine a point is between two other points on a line segment?", StackOverflow, stackoverflow.com, [Online]. Available at: https://stackoverflow.com/questions/328107/. Accessed: Feb. 8, 2026.
+// * source: "Shortest distance between a point and a line segment", Stack Overflow, stackoverflow.com, [Online]. Available at: https://stackoverflow.com/questions/849211. Accessed: Apr. 15, 2026.
 
 import Vector2 from "./vector2.js";
 import Validator from "../../utilities/validator.js";
@@ -92,8 +93,11 @@ export default class Line {
             && Math.min(p1.y, p2.y) <= q.y && q.y <= Math.max(p1.y, p2.y)
     }
 
-    // TODO: write unit tests
+    // [source 2]
+    /*
     toPoint(point) {
+        Validator.isInstance(point, Vector2);
+
         let v1 = this.start;
         let v2 = this.end
         let p = point;
@@ -104,33 +108,74 @@ export default class Line {
         let tDen = (v2.x - v1.x)**2 + (v2.y - v1.y)**2;
         let t = tNum / tDen;
 
-        if (0 <= t && t <= 1) {
+        if (0 <= t && t <= 1) { // "within" segment range
             let dNum = Math.abs( (v2.x - v1.x) * (v1.y - p.y) - (v2.y - v1.y) * (v1.x - p.x) );
             let dDen = Math.sqrt(tDen);
             distance = dNum / dDen;
         
-        } else {
+        } else { // "beyond" segment range
             let d1 = Math.sqrt( (v2.x - p.x)**2 + (v2.y - p.y)**2 );
             let d2 = Math.sqrt( (v1.x - p.x)**2 + (v1.y - p.y)**2 );
             distance = Math.min(d1, d2);
         }
 
+        console.log(distance);
+
         return distance
+    }
+    */
+
+    // [source 3]
+    toPoint(point) {
+        Validator.isInstance(point, Vector2)
+
+        let x = point.x, y = point.y;
+        let x1 = this.#start.x, y1 = this.#start.y;
+        let x2 = this.#end.x, y2 = this.#end.y;
+
+        let A = x - x1;
+        let B = y - y1;
+        let C = x2 - x1;
+        let D = y2 - y1;
+
+        let dot = A * C + B * D;
+        let lenSq = C**2 + D**2
+        let param = lenSq != 0 ? dot / lenSq : -1; // in case of 0 length
+
+        let xx, yy;
+
+        if (param < 0) {
+            xx = x1;
+            yy = y1;
+        } else if (param > 1) {
+            xx = x2;
+            yy = y2;
+        } else {
+            xx = x1 + param * C;
+            yy = y1 + param * D;
+        }
+
+        let dx = x - xx;
+        let dy = y - yy;
+
+        let distance = Math.sqrt(dx**2 + dy**2);
+
+        return distance;
     }
 
     // serialisation
     toObject() {
         return { 
             start: this.#start.toObject(), 
-            end: this.#start.toObject() 
+            end: this.#end.toObject() 
         };
     }
 
     static toInstance(object) {
-        let line = new Line();
+        let start = Vector2.toInstance(object.start)
+        let end = Vector2.toInstance(object.end)
 
-        line.start = Vector2.toInstance(object.start);
-        line.end = Vector2.toInstance(object.end);
+        let line = new Line(start, end);
 
         return line;
     }
