@@ -10,6 +10,14 @@ const TrackModel = require("./models/track");
 const LeaderboardModel = require("./models/leaderboard");
 
 const { gameTracks } = require("./src/track-repository");
+const LOBBY_LOCALITY = require("./src/core/enums/lobby-locality").default;
+const RACER_TYPE = require("./src/core/enums/racer-type").default;
+
+const { db } = require("./services/firebase-admin");
+
+let offlineLobbies = [];
+let offlineRaces = [];
+
 
 
 // [[ App Set Up ]] //
@@ -37,7 +45,8 @@ if (usingDb) {
 } else {
     app.listen(3000);
     console.log("RUNNING WITHOUT DATABASE!");
-} 
+}
+
 
 
 // [[ URL Endpoints ]] //
@@ -124,39 +133,256 @@ app.get("/tracks/list", async (request, response) => {
 });
 
 
-/* // NOTE: uncomment when using actual lobbies
-app.post("/tracks/play", async(request, response) => {
-    let { trackId, racers } = request.body;
+app.get("/lobbies/list", async(request, response) => {
+    try {
+        response.render("game-lobbies", {title: "Lobbies" });
 
-    if (!trackId || !racers) {
-        return res.status(400).json({ success: false });
+    } catch (error) {
+        console.error(error);
+        response.status(500).send({ success: false, error: "Failed to load lobbies" });
     }
-
-    let racersJson = JSON.stringify(racers);
-    let racersEncoded = encodeURIComponent(racersJson);
-
-    response.redirect(`/tracks/play/${trackId}?racers=${racersEncoded}`);
 });
-*/
 
 
-app.get("/tracks/play/:trackId", async (request, response) => {
+app.get("/lobbies", async(request, response) => {
+    try {
+        let snapshot = await db.ref("lobbies").once("value");
+        let lobbiesObj = snapshot.val() || {};
+
+        let lobbies = Object.entries(lobbiesObj).map(([id, lobby]) => ({
+            id, ...lobby}));
+
+        response.status(200).json({ success: true, lobbies});
+    
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ success: false, error });
+    }
+});
+
+
+app.post("/lobbies", async(request, response) => {
+    try {
+        let { playerId, trackId, locality } = request.body;
+
+        if (!trackId || !locality) {
+            return response.status(400).json({ success: false, error: "Missing data" });
+        }
+
+        let track = await TrackModel.findById(trackId);
+        if (!track) {
+            return response.status(404).json({ success: false, error: "Track not found" });
+        }
+
+        let host = {id: playerId, playerType: RACER_TYPE.Player}
+        let lobbyId = "";
+
+        if (locality == LOBBY_LOCALITY.Online) {
+            let lobbyRef = db.ref("lobbies").push();
+            lobbyId = lobbyRef.key; // lobbyRef itself is the ID
+            let lobby = { hostId: playerId, trackId, locality, 
+                players: {[playerId]: host} };
+
+            await lobbyRef.set( lobby );
+
+        } else {
+            lobbyId = "offline";
+            let lobby = { id: "offline", hostId: playerId, trackId, locality, players: {host} };
+            offlineLobbies.push(lobby);
+        }
+
+        response.status(200).json({ success: true, lobbyId });
+    
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ success: false, error });
+    }
+});
+
+
+app.get("/lobbies/:lobbyId", async (request, response) => {
+    try {
+        let lobbyId = request.params.lobbyId;
+
+        if (!lobbyId) {
+            response.status(400).json({ success: false, error: "Lobby ID missing" });
+        }
+    
+        let snapshot = await db.ref(`lobbies/${lobbyId}`).once("value");
+        let lobby = snapshot.val();
+
+        if (lobby) {
+            response.render("lobby-online", { title: "Lobby (Online)", lobby });
+            
+        } else {
+            lobby = offlineLobbies.find(l => l.id == lobbyId);
+
+            if (lobby) {
+                    response.render("lobby-offline", { title: "Lobby (Offline)", lobby });
+
+            } else {
+                response.redirect("/tracks/list");
+            }
+        }
+
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ success: false, error });
+    }
+});
+
+
+app.post("/lobbies/join/:lobbyId", async (request, response) => {
+    try {
+        let lobbyId = request.params.lobbyId;
+        
+        let snapshot = await db.ref(`lobbies/${lobbyId}`).once("value");
+        let lobby = snapshot.val();
+
+        if (lobby) {
+            console.log(`Joining Lobby ${lobbyId}`);
+            response.render("lobby-online", { title: "Lobby (Online)", lobby });
+
+        } else {
+            response.status(404).json({ success: false, error: "Lobby doesn't exist" });
+        }
+
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ success: false, error });
+    }
+});
+
+
+app.post("/lobbies/:lobbyId", async (request, response) => {
+    try {
+        let lobbyId = request.params.lobbyId;
+        let { details } = request.body;
+
+        if (!offlineLobbies.find(l => l.id == lobbyId)) {
+            await db.ref(`lobbies/${lobbyId}`).update({
+                racers: details.racers
+            });
+        }
+
+        response.status(200).json({ success: false });
+
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ success: false, error });
+    }
+});
+
+
+app.post("/lobby/start", async (request, response) => {
+    try {
+        let { lobbyId, playerId } = request.body;
+        let snapshot = await db.ref(`lobbies/${lobbyId}`).once("value");
+        let lobby = snapshot.val();
+
+        if (lobby) {
+            if (playerId == lobby.hostId) {
+                let raceRef = db.ref(`races/${lobbyId}`);
+                let race = {...lobby};
+                await raceRef.set(race);
+                await db.ref(`lobbies/${lobbyId}`).remove();
+            
+            } else {
+                return response.status(403).json({ success: false, error: "Only the host can start the race" });
+            }
+
+        } else {
+            let index = offlineLobbies.findIndex(l => l.id == lobbyId);
+
+            if (index > -1) {
+                lobby = offlineLobbies[index];
+                offlineLobbies.splice(index, 1);
+                offlineRaces.push(lobby);
+
+            } else {
+                return response.status(404).json({ success: false, error: "Lobby not found" });
+            }
+        }
+        
+        response.status(200).json({ success: true, raceId: lobbyId });
+
+        /*
+        let lobbyId = request.params.lobbyId;
+        let index = lobbies.findIndex(l => l.id == lobbyId);
+        let lobby = lobbies[index];
+        lobbies.splice(index, 1);
+        
+        let raceId = findNextId(races);
+        lobby.id = raceId;
+        races.push(lobby);
+        */
+
+    } catch (error) {
+        console.error(error);
+        response.status(500).json({ success: false, error });
+    }
+});
+
+
+app.get("/tracks/:trackId", async (request, response) => {
     if (usingDb) {
         try {
             let trackId = request.params.trackId;
-            let lobby = request.query.lobby;
 
-            if (!trackId || !lobby) {
-                response.status(400).json({ success: false, error: "Track ID / lobby data missing" });
+            if (!trackId) {
+                response.status(400).json({ success: false, error: "Missing data" });
             }
 
             let track = await TrackModel.findById( trackId );
-            lobby = JSON.parse(decodeURIComponent(lobby));
 
-            if (track && lobby) {
-                response.render("track-play", { title: "Race", track, lobby });
+            if (!track) {
+                response.status(404).json({ success: false, error: "No track with the given ID" });
+            }
+
+            response.status(200).json({ success: true, track });
+        
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({ success: false, error: error})
+        }
+    }
+})
+
+
+app.get("/tracks/play/:raceId", async (request, response) => {
+    if (usingDb) {
+        try {
+            let raceId = request.params.raceId;
+            
+            let snapshot = await db.ref(`races/${raceId}`).once("value");
+            let race = snapshot.val();
+
+            if (race) {
+                let track = await TrackModel.findById( race.trackId );
+
+                if (track) {
+                    response.render("track-play", { title: "Race", track, race });
+                
+                } else {
+                    response.redirect("/tracks/list");
+                }
+
             } else {
-                response.redirect("/tracks/list");
+                race = offlineRaces.find(r => r.id == raceId);
+
+                if (race) {
+                    let track = await TrackModel.findById( race.trackId );
+
+                    if (track) {
+                        response.render("track-play", { title: "Race", track, race });
+                    
+                    } else {
+                        response.redirect("/tracks/list");
+                    }
+   
+                } else {
+                    response.redirect("/tracks/list");
+                }
             }
 
         } catch(error) {
@@ -245,7 +471,22 @@ app.get("/tracks/leaderboards", async(request, response) => {
 
 app.get("/tracks/leaderboards/:trackId", async(request, response) => {
     if (usingDb) {
-        // TODO: ...
+        try {
+            let trackId = request.params.trackId;
+
+            if (!trackId) {
+                return response.status(400).json({ success: false, error: "Missing data" });
+            }
+
+            let leaderboardData = await LeaderboardModel.findById(trackId);
+            let leaderboard = JSON.stringify(leaderboardData);
+
+            response.status(200).json({ success: true, leaderboard });
+        
+        } catch (error) {
+            console.log(error)
+            response.status(500).json({ success: false, error });
+        }
     }
 })
 

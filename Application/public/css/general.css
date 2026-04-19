@@ -197,5 +197,14 @@ input.finish-box.form-check-input:checked {
     text-align: center;
 }
 
+/* lobbies */
+
+.lobby-entry {
+    background: #EEE;
+}
+
+
+
+
 /* settings */
 /* ... */

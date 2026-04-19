@@ -1001,7 +1001,7 @@ racecarSprite.onload = () => { // TODO: make this independent
 
     initialiseResultsPopup();
 
-    loadTrack(window.track, window.lobby);
+    loadTrack(window.track_, window.race_);
 
     lucide.createIcons();
 }

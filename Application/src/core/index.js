@@ -30,6 +30,7 @@ export { default as RACECAR_INFO } from "./enums/racecar-info.js";
 export { default as RACECAR_STATE } from "./enums/racecar-state.js";
 export { default as RACER_TYPE } from "./enums/racer-type.js";
 export { default as TOOL_TYPE } from "./enums/tool-type.js";
+export { default as LOBBY_LOCALITY } from "./enums/lobby-locality.js";
 
 // utilities
 export { default as SplineUtil } from "./utilities/spline-util.js";

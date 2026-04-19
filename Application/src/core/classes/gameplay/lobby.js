@@ -2,26 +2,59 @@
 
 import RACER_TYPE from "../../enums/racer-type.js";
 import RACECAR_INFO from "../../enums/racecar-info.js";
+import LOBBY_LOCALITY from "../../enums/lobby-locality.js";
 import Validator from "../../utilities/validator.js";
 
 
 export default class Lobby {
+    #id;
+    #hostId;
+    #trackId;
     #racers;
     #options;
+    #locality;
 
     constructor() {
+        this.#id = null;
+        this.#trackId = "";
         this.#racers = [];
         this.#options = {
             "Auto-retry Players": false,
             "Auto-retry Robots": false
         };
+        this.#locality = 1;
     }
 
 
     // getters / setters
+    getId() { return this.#id; }
+    setId(id) { 
+        Validator.isPrimitive(id, "string");
+        this.#id = id;
+    }
+
+    getHostId() { return this.#hostId }
+    setHostId(id) {
+        Validator.isPrimitive(id, "string");
+        this.#hostId = id;
+    }
+
+    getTrackId() { return this.#trackId; }
+    setTrackId(id) {
+        Validator.isPrimitive(id, "string");
+        this.#trackId = id;
+    }
+
     getRacers() { return this.#racers; }
+
     getOptions() { return this.#options; }
     
+    getLocality() { return this.#locality};
+    setLocality(locality) {
+        Validator.valuePresence(LOBBY_LOCALITY, locality);
+        this.#locality = locality;
+    } 
+
 
     // methods
     addRacer(racerType, carType, colour) {
@@ -58,16 +91,24 @@ export default class Lobby {
     // serialisation
     toObject() {
         return {
+            id: this.#id,
+            hostId: this.#hostId,
+            trackId: this.#trackId,
             racers: this.#racers,
-            options: this.#options
+            options: this.#options,
+            locality: this.#locality
         };
     }
 
     static toInstance(object) {
         let lobby = new Lobby();
 
-        lobby.#racers = object.racers;
-        lobby.#options = object.options;
+        lobby.#id = object.id;
+        lobby.#hostId = object.hostId;
+        lobby.#trackId = object.trackId;
+        lobby.#racers = object.racers || [];
+        lobby.#options = object.options || {};
+        lobby.#locality = object.locality;
 
         return lobby;
     }

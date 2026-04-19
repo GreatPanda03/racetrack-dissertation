@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <%- include("./partials/head.ejs") %>
+    <script type="module" src="/js/lobby-online.js"></script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <%- include("./partials/nav.ejs") %>
+        </nav>
+
+        <div class="content">
+            <div class="introduction">
+                <p id="page-description">
+                    You're in a lobby to play an <b>online</b> game. You can set the settings for the lobby below!
+                </p>  
+                <hr>
+
+                <!-- track details -->
+                <div>
+                    <h5>Track Details</h5>
+
+                    <!-- canvas, track details, & leaderboard -->
+                    <div class="d-flex flex-row gap-3">
+                        <div class="canvas-wrapped">
+                            <div id="details-info" class="mb-3">
+                                <!-- script generated -->
+                            </div>
+                            <canvas id="details-canvas" width="300" height="300"></canvas>
+                        </div>
+                        <div class="container">
+                            <div id="details-leaderboard">
+                                <!-- script generated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+
+                <button id="start-race" class="btn btn-success mb-3">
+                    <i data-lucide="play"></i>
+                    Start Race
+                </button>
+
+                <!-- race options & settings -->
+                <div id="race-options">
+                    <div id="lobby-options" class="d-flex flex-row gap-4 mb-2">
+                        <div>
+                            <input id="input-autoretry-players" class="form-check-input" type="checkbox" data-option="Auto-retry Players">
+                            <label class="form-check-label" for="input-autoretry-players">Auto-retry Players</label>
+                        </div>
+                        <div>
+                            <input id="input-autoretry-robots" class="form-check-input" type="checkbox" data-option="Auto-retry Robots">
+                            <label class="form-check-label" for="input-autoretry-robots">Auto-retry Robots</label>
+                        </div>
+                    </div>
+
+                    <div id="racer-lists" class="d-flex gap-3" style="overflow-x: auto;">
+                        <div id="player-racers" class="d-flex flex-column gap-3">
+                            <div id="player-racers-header" class="mb-1">
+                                <b id="player-racers-label">Player Racers (0)</b>
+                                <button id="player-racers-add" class="btn btn-primary p-1"
+                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer">
+                                    <i data-lucide="circle-plus"></i>
+                                </button>
+                            </div>
+                            <div id="player-racers-body">
+                                <span class="empty-list" hidden>No player racers</span>
+                                <div id="player-racers-list" class="d-flex flex-column gap-2 overflow-auto">
+                                    <!-- script generated -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="robot-racers" class="d-flex flex-column gap-3">
+                            <div id="robot-racers-header" class="mb-1">
+                                <b id="robot-racers-label">Robot Racers (0)</b>
+                                <button id="robot-racers-add" class="btn btn-primary p-1"
+                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer">
+                                    <i data-lucide="circle-plus"></i>
+                                </button>
+                            </div>
+                            <div id="robot-racers-body">
+                                <span class="empty-list" hidden>No robot racers</span>
+                                <div id="robot-racers-list" class="d-flex flex-column gap-2 overflow-auto">
+                                    <!-- script generated -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="ghost-racers" class="d-flex flex-column gap-3">
+                            <div id="ghost-racers-header" class="mb-1">
+                                <b id="ghost-racers-label">Ghost Racers (0)</b>
+                            </div>
+                            <div id="ghost-racers-body">
+                                <span class="empty-list" hidden>No ghost racers</span>
+                                <div id="ghost-racers-list" class="d-flex flex-column gap-2 overflow-auto">
+                                    <!-- script generated -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <%- include("./partials/footer.ejs") %>
+        </footer>
+    </div>
+    
+    <!-- racer entry template -->
+    <template id="racer-entry-template">
+        <div class="racer-entry container border border-secondary rounded" style="width: 285px;">
+            <div class="racer-header d-flex gap-1">
+                <i data-lucide="circle" class="racer-colour p-1"></i>
+                <div class="racer-details">
+                    Racer 1
+                </div>
+            </div>
+            <div class="racer-options d-flex flex-nowrap align-items-center gap-2">
+                <button class="btn-racer-colour btn btn-secondary p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Set Colour">
+                    <div class="d-flex align-items-center gap-1">
+                        <input type="color">     
+                        <i data-lucide="brush"></i>
+                    </div>
+                </button>
+                <div class="div-racer-cartype btn-group dropend p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Set Car Type">
+                    <button class="btn-racer-cartype btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i data-lucide="wrench"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <!-- script generated -->
+                    </ul>
+                </div>
+                <div class="div-robot-level mr-4" style="width: 50px;">
+                    <input class="input-robot-level form-control" type="number" min="0" max="4" value="1" style="width: 50px;">
+                </div>
+                <button class="btn-racer-remove btn btn-danger p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Remove Player">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- race car type info -->
+    <template id="car-type-item-template">
+        <li class="dropdown-item">
+            <div class="d-flex justify-content-between gap-3">
+                <span class="car-type-name"></span>
+                <i class="car-type-info" data-lucide="info" data-bs-toggle="tooltip" data-bs-placement="right"
+                    data-bs-html="true" title="test">
+                </i>
+            </div>
+        </li>
+    </template>
+
+    <script>
+        window.lobby_ = <%- JSON.stringify(lobby) %>;
+    </script>
+</body>
+</html>
