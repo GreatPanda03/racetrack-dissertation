@@ -11,6 +11,9 @@ import {
     SplineUtil, Validator
 } from "/core/index.js";
 
+import GeneralUI from "./utilities/general-ui.js";
+
+lucide.createIcons();
 
 
 // [[ Variables ]] //
@@ -63,13 +66,15 @@ async function saveTrack(trackJson) {
     Validator.isPrimitive(trackJson, "string");
 
     try {
-        await fetch("/tracks/save", {
-            method: "POST",
+        let trackId = trackJson.id_;
+
+        let saveRes = await fetch(`/api/tracks/${trackId}`, {
+            method: "PATCH",
             headers: new Headers({ "Content-Type": "application/json"}),
             body: trackJson
         });
 
-        return true;
+        return saveRes.ok;
 
     } catch(error) {
         console.log(error);
@@ -1319,15 +1324,7 @@ function loadAllUI() {
 
     initialiseElementDetails();
 
-    lucide.createIcons();
-
-    // enables all tooltips on the page
-    // * source: https://getbootstrap.com/docs/5.3/components/tooltips/
-    let tooltipTriggerList = document.querySelectorAll("[data-bs-toggle='tooltip']");
-
-    tooltipTriggerList.forEach(tooltip => {
-        new bootstrap.Tooltip(tooltip, { trigger: "hover" })
-    });
+    GeneralUI.prepareTooltips();
 
     // warns about unsaved changes (if any)
     window.addEventListener("beforeunload", (e) => {

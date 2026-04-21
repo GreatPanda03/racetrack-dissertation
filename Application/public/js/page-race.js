@@ -17,9 +17,11 @@ import {
     Track,
     CanvasRenderer, TrackRenderer,
     Lobby, RaceCar, RaceInstance,
-    RACECAR_STATE, RACER_TYPE,
+    RACECAR_STATE, PLAYER_TYPE,
     Validator
 } from "/core/index.js";
+
+lucide.createIcons();
 
 
 
@@ -85,6 +87,8 @@ function findNextTurn() {
         let racecar = racecars[turn];
         let stats = raceInstance.getRacecarStats(racecar);
         let state = stats.getState();
+
+        let player = race.getPlayers()[racecar.getPlayerId()];
         
         if (state == RACECAR_STATE.Finished || state == RACECAR_STATE.Retired) {
             movesToMake[turn] = undefined;
@@ -97,19 +101,19 @@ function findNextTurn() {
                 updateRaceStats();
                 renderRacecars();
                 
-                let racerType = racecar.getRacerType();
+                let playerType = player.getPlayerType();
 
-                if (racerType == RACER_TYPE.Player) {
+                if (playerType == PLAYER_TYPE.Player) {
                     let first = raceInstance.getRacecars()[turn];
                     displayMoves(first, raceInstance.getPossibleMoves(first));
 
                     break; // this player can actually move
                 
-                } else if (racerType == RACER_TYPE.Robot) {
+                } else if (playerType == PLAYER_TYPE.Robot) {
                     let move = determineRobotMove(racecar);
                     movesToMake[turn] = move;
                 
-                } else if (racerType == RACER_TYPE.Ghost) {
+                } else if (playerType == PLAYER_TYPE.Ghost) {
                     let index = racecars.findIndex(r => r == racecar);
                     let moveInfo = ghostMoves[index][timeElapsed];
 
@@ -127,14 +131,10 @@ function findNextTurn() {
     }
 }
 
-function loadTrack(trackToLoad, lobbyToLoad) {
-    let track = Track.toInstance(trackToLoad);
-    let lobby = Lobby.toInstance(lobbyToLoad);
+function loadTrack(track, race) {
+    let players = race.getPlayers();
 
-    lobbyOptions = lobby.getOptions();
-    lobbyOptions.RobotLevels = lobby.getRacers()
-        .filter(r => r.RacerType == RACER_TYPE.Robot)
-        .map(r => r.Level);
+    lobbyOptions = race.getOptions();
 
     // track rendering
     trackRenderer = new TrackRenderer(track, trackCanvas, spacing);
@@ -146,21 +146,25 @@ function loadTrack(trackToLoad, lobbyToLoad) {
 
     // race car set up
     let racecars = [];
-    let racers = lobby.getRacers();
 
-    racers.forEach((racer, r) => {
-        let {RacerType, Colour, CarType} = racer;
+    for (let [id, player] of Object.entries(players)) {
+        let playerType = player.getPlayerType();
+        let colour = race.getPlayerDetail(id, "colour");
+        let carType = race.getPlayerDetail(id, "carType");
 
         let racecar = new RaceCar();
-        racecar.setRacerType(RacerType);
-        racecar.setCarType(CarType);
-        racecar.setColour(Colour);
+        racecar.setPlayerId(id);
+        racecar.setPlayerType(playerType);
+        racecar.setColour(colour);
+        racecar.setCarType(carType);
         racecars.push(racecar);
 
-        if (RacerType == RACER_TYPE.Ghost) {
-            ghostMoves[r] = racer.Moves;
+        if (playerType == PLAYER_TYPE.Ghost) {
+            ghostMoves[id] = racer.Moves;
         }
-    });
+    };
+
+    console.log(racecars);
 
     // instance creation
     raceInstance = new RaceInstance(track, racecars, spacing);
@@ -257,9 +261,7 @@ function determineRobotMove(racecar) {
     let finalMove;
     
     let racecars = raceInstance.getRacecars();
-    let robots = racecars.filter(r => r.getRacerType() == RACER_TYPE.Robot);
-    let index = robots.findIndex(r => r == racecar);
-    let level = lobbyOptions.RobotLevels[index];
+    let level = race.getPlayerDetail(racecar.getPlayerId(), "level");
 
     function getClosestSegmentIndex(position) {
         let closest = -1;
@@ -406,10 +408,10 @@ function applyAllMoves() {
 
     if (crashed.length > 0) {
         let playersCrashed = crashed.some(
-            r => r.getRacerType() == RACER_TYPE.Player);
+            r => r.getPlayerType() == PLAYER_TYPE.Player);
 
         let robotsCrashed = crashed.some(
-            r => r.getRacerType() == RACER_TYPE.Robot);
+            r => r.getPlayerType() == PLAYER_TYPE.Robot);
 
         let autoPlayers = !playersCrashed || (playersCrashed && lobbyOptions["Auto-retry Players"]);
         let autoRobots = !robotsCrashed || (robotsCrashed && lobbyOptions["Auto-retry Robots"]);
@@ -467,8 +469,8 @@ function endRace(state) {
     let racecars = raceInstance.getRacecars();
     let ranks = getRankedRacecars();
 
-    let buckets = Object.keys(RACER_TYPE).map(k => {
-        return racecars.filter(r => r.getRacerType() == RACER_TYPE[k]);
+    let buckets = Object.keys(PLAYER_TYPE).map(k => {
+        return racecars.filter(r => r.getPlayerType() == PLAYER_TYPE[k]);
     });
     buckets.unshift(undefined); // hacky: to accommodate 1-n enum numbering
 
@@ -487,13 +489,13 @@ function endRace(state) {
         let crashes = stats.getCrashes();
 
         // racer name in row
-        let racerType = racecar.getRacerType();
+        let playerType = racecar.getPlayerType();
         let colour = racecar.getColour();
         
-        let bucket = buckets[racerType];
+        let bucket = buckets[playerType];
         let number = bucket.findIndex(r => r == racecar) + 1;
         
-        let prefix = Object.keys(RACER_TYPE).find(k => RACER_TYPE[k] == racerType);
+        let prefix = Object.keys(PLAYER_TYPE).find(k => PLAYER_TYPE[k] == playerType);
         let name = `${prefix} ${number}`;
 
         let data = [name, time, moveCount, distance, topSpeed, averageSpeed, crashes];
@@ -597,11 +599,11 @@ function endRace(state) {
         crashes.forEach((racecar, i) => {
             let entry = document.createElement("div");
 
-            let racerType = racecar.getRacerType();
-            let bucket = buckets[racerType];
+            let playerType = racecar.getPlayerType();
+            let bucket = buckets[playerType];
             let number = bucket.findIndex(r => r == racecar) + 1;
         
-            let prefix = Object.keys(RACER_TYPE).find(k => RACER_TYPE[k] == racerType);
+            let prefix = Object.keys(PLAYER_TYPE).find(k => PLAYER_TYPE[k] == playerType);
             let name = `${prefix} ${number}`;
             
             let index = racecars.findIndex(r => r == racecar);
@@ -682,10 +684,10 @@ function handleLeaderScore() {
     let leader = ranks.find(r => {
         let stats = raceInstance.getRacecarStats(r);
         let state = stats.getState();
-        let racerType = r.getRacerType();
+        let playerType = r.getPlayerType();
 
         return state == RACECAR_STATE.Finished
-            && racerType == RACER_TYPE.Player
+            && playerType == PLAYER_TYPE.Player
     });
     if (!leader) return;
 
@@ -703,14 +705,10 @@ async function saveRecordToLeaderboard(time, carType, moves) {
     let track = raceInstance.getTrack();
     let trackId = track.getId();
     
-    let data = {};
-    data.trackId = trackId;
-    data.time = time;
-    data.carType = carType;
-    data.moves = moves;
-
     try {
-        let response = await fetch("/tracks/leaderboards", {
+        let data = {time, carType, moves};
+    
+        let response = await fetch(`/api/leaderboards/${trackId}`, {
             method: "POST",
             headers: new Headers({ "Content-Type": "application/json"}),
             body: JSON.stringify(data)
@@ -762,7 +760,7 @@ function renderRacecars() {
 
     let racecars = raceInstance.getRacecars();
 
-    let racerInfo = Object.keys(RACER_TYPE).map(k => {
+    let racerInfo = Object.keys(PLAYER_TYPE).map(k => {
         return ({Count: 0, Symbol: k.substring(0, 1)})
     });
     racerInfo.unshift(undefined); // hacky: to accommodate 1-n enum numbering
@@ -839,8 +837,8 @@ function renderRacecars() {
         }
 
         // race car label
-        let racerType = racecar.getRacerType();
-        let info = racerInfo[racerType];
+        let playerType = racecar.getPlayerType();
+        let info = racerInfo[playerType];
         info.Count += 1;
 
         let symbol = info.Symbol;
@@ -950,29 +948,29 @@ function updateRaceStats() {
 
     statsList.innerHTML = "";
 
-    let racerInfo = Object.keys(RACER_TYPE).map(k => {
+    let racerInfo = Object.keys(PLAYER_TYPE).map(k => {
         return ({Count: 0, Name: k})
     });
     racerInfo.unshift(undefined); // hacky: to accommodate 1-n enum numbering
     
     racecars = racecars.toSorted((a, b) => // sorted copy
-        a.getRacerType() - b.getRacerType());
+        a.getPlayerType() - b.getPlayerType());
 
     racecars.forEach((racecar, index) => {
-        if (racecar.getRacerType() == RACER_TYPE.Ghost) return;
+        if (racecar.getPlayerType() == PLAYER_TYPE.Ghost) return;
 
         let entry = createRaceStatsEntry(racecar);
         let header = entry.querySelector(".stats-header");
         let collapse = entry.querySelector(".accordion-collapse");
 
         // additional info
-        let racerType = racecar.getRacerType();
+        let playerType = racecar.getPlayerType();
         let carType = racecar.getCarType();
         let stats = raceInstance.getRacecarStats(racecar);
         let state = stats.getState();
         
         let stateName = Object.keys(RACECAR_STATE).find(s => RACECAR_STATE[s] == state);
-        let info = racerInfo[racerType];
+        let info = racerInfo[playerType];
         info.Count += 1;
 
         header.innerHTML = `<span>
@@ -993,6 +991,15 @@ function updateRaceStats() {
 
 // [[ Set Up ]] //
 
+let raceId = raceId_;
+
+let raceJson = await fetch(`/api/races/${raceId}`).then(r => r.json());
+let race = Lobby.toInstance(raceJson.race);
+
+let trackJson = await fetch(`/api/tracks/${race.getTrackId()}`).then(r => r.json());
+let track = Track.toInstance(trackJson.track);
+
+
 racecarSprite = new Image();
 racecarSprite.src = "http://localhost:3000/images/race-car-sprite-nobg.png";
 
@@ -1001,7 +1008,5 @@ racecarSprite.onload = () => { // TODO: make this independent
 
     initialiseResultsPopup();
 
-    loadTrack(window.track_, window.race_);
-
-    lucide.createIcons();
+    loadTrack(track, race);
 }

@@ -224,7 +224,7 @@ export default class Track {
         track.#authorId = object.authorId;
         track.#author = object.author;
         track.#tags = object.tags;
-
+        
         track.#path = object.path.map(n => TrackNode.toInstance(n));
         track.#materials = object.materials.map(m => Material.toInstance(m));
         track.#obstacles = object.obstacles.map(o => Obstacle.toInstance(o));

@@ -51,6 +51,12 @@ export default class Validator {
         }
     }
 
+    static keyAbsence(object, key) {
+        if (key in object) {
+            throw new Error(`[Validator] "${key}" is a key in object`);
+        }
+    }
+
     static valuePresence(object, value) {
         if (!Object.values(object).find(v => v == value)) {
             throw new Error(`[Validator] "${value}" is not a value in object`);
@@ -89,5 +95,15 @@ export default class Validator {
         }
 
         return target;
+    }
+
+    static isAnyNull(dict) {
+        for (let [key, value] of Object.entries(dict)) {
+            if (value == undefined || value == null) {
+                throw new Error(`A value is missing for ${key}`);
+            }
+        }
+
+        return true;
     }
 }

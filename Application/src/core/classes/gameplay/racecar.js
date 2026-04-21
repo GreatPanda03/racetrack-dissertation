@@ -1,19 +1,20 @@
 // class to manage RaceCar instances
 
 import Vector2 from "../geometry/vector2.js";
+import PLAYER_TYPE from "../../enums/player-type.js";
 import RACECAR_INFO from "../../enums/racecar-info.js";
-import RACER_TYPE from "../../enums/racer-type.js";
 import Validator from "../../utilities/validator.js";
 
 
 export default class RaceCar {
     // ALL positional values in GRID units (NOT pixels)
+    #playerId;
     #position;
     #velocity;
     #maxSpeed;
     #maxAcceleration;
+    #playerType;
     #carType;
-    #racerType;
     #colour;
     #style;
 
@@ -22,20 +23,25 @@ export default class RaceCar {
         velocity = new Vector2(),
         maxSpeed = new Vector2(10, 10),
         maxAcceleration = new Vector2(1, 1),
-        colour = "#A00"
+        colour = "#aa0000"
     ) {
         this.setPosition(position);
         this.setVelocity(velocity);
         this.setMaxSpeed(maxSpeed);
         this.setMaxAcceleration(maxAcceleration);
         this.setCarType("The Race Car");
-        this.setRacerType(RACER_TYPE.Robot);
         this.setColour(colour);
         this.style = null;
     }
 
 
     // getters / setters
+    getPlayerId() { return this.#playerId; }
+    setPlayerId(id) {
+        Validator.isPrimitive(id, "string");
+        this.#playerId = id;
+    }
+
     getPosition() { return this.#position; }
     setPosition(position) { 
         Validator.isInstance(position, Vector2);
@@ -60,6 +66,12 @@ export default class RaceCar {
         this.#maxAcceleration = acceleration;
     };
 
+    getPlayerType() { return this.#playerType; }
+    setPlayerType(playerType) {
+        Validator.valuePresence(PLAYER_TYPE, playerType);
+        this.#playerType = playerType;
+    }
+
     getCarType() { return this.#carType; }
     setCarType(type) {
         Validator.keyPresence(RACECAR_INFO, type);
@@ -69,12 +81,6 @@ export default class RaceCar {
         let info = RACECAR_INFO[type];
         this.setMaxSpeed(info.MaxSpeed);
         this.setMaxAcceleration(info.MaxAcceleration);
-    }
-
-    getRacerType() { return this.#racerType; }
-    setRacerType(racerType) {
-        Validator.valuePresence(RACER_TYPE, racerType);
-        this.#racerType = racerType;
     }
 
     getColour() { return this.#colour; }

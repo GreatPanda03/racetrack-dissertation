@@ -1,44 +1,105 @@
-// manages offline lobbies on the client
+// manages game lobbies on the client
 
 
-// [[ Variables ]] //
-
+// [[ Imports ]] //
 import {
     Track,
-    TrackRenderer,
-    Lobby,
-    RACER_TYPE, RACECAR_INFO, LOBBY_LOCALITY
+    Player, Lobby,
+    PLAYER_TYPE, RACECAR_INFO
 } from "/core/index.js";
 
-import { initAuth } from "./firebase.js";
+import GeneralUI from "./utilities/general-ui.js";
+
+import { db, initAuth } from "./firebase.js";
+import { ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+lucide.createIcons();
 
 
 
 // [[ Variables ]] //
-
 var user = await initAuth();
 var playerId = user.uid;
 
 
 
-// [[ Lobby Options ]] //
+// [[ Functions ]] //
 
-function initialiseLobbyOptions() {
+function listenToLobby(lobby) {
+    let lobbyId = lobby.getId();
+    let lobbyRef = ref(db, `lobbies/${lobbyId}`);
+
+    onValue(lobbyRef, (snapshot) => {
+        let data = snapshot.val();
+
+        if (!data) {
+            console.log("Lobby has been deleted");
+            window.location.href = "/tracks";
+            return;
+        }
+
+        console.log("Live Update:", data);
+
+        let updated = Lobby.toInstance({id: data.id, ...data});
+        refreshRacerDetails(updated);
+    });
+}
+
+
+async function sendLobbyUpdate(playerId) {
+    await fetch(`/api/lobbies/${lobby.getId()}/online`, {
+        method: "PATCH",
+        headers: new Headers({ "Content-Type": "application/json"}),
+        body: JSON.stringify({ details: lobby })
+    });
+}
+
+
+async function leaveLobby(lobby, playerId) {
+    let lobbyId = lobby.getId();
+    let hostId = lobby.getHostId();
+
+    if (playerId == hostId) {
+        let lobbyRef = ref(db, `lobbies/${lobbyId}`);
+        await remove(lobbyRef);
+        window.location.href = "/lobbies";
+
+    } else {
+        let playerRef = ref(db, `lobbies/${lobbyId}/players/${playerId}`);
+        await remove(playerRef);
+        window.location.href = "/lobbies";
+    }
+}
+
+
+function initialiseLobbyDetails() {
+    let pageDescription = document.getElementById("page-description");
+
     let startBtn = document.getElementById("start-race");
-    let addPlayer = document.getElementById("player-racers-add");
+    let leaveBtn = document.getElementById("leave-lobby");
     let addRobot = document.getElementById("robot-racers-add");
     let lobbyOptions = document.getElementById("lobby-options");
 
+    // description
+    let hostDescription = ""
+    if (lobby.getHostId() == playerId) {
+        hostDescription = "<p><b>You're the lobby host!</b> You can set the settings for the lobby below. You can start the game whenever you're ready.</p>";
+    }
+
+    pageDescription.innerHTML = `<p>You're in a lobby to play an <b>online</b> game.</p> ${hostDescription}`;
+
+    // lobby options
     startBtn.addEventListener("click", (e) => {
         startRace();
     });
 
-    addPlayer.addEventListener("click", (e) => {
-        addDefaultRacer(RACER_TYPE.Player);
+    leaveBtn.addEventListener("click", async (e) => {
+        await leaveLobby(lobby, playerId);
     });
 
     addRobot.addEventListener("click", (e) => {
-        addDefaultRacer(RACER_TYPE.Robot);
+        addDefaultRacer(PLAYER_TYPE.Robot);
+        sendLobbyUpdate();
     });
 
     for (let element of lobbyOptions.children) {
@@ -55,33 +116,29 @@ function initialiseLobbyOptions() {
 
 
 function refreshRacerDetails() {
-    updateLobbyOnServer();
-
     let options = document.getElementById("lobby-options");
     let oldTooltips = options.querySelectorAll("[data-bs-toggle='tooltip']");
     
     let playerList = document.getElementById("player-racers-list");
     let robotList = document.getElementById("robot-racers-list");
-    let ghostList = document.getElementById("ghost-racers-list");        
-
+            
     oldTooltips.forEach(tooltip => {
-        bootstrap.Tooltip.getInstance(tooltip).dispose();
+        bootstrap.Tooltip.getInstance(tooltip)?.dispose();
     });
     
     playerList.innerHTML = "";
     robotList.innerHTML = "";
-    ghostList.innerHTML = "";
 
-    let racerInfo = Object.keys(RACER_TYPE).map(k => {
+    let racerInfo = Object.keys(PLAYER_TYPE).map(k => {
         return ({Count: 0, Name: k})
     });
     racerInfo.unshift(undefined); // hacky: to accommodate 1-n enum numbering
 
-    let racers = lobby.getRacers();
+    let racers = lobby.getPlayers();
 
-    for (let racer of racers) {
-        let racerType = racer.RacerType;
-        let carType = racer.CarType;
+    for (let [id, racer] of Object.entries(racers)) {
+        let racerType = racer.getPlayerType();
+        let carType = lobby.getPlayerDetail(id, "carType");
 
         let info = racerInfo[racerType];
         info.Count += 1;
@@ -103,8 +160,9 @@ function refreshRacerDetails() {
         });
 
         colourPicker.addEventListener("change", (e) => {
-            racer.Colour = colourPicker.value;
-            refreshRacerDetails();
+            let colour = colourPicker.value;
+            lobby.setPlayerDetail(playerId, "colour", colour);
+            sendLobbyUpdate(playerId);
         });
 
         // car types
@@ -113,12 +171,13 @@ function refreshRacerDetails() {
 
         for (let item of dropdown.children) {
             item.addEventListener("click", (e) => {
-                racer.CarType = item.querySelector(".car-type-name").innerHTML;
-                refreshRacerDetails();
+                let carType = item.querySelector(".car-type-name").innerHTML;
+                lobby.setPlayerDetail(playerId, "carType", carType);
+                sendLobbyUpdate(playerId);
             });
         }
 
-        if (racerType == RACER_TYPE.Robot) {
+        if (racerType == PLAYER_TYPE.Robot) {
             let levelInput = entry.querySelector(".input-robot-level");
             levelInput.value = racer.Level;
             
@@ -127,17 +186,12 @@ function refreshRacerDetails() {
                 level = Math.min(Math.max(level, 0), 4);
                 racer.Level = level;
 
-                refreshRacerDetails();
+                sendLobbyUpdate(playerId);
             })
 
         } else {
             let levelDiv = entry.querySelector(".div-robot-level");
             levelDiv.remove();
-
-            if (racerType == RACER_TYPE.Ghost) {
-                carTypeList.remove();
-                dropdown.remove();
-            }
         }
 
         // deletion
@@ -146,129 +200,48 @@ function refreshRacerDetails() {
         deleteBtn.addEventListener("click", (e) => {
             let index = racers.findIndex(r => r == racer);
             racers.splice(index, 1);
-            refreshRacerDetails();
+            sendLobbyUpdate(playerId);
         });
 
-        if (racer.RacerType == RACER_TYPE.Player) {
+        if (racerType == PLAYER_TYPE.Player) {
             playerList.appendChild(entry);
         
-        } else if (racer.RacerType == RACER_TYPE.Robot) {
+        } else if (racerType == PLAYER_TYPE.Robot) {
             robotList.appendChild(entry);
-        
-        } else if (racer.RacerType == RACER_TYPE.Ghost) {
-            ghostList.appendChild(entry);
         }
     }
 
     // update labels
     let playerLabel = document.getElementById("player-racers-label");
     let robotLabel = document.getElementById("robot-racers-label");
-    let ghostLabel = document.getElementById("ghost-racers-label");
 
-    let playerCount = playerList.childElementCount;
-    let robotCount = robotList.childElementCount;
-    let ghostCount = ghostList.childElementCount;
+    playerLabel.innerHTML = `Player Racers (${playerList.childElementCount})`;
+    robotLabel.innerHTML = `Robot Racers (${robotList.childElementCount})`;
 
-    playerLabel.innerHTML = `Player Racers (${playerCount})`;
-    robotLabel.innerHTML = `Robot Racers (${robotCount})`;
-    ghostLabel.innerHTML = `Ghost Racers (${ghostCount})`;
-
-    // widgets & icons
     lucide.createIcons();
-    
-    let tooltips = options.querySelectorAll("[data-bs-toggle='tooltip']");
-
-    tooltips.forEach(tooltip => {
-        new bootstrap.Tooltip(tooltip, { trigger: "hover" })
-    });
+    GeneralUI.prepareTooltips();
 }
 
 
-function addDefaultRacer(racerType) {
+function addDefaultRacer(playerType) {
     let carType = Object.keys(RACECAR_INFO)[0];
-    let colour = generateRacerColour(0);
 
-    let racer = lobby.addRacer(racerType, carType, colour);
+    let details = lobby.getPlayerDetails();
+    let colours = Object.values(details).map(d => d.colour);
+    let colour = GeneralUI.generateUniqueColourFromNumber(colours, 0);
 
-    if (racerType == RACER_TYPE.Robot) {
+    let prefix = Object.keys(PLAYER_TYPE).find(k => PLAYER_TYPE[k] == playerType);
+    let player = new Player("Player 1", "", playerType);
+
+    let racer = lobby.addPlayer(player);
+    lobby.setPlayerDetail(player.getId(), "carType", "The Race Car");
+    lobby.setPlayerDetail(player.getId(), "colour", colour);
+
+    if (playerType == PLAYER_TYPE.Robot) {
         racer.Level = 1;
     }
 
-    refreshRacerDetails();
-
     return racer;
-}
-
-
-async function updateLobbyOnServer() {
-    let lobbyId = lobby.getId();
-
-    let response = await fetch(`/lobbies/${lobbyId}`, {
-        method: "POST",
-        headers: new Headers({ "Content-Type": "application/json"}),
-        body: JSON.stringify({ details: lobby })
-    });
-
-    if (!response.ok) {
-        console.log("Could not update lobby details");
-    }
-}
-
-
-
-// [[ Entry Creation ]] //
-
-// [source 1, source 2, source 3]
-function generateColour(number) {
-    // generates a somewhat "distant" colour for the given
-    //   racer number (based on the golden ratio) in HTML hex format
-
-    const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
-
-    // source 1
-    let h = (number * GOLDEN_RATIO) % 1;
-    let s = 0.75;
-    let v = Math.sqrt(1 - ((number * GOLDEN_RATIO) % 0.5));
-
-    // source 2
-    var r, g, b, i, f, p, q, t;
-    i = Math.floor(h * 6);
-    f = h * 6 - i;
-    p = v * (1 - s);
-    q = v * (1 - f * s);
-    t = v * (1 - (1 - f) * s);
-
-    switch (i % 6) {
-        case 0: r = v, g = t, b = p; break;
-        case 1: r = q, g = v, b = p; break;
-        case 2: r = p, g = v, b = t; break;
-        case 3: r = p, g = q, b = v; break;
-        case 4: r = t, g = p, b = v; break;
-        case 5: r = v, g = p, b = q; break;
-    }
-
-    r = Math.round(r * 255);
-    g = Math.round(g * 255);
-    b = Math.round(b * 255);
-
-    // source 3
-    let hex = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-
-    return hex;
-}
-
-
-function generateRacerColour(number) { // starting number
-    let racers = lobby.getRacers();
-    let colours = racers.map(r => r.Colour);
-    let colour;
-
-    do {
-        colour = generateColour(number);
-        number += 1;
-    } while (colours.find(c => c == colour))
-
-    return colour;
 }
 
 
@@ -277,7 +250,7 @@ function createRacerEntry(racer) {
     let entry = document.importNode(entryTemplate.content, true);
 
     // colour
-    let colour = racer.Colour;
+    let colour = lobby.getPlayerDetail(racer.getId(), "colour");
 
     let colourMarker = entry.querySelector(".racer-colour");
     let colourBtn = entry.querySelector(".btn-racer-colour");
@@ -321,9 +294,6 @@ function createRacerEntry(racer) {
     return entry;
 }
 
-
-
-// [[ Leaderboard Creation ]] //
 
 function constructLeaderboard(scores) {
     let table = document.createElement("table");
@@ -373,13 +343,13 @@ function constructLeaderboard(scores) {
 
         inputBox.addEventListener("change", (e) => {
             if (inputBox.checked) {
-                let ghost = lobby.addRacer(RACER_TYPE.Ghost, 
+                let ghost = lobby.addRacer(PLAYER_TYPE.Ghost, 
                     row.carType,
                     "#777")
                 ghost.Name = row.name;
                 ghost.Moves = row.moves;
 
-                refreshRacerDetails();
+                sendLobbyUpdate(playerId);
 
             } else {
                 let racers = lobby.getRacers();
@@ -387,7 +357,7 @@ function constructLeaderboard(scores) {
                 
                 if (index) {
                     racers.splice(index, 1);
-                    refreshRacerDetails();
+                    sendLobbyUpdate(playerId);
                 }
             }
         });
@@ -405,27 +375,15 @@ function constructLeaderboard(scores) {
 }
 
 
-
-// [[ Lobby Details ]] //
-
 async function loadLobbyInfo(lobby) {
     let lobbyId = lobby.getId();
-    
-    let lbRes = await fetch(`/tracks/leaderboards/${lobby.getTrackId()}`);
-    let leaderboard = null
+    let trackId = lobby.getTrackId();
 
-    if (lbRes.ok) {
-        let lbJson = await lbRes.json();
-        leaderboard = JSON.parse(lbJson.leaderboard);
-    }
+    let lbJson = await fetch(`/api/leaderboards/${trackId}`).then(r => r.json());
+    let leaderboard = lbJson.leaderboard;
 
-    let trackRes = await fetch(`/tracks/${lobby.getTrackId()}`);
-    let track = null;
-
-    if (trackRes.ok) {
-        let trackJson = await trackRes.json();
-        track = Track.toInstance(trackJson.track);
-    }
+    let trackJson = await fetch(`/api/tracks/${trackId}`).then(r => r.json());
+    let track = Track.toInstance(trackJson.track);
 
     // track info
     let infoBody = document.getElementById("details-info");
@@ -438,7 +396,7 @@ async function loadLobbyInfo(lobby) {
 
     // leaderboard info
     let lbBody = document.getElementById("details-leaderboard");
-    lbBody.innerHTML += "<div class='text-center'><b>Track Times</b></div>";
+    lbBody.innerHTML = "<div class='text-center'><b>Track Times</b></div>";
 
     let lbContent = null;
 
@@ -465,45 +423,24 @@ async function loadLobbyInfo(lobby) {
     // track preview
     let canvas = document.getElementById("details-canvas");
 
-    let renderer = new TrackRenderer(track, canvas, 25);
-    renderer.setVisibility("nodes", false);
-    renderer.setVisibility("wires", false);
-    renderer.setScale(canvas.width / 750);
-    renderer.redrawTrack();
-}
-
-
-
-// [[ Race Commencement ]] //
-
-async function startRace() {
-    let lobbyId = lobby.getId();
-
-    let startRes = await fetch(`/lobby/start`, {
-        method: "POST",
-        headers: new Headers({ "Content-Type": "application/json"}),
-        body: JSON.stringify({ lobbyId, playerId })
-    });
-
-    if (startRes.ok) {
-        let result = await startRes.json();
-        let raceId = result.raceId;
-
-        window.location.href = `/tracks/play/${raceId}`;
-    }
+    GeneralUI.generateTrackPreview(canvas, track, 25);
 }
 
 
 
 // [[ Set Up ]] //
 
-let lobby = new Lobby();
-lobby.setId(lobby_.id);
-lobby.setTrackId(lobby_.trackId);
-lobby.setLocality(LOBBY_LOCALITY.Offline);
+let lobby = Lobby.toInstance(lobby_); // NOTE: has players
+let lobbyId = lobby.getId();
+
+if (!lobby_.players[playerId]) { // must be officially registered
+    window.location.href = "/lobbies";
+}
 
 loadLobbyInfo(lobby);
 
-initialiseLobbyOptions();
+initialiseLobbyDetails(lobby);
 
-lucide.createIcons();
+listenToLobby(lobby);
+
+GeneralUI.prepareTooltips();

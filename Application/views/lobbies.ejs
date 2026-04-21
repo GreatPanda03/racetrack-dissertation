@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
-    <script type="module" src="/js/game-lobbies.js"></script>
+    <script type="module" src="/js/page-lobbies.js"></script>
 </head>
 <body>
     <div class="container">
@@ -16,12 +16,16 @@
                 <p>
                     Welcome to the <b>Lobbies</b> section. Here, you can find all available online games other players are hosting!
                 </p>
-
                 <hr>
-
                 <div id="lobby-list">
-                    <div id="lobby-list-header">
-                        Loading lobbies...
+                    <div id="lobby-list-header" class="d-flex justify-content-between">
+                        <div id="lobby-list-description">
+                            Loading lobbies...
+                        </div>
+                        <button class="entry-join btn btn-primary">
+                            <i data-lucide="list-restart"></i>
+                            Refresh Lobbies
+                        </button>
                     </div>
                     <br>
                     <div id="lobby-list-body" class="d-flex flex-column gap-3">
@@ -30,6 +34,8 @@
                 </div>
             </div>
         </div>
+
+        <%- include("./partials/toast.ejs") %>
 
         <footer>
             <%- include("./partials/footer.ejs") %>
@@ -48,8 +54,8 @@
                 </div>
                 <div class="entry-body">
                     <b>Host:</b> Player
-                    <b>Players:</b> 3 / 5
-                    <b>Robots:</b> 5
+                    <br><b>Players:</b> 3 / 5
+                    <br><b>Robots:</b> 5
                 </div>
                 <hr class="m-1">
                 <div class="entry-footer mt-2">

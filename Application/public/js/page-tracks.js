@@ -1,28 +1,25 @@
 // manages the tracks list section
 
-// * source 1: Game Development, "How can I find an optimum set of colors for 10 players?", Stack Exchange, stackexchange.com, [Online]. Available at: https://gamedev.stackexchange.com/questions/46463. Accessed: Mar. 1, 2026.
-// * source 2: Stack Overflow, "How to convert HSB/HSV color to RGB accurately?", Stack Exchange, stackexchange.com, [Online]. Available at: https://stackoverflow.com/questions/17242144. Accessed: Mar. 1, 2026.
-// * source 3: Prashant Yadav (2022), "Convert RGB to HEX color in JavaScript", LearnersBucket, learnersbucket.com, [Online]. Available at: https://learnersbucket.com/examples/interview/convert-rgb-to-hex-color-in-javascript/. Accessed: Mar. 1, 2026.
-
 
 // [[ Imports ]] //
 import {
-    Track, TrackRenderer,
+    Track,
     Lobby,
-    RACECAR_INFO, RACER_TYPE, LOBBY_LOCALITY,
+    RACECAR_INFO, PLAYER_TYPE,
     Validator
 } from "/core/index.js";
+
+import GeneralUI from "./utilities/general-ui.js";
 
 import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 import { initAuth } from "./firebase.js";
 
+lucide.createIcons();
 
 
 // [[ Variables ]] //
 var user = await initAuth();
 var playerId = user.uid;
-
-console.log(`Player (ID: ${playerId})`);
 
 var spacing = 25;
 var selectedTrack = null;
@@ -40,11 +37,7 @@ function createTrackEntry(track) {
 
     title.innerHTML = track.getName();
 
-    let renderer = new TrackRenderer(track, canvas, spacing);
-    renderer.setVisibility("nodes", false);
-    renderer.setVisibility("wires", false);
-    renderer.setScale(canvas.width / 750);
-    renderer.redrawTrack();
+    GeneralUI.generateTrackPreview(canvas, track, 25);
 
     return entry;
 }
@@ -100,11 +93,11 @@ function initialiseTrackDetails() {
     let deleteBtn = document.getElementById("details-delete");
 
     playOfflineBtn.addEventListener("click", (e) => {
-        startLobby(selectedTrack, LOBBY_LOCALITY.Offline);
+        startLobby(selectedTrack, "offline");
     });
 
     playOnlineBtn.addEventListener("click", (e) => {
-        startLobby(selectedTrack, LOBBY_LOCALITY.Online);
+        startLobby(selectedTrack, "online");
     });
 
     editBtn.addEventListener("click", async (e) => {
@@ -189,7 +182,7 @@ function showTrackDetails(track) {
         return table;
     }
 
-    let leaderboard = theLeaderboards.find(l => l._id == track.getId());
+    let leaderboard = leaderboards.find(l => l._id == track.getId());
     let lbContent = null;
 
     lbBody.innerHTML = "<div class='text-center'><b>Track Times</b></div>";
@@ -217,11 +210,7 @@ function showTrackDetails(track) {
     // track preview
     let canvas = document.getElementById("details-canvas");
 
-    let renderer = new TrackRenderer(track, canvas, spacing);
-    renderer.setVisibility("nodes", false);
-    renderer.setVisibility("wires", false);
-    renderer.setScale(canvas.width / 750);
-    renderer.redrawTrack();
+    GeneralUI.generateTrackPreview(canvas, track, 25);
 
     // TODO: when "players" are a thing, only allow
     //   editing / deleting for personal tracks
@@ -266,14 +255,13 @@ function loadAllTracks(tracks) {
 
 async function startLobby(track, locality) {
     Validator.isInstance(track, Track);
-    Validator.valuePresence(LOBBY_LOCALITY, locality);
 
     let trackId = track.getId();
 
-    let response = await fetch("/lobbies", {
+    let response = await fetch(`/api/lobbies/${locality}`, {
         method: "POST",
         headers: new Headers({ "Content-Type": "application/json"}),
-        body: JSON.stringify({ playerId, trackId, locality })
+        body: JSON.stringify({ playerId, trackId })
     });
 
     if (response.ok) {
@@ -281,7 +269,7 @@ async function startLobby(track, locality) {
         window.location.href = `/lobbies/${result.lobbyId}`;
 
     } else {
-        throw new Error(`[Tracks List] Couldn't create lobby: ${response.statusText}`)
+        throw new Error(`Couldn't create lobby: ${response.statusText}`)
     }
 }
 
@@ -293,7 +281,7 @@ function startLobby(track) {
     }
 
     if (lobby.getRacers().length == 0) { // solo race
-        addDefaultRacer(RACER_TYPE.Player);
+        addDefaultRacer(PLAYER_TYPE.Player);
     }    
 
     // NOTE: use this when using an actual lobby system 
@@ -306,7 +294,7 @@ function startLobby(track) {
     })();
 
     for (let data of ghostData) {
-        let ghost = addDefaultRacer(RACER_TYPE.Ghost);
+        let ghost = addDefaultRacer(PLAYER_TYPE.Ghost);
         ghost.Colour = "#777";
         ghost.Moves = data.moves
         ghost.CarType = data.carType || Object.keys(RACECAR_INFO)[0];
@@ -325,23 +313,13 @@ function startLobby(track) {
 // [[ Set Up ]] //
 
 // through ejs
+let tracks = tracks_.map(t => Track.toInstance(t));
+let leaderboards = leaderboards_;
 
-let theTracks = tracks.map(t => Track.toInstance(JSON.parse(t)));
-let theLeaderboards = leaderboards.map(l => JSON.parse(l));
-
-loadAllTracks(theTracks);
+loadAllTracks(tracks);
 
 initialiseTrackSearch();
 
 initialiseTrackDetails();
 
-lucide.createIcons();
-
-
-// enables all tooltips on the page
-// * source: https://getbootstrap.com/docs/5.3/components/tooltips/
-let tooltipTriggerList = document.querySelectorAll("[data-bs-toggle='tooltip']");
-
-tooltipTriggerList.forEach(tooltip => {
-    new bootstrap.Tooltip(tooltip, { trigger: "hover" })
-});
+GeneralUI.prepareTooltips();

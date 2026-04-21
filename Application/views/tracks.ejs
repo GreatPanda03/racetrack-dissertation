@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
-    <script type="module" src="/js/tracks-list.js"></script>
+    <script type="module" src="/js/page-tracks.js"></script>
 </head>
 <body>
     <div class="container">
@@ -102,6 +102,8 @@
             </div>
         </div>
     </div>  
+
+    <%- include("./partials/toast.ejs") %>
     
     <!-- track entry template -->
     <template id="track-list-entry-template">
@@ -120,8 +122,8 @@
     </template>
 
     <script>
-        window.tracks = <%- JSON.stringify(tracks) %>;
-        window.leaderboards = <%- JSON.stringify(leaderboards) %>;
+        window.tracks_ = <%- JSON.stringify(tracks) %>;
+        window.leaderboards_ = <%- JSON.stringify(leaderboards) %>;
     </script>
 </body>
 </html>

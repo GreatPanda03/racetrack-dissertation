@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
-    <script type="module" src="/js/track-play.js" defer></script>
+    <script type="module" src="/js/page-race.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -14,7 +14,7 @@
         <div class="content">
             <div class="introduction">
                 <p>
-                    Welcome to <b><%= track.name %></b>! Start your engines...
+                    Welcome to <b>The Oval</b>! Start your engines...
                 </p>
                 <p>
                     Your race car moves using <b>vectors</b>. This vector affects your current velocity, determining where you can move.
@@ -70,7 +70,9 @@
                     </div>
                 </div>
             </div>
-        </div>  
+        </div>
+
+        <%- include("./partials/toast.ejs") %>
             
         <footer>
             <%- include("./partials/footer.ejs") %>
@@ -96,8 +98,7 @@
     </template>
 
     <script>
-        window.track_ = <%- JSON.stringify(track) %>;
-        window.race_ = <%- JSON.stringify(race) %>;
+        window.raceId_ = <%- raceId %>;
     </script>
 </body>
 </html>

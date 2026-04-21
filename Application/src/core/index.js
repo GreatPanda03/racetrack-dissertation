@@ -18,6 +18,7 @@ export { default as CanvasRenderer } from "./classes/rendering/canvas-renderer.j
 export { default as TrackRenderer } from "./classes/rendering/track-renderer.js";
 export { default as UndoRedoStack } from "./classes/rendering/undo-redo-stack.js";
 
+export { default as Player } from "./classes/gameplay/player.js";
 export { default as Lobby } from "./classes/gameplay/lobby.js";
 export { default as RaceCar } from "./classes/gameplay/racecar.js";
 export { default as RaceStats } from "./classes/gameplay/race-stats.js";
@@ -28,9 +29,8 @@ export { default as ACTION_TYPE } from "./enums/action-type.js";
 export { default as MATERIAL_INFO } from "./enums/material-info.js";
 export { default as RACECAR_INFO } from "./enums/racecar-info.js";
 export { default as RACECAR_STATE } from "./enums/racecar-state.js";
-export { default as RACER_TYPE } from "./enums/racer-type.js";
+export { default as PLAYER_TYPE } from "./enums/player-type.js";
 export { default as TOOL_TYPE } from "./enums/tool-type.js";
-export { default as LOBBY_LOCALITY } from "./enums/lobby-locality.js";
 
 // utilities
 export { default as SplineUtil } from "./utilities/spline-util.js";

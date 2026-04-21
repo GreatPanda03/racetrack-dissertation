@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
-    <script type="module" src="/js/lobby-offline.js"></script>
+    <script type="module" src="/js/page-lobby-offline.js"></script>
 </head>
 <body>
     <div class="container">
@@ -13,9 +13,9 @@
 
         <div class="content">
             <div class="introduction">
-                <p>
-                    You're in a lobby to play an offline game. You can set the settings for the lobby below!
-                </p>  
+                <p id="page-description">
+                    You're in a lobby to play an <b>online</b> game. You can set the settings for the lobby below!
+                </p> 
                 <hr>
 
                 <!-- track details -->
@@ -40,10 +40,16 @@
                 
                 <hr>
 
-                <button id="start-race" class="btn btn-success mb-3">
-                    <i data-lucide="play"></i>
-                    Start Race
-                </button>
+                <div>
+                    <button id="start-race" class="btn btn-success mb-3">
+                        <i data-lucide="play"></i>
+                        Start Race
+                    </button>
+                    <button id="leave-lobby" class="btn btn-danger mb-3">
+                        <i data-lucide="x"></i>
+                        Leave Lobby
+                    </button>
+                </div>
 
                 <!-- race options & settings -->
                 <div id="race-options">
@@ -79,7 +85,7 @@
                             <div id="robot-racers-header" class="mb-1">
                                 <b id="robot-racers-label">Robot Racers (0)</b>
                                 <button id="robot-racers-add" class="btn btn-primary p-1"
-                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer">
+                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Robot Racer">
                                     <i data-lucide="circle-plus"></i>
                                 </button>
                             </div>
@@ -106,6 +112,8 @@
                 </div>
             </div>
         </div>
+
+        <%- include("./partials/toast.ejs") %>
 
         <footer>
             <%- include("./partials/footer.ejs") %>
