@@ -12,6 +12,7 @@ import {
 import GeneralUI from "./utilities/general-ui.js";
 
 import { initAuth } from "./firebase.js";
+import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
 lucide.createIcons();
 
@@ -22,8 +23,11 @@ lucide.createIcons();
 var user = await initAuth();
 var playerId = user.uid;
 
+var db = getDatabase();
+
 var lobby;
 var isHost = false;
+var isOnline;
 
 
 
@@ -71,7 +75,7 @@ function findFreeRacerId() {
     return id.toString();
 }
 
-function addDefaultRacer(playerType) {
+function addDefaultRacer(playerType, id) {
     let carType = Object.keys(RACECAR_INFO)[0];
 
     let details = lobby.getPlayerDetails();
@@ -79,7 +83,8 @@ function addDefaultRacer(playerType) {
     let colour = GeneralUI.generateUniqueColourFromNumber(colours, 0);
 
     let prefix = Object.keys(PLAYER_TYPE).find(k => PLAYER_TYPE[k] == playerType);
-    let id = findFreeRacerId();
+     
+    id = id || findFreeRacerId();
     let name = `${prefix} ${id}`;
     let player = new Player(id, name, playerType);
 
@@ -103,13 +108,32 @@ function addGhost() {
     let ghost = addDefaultRacer(PLAYER_TYPE.Ghost);
 }
 
+async function leaveLobby() {
+    let lobbyId = lobby.getId();
+
+    if (isOnline) {
+        let lobbyRef = ref(db, `lobbies/${lobbyId}`);
+        let playerRef = ref(db, `lobbies/${lobbyId}/players/${playerId}`);
+
+        // If host → delete entire lobby
+        if (isHost) {
+            await remove(lobbyRef);
+        } else {
+            // Otherwise just remove player
+            await remove(playerRef);
+        }
+    } else {
+        window.location.href = "/tracks";
+    }
+}
+
 
 
 // [[ Static UI ]] //
 
 function updatePageDescription() {
     let description = document.getElementById("page-description");
-    let state = "online / offline";
+    let state = isOnline ? "online" : "offline";
 
     description.innerHTML = `<p>You're in a lobby to play an <b>${state}</b> game.</p>`;
 
@@ -201,23 +225,27 @@ function constructLeaderboard(scores) {
         let inputBox = ghostBox.querySelector(".form-check-input");
         let addedGhost = null;
 
-        inputBox.addEventListener("change", (e) => {
-            if (inputBox.checked) {
-                addedGhost = addDefaultRacer(PLAYER_TYPE.Ghost);
+        if (isHost) {
+            inputBox.addEventListener("change", (e) => {
+                if (inputBox.checked) {
+                    let id = name;
+                    addedGhost = addDefaultRacer(PLAYER_TYPE.Ghost, id);
+                    
+                    lobby.setPlayerDetail(id, "colour", "#777");
+                    lobby.setPlayerDetail(id, "carType", carType)
 
-                let id = addedGhost.getId();
-                lobby.setPlayerDetail(id, "colour", "#777");
-                lobby.setPlayerDetail(id, "carType", row.carType)
+                    handleNewDetails();
 
-                refreshRacerDetails();
-
-            } else {
-                if (addedGhost) {
-                    lobby.removePlayer(addedGhost)
-                    refreshRacerDetails();
+                } else {
+                    if (addedGhost) {
+                        lobby.removePlayer(addedGhost)
+                        handleNewDetails();
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            inputBox.disabled = true;
+        }
 
         tr.appendChild(ghostBox); // add ghost to race
         
@@ -253,7 +281,6 @@ function createRacerEntry(racer) {
     let colourBtn = entry.querySelector(".btn-racer-colour");
     let colourPicker = colourBtn.querySelector("input");
 
-    colourMarker.setAttribute("fill", colour);
     colourMarker.setAttribute("fill", colour);
     
     colourBtn.setAttribute("fill", colour);
@@ -317,7 +344,7 @@ function refreshRacerDetails() {
         let nameElement = entry.querySelector(".racer-details");
         nameElement.innerHTML = name;
 
-        prepareControls_racerEntry(entry, "offline", racer);
+        prepareControls_racerEntry(entry, racer);
 
         lists[playerType].appendChild(entry);
     }
@@ -328,6 +355,19 @@ function refreshRacerDetails() {
     GeneralUI.prepareTooltips();
 
     updateRacerListHeaders();
+}
+
+async function handleNewDetails() {
+    if (isOnline) {
+        await fetch(`/api/lobbies/${lobby.getId()}/online`, {
+            method: "PATCH",
+            headers: new Headers({ "Content-Type": "application/json"}),
+            body: JSON.stringify({ details: lobby })
+        });
+
+    } else {
+        refreshRacerDetails();
+    }
 }
 
 
@@ -391,10 +431,10 @@ function prepareControls_addPlayer(enabled) {
     let addPlayerBtn = document.getElementById("player-racers-add");
     let hostId = lobby.getHostId();
 
-    if (enabled && isHost) {
+    if (enabled && !isOnline && isHost) {
         addPlayerBtn.addEventListener("click", (e) => {
             addPlayer();
-            refreshRacerDetails();
+            handleNewDetails();
         });
     } else {
         addPlayerBtn.remove();
@@ -407,7 +447,7 @@ function prepareControls_addRobot(enabled) {
     if (enabled && isHost) {
         addRobotBtn.addEventListener("click", (e) => {
             addRobot();
-            refreshRacerDetails();
+            handleNewDetails();
         });
     } else {
         addRobotBtn.remove();
@@ -418,19 +458,23 @@ function prepareControls_leaderboard(enabled) {
 
 }
 
-function prepareControls_racerEntry(entry, lobbyState, targetPlayer) {
+function prepareControls_racerEntry(entry, targetPlayer) {
     let id = targetPlayer.getId();
     let playerType = targetPlayer.getPlayerType();
 
-    let ONLINE = lobbyState == "online";
-    let OFFLINE = lobbyState == "offline";
+    let ONLINE = isOnline;
+    let OFFLINE = !isOnline;
     let FOR_PLAYER = playerId == id;
 
     // colouring
     let colourBtn = entry.querySelector(".btn-racer-colour");
     let colourPicker = colourBtn.querySelector("input");
 
-    if ( OFFLINE || (ONLINE && FOR_PLAYER) ) {
+    if ( 
+        OFFLINE 
+        || (ONLINE && FOR_PLAYER)
+        || (isHost && playerType != PLAYER_TYPE.Player)
+    ) {
         colourBtn.addEventListener("click", (e) => {
             let colourPicker = colourBtn.querySelector("input");
             colourPicker.focus();
@@ -439,7 +483,7 @@ function prepareControls_racerEntry(entry, lobbyState, targetPlayer) {
         colourPicker.addEventListener("change", (e) => {
             let newColour = colourPicker.value;
             lobby.setPlayerDetail(id, "colour", newColour);
-            refreshRacerDetails();
+            handleNewDetails();
         });
     } else {
         colourBtn.remove();
@@ -450,12 +494,16 @@ function prepareControls_racerEntry(entry, lobbyState, targetPlayer) {
     let carTypeList = entry.querySelector(".div-racer-cartype");
     let dropdown = carTypeList.querySelector(".dropdown-menu");
 
-    if ( OFFLINE || (ONLINE && FOR_PLAYER) ) {
+    if ( 
+        OFFLINE 
+        || (ONLINE && FOR_PLAYER)
+        || (isHost && playerType != PLAYER_TYPE.Player)
+    ) {
         for (let item of dropdown.children) {
             item.addEventListener("click", (e) => {
                 let newCarType = item.querySelector(".car-type-name").innerHTML;
                 lobby.setPlayerDetail(id, "carType", newCarType);
-                refreshRacerDetails();
+                handleNewDetails();
             });
         }
     } else {
@@ -469,7 +517,7 @@ function prepareControls_racerEntry(entry, lobbyState, targetPlayer) {
     if ( !FOR_PLAYER && (OFFLINE || (ONLINE && isHost)) ) {
         deleteBtn.addEventListener("click", (e) => {
             lobby.removePlayer(targetPlayer);
-            refreshRacerDetails();
+            handleNewDetails();
         });
     } else {
         deleteBtn.remove();
@@ -484,9 +532,9 @@ function prepareControls_racerEntry(entry, lobbyState, targetPlayer) {
         
         levelInput.addEventListener("change", (e) => {
             let newLevel = levelInput.value;
-            newLevel = Math.min(Math.max(level, 0), 4);
+            newLevel = Math.min(Math.max(newLevel, 0), 4);
             lobby.setPlayerDetail(id, "level", newLevel);
-            refreshRacerDetails();
+            handleNewDetails();
         })
 
     } else {
@@ -535,12 +583,14 @@ async function startRace() {
     let lobbyId = lobby.getId();
 
     // update server data
-    await fetch(`/api/lobbies/${lobby.getId()}/offline`, {
-        method: "PATCH",
-        headers: new Headers({ "Content-Type": "application/json"}),
-        body: JSON.stringify({ details: lobby })
-    });
-
+    if (!isOnline) {
+        await fetch(`/api/lobbies/${lobby.getId()}/offline`, {
+            method: "PATCH",
+            headers: new Headers({ "Content-Type": "application/json"}),
+            body: JSON.stringify({ details: lobby })
+        });
+    }
+    
     let startRes = await fetch(`/api/lobbies/start/${lobbyId}`, {
         method: "POST",
         headers: new Headers({ "Content-Type": "application/json"}),
@@ -559,7 +609,28 @@ async function startRace() {
 }
 
 
-lobby = Lobby.toInstance(lobby_);
+lobby = Lobby.toInstance( lobby_ );
 isHost = playerId == lobby.getHostId();
+isOnline = isOnline_;
 
 initialiseLobbyPage(lobby);
+
+
+// update connection
+if (isOnline) {
+    let lobbyRef = ref(db, `lobbies/${lobby.getId()}`);
+
+    onValue(lobbyRef, (snapshot) => {
+        let lobbyObj = snapshot.val() || null;
+
+        console.log(lobbyObj);
+
+        lobby = Lobby.toInstance(lobbyObj)
+
+        refreshRacerDetails();
+
+        if (!lobby.getPlayers()[playerId]) {
+            window.location.href = "/tracks";
+        }
+    });
+}

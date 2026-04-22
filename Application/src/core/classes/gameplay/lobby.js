@@ -65,7 +65,7 @@ export default class Lobby {
         this.#players[id] = player;
         this.#playerDetails[id] = {
             carType: "The Race Car",
-            colour: "#A00"};
+            colour: "#ff4040"};
 
         return player;
     }
@@ -102,13 +102,18 @@ export default class Lobby {
 
     // serialisation
     toObject() {
+        let players = {};
+        for (let [id, player] of Object.entries(this.#players)) {
+            players[id] = player.toObject();
+        }
+
         return {
             id: this.#id,
             hostId: this.#hostId,
             trackId: this.#trackId,
-            players: this.#players,
+            players,
             playerDetails: this.#playerDetails,
-            options: this.#options,
+            options: this.#options
         };
     }
 

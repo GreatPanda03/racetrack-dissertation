@@ -1,4 +1,7 @@
-const mongoose = require("mongoose");
+// track schema for MongoDB database
+
+import mongoose from "mongoose";
+
 const Schema = mongoose.Schema;
 
 const trackSchema = new Schema({
@@ -18,4 +21,4 @@ const trackSchema = new Schema({
 
 const Track = mongoose.model("Track", trackSchema);
 
-module.exports = Track;
+export default Track;

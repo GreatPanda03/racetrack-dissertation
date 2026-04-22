@@ -1,4 +1,7 @@
-const mongoose = require("mongoose");
+// leaderboard schema for MongoDB database
+
+import mongoose from "mongoose";
+
 const Schema = mongoose.Schema;
 
 const scoreSchema = new Schema({
@@ -33,4 +36,4 @@ const leaderboardSchema = new Schema({
 
 const Leaderboard = mongoose.model("Leaderboard", leaderboardSchema);
 
-module.exports = Leaderboard;
+export default Leaderboard;

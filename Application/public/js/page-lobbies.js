@@ -142,6 +142,8 @@ function initialiseInterface() {
 
 // [[ Set Up ]] //
 
+initialiseInterface();
+
 refreshLobbies();
 
 GeneralUI.prepareTooltips();

@@ -266,6 +266,7 @@ async function startLobby(track, locality) {
 
     if (response.ok) {
         let result = await response.json();
+
         window.location.href = `/lobbies/${result.lobbyId}`;
 
     } else {
@@ -274,45 +275,9 @@ async function startLobby(track, locality) {
 }
 
 
-/*
-function startLobby(track) {
-    if (!track) {
-        throw new Error(`[Tracks List] No track provided to play`);
-    }
-
-    if (lobby.getRacers().length == 0) { // solo race
-        addDefaultRacer(PLAYER_TYPE.Player);
-    }    
-
-    // NOTE: use this when using an actual lobby system 
-    (async () => {
-        await fetch("/tracks/play", {
-            method: "POST",
-            headers: new Headers({ "Content-Type": "application/json"}),
-            body: JSON.stringify({ trackId: track.getId(), racers })
-        });
-    })();
-
-    for (let data of ghostData) {
-        let ghost = addDefaultRacer(PLAYER_TYPE.Ghost);
-        ghost.Colour = "#777";
-        ghost.Moves = data.moves
-        ghost.CarType = data.carType || Object.keys(RACECAR_INFO)[0];
-    }
-
-    let trackId = track.getId();
-    let lobbyJson = JSON.stringify(lobby);
-    let lobbyEncoded = encodeURIComponent(lobbyJson);
-
-    window.location.href = `/tracks/play/${trackId}?lobby=${lobbyEncoded}`;
-}
-*/
-
-
 
 // [[ Set Up ]] //
 
-// through ejs
 let tracks = tracks_.map(t => Track.toInstance(t));
 let leaderboards = leaderboards_;
 
