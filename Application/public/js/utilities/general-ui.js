@@ -96,11 +96,19 @@ export default class GeneralUI {
 
     // enables all tooltips on the page
     // * source: https://getbootstrap.com/docs/5.3/components/tooltips/
-    static prepareTooltips() {
-        let tooltipTriggerList = document.querySelectorAll("[data-bs-toggle='tooltip']");
+    static prepareTooltips(target = document) {
+        let tooltips = target.querySelectorAll("[data-bs-toggle='tooltip']");
 
-        tooltipTriggerList.forEach(tooltip => {
-            new bootstrap.Tooltip(tooltip, { trigger: "hover" })
+        tooltips.forEach(t => {
+            new bootstrap.Tooltip(t, { trigger: "hover" })
+        });
+    }
+
+    static clearTooltips(target = document) {
+        let tooltips = target.querySelectorAll("[data-bs-toggle='tooltip']");
+
+        tooltips.forEach(t => {
+            bootstrap.Tooltip.getInstance(t)?.dispose();
         });
     }
 }

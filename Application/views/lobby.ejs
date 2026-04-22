@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
-    <script type="module" src="/js/page-lobby-online.js"></script>
+    <script type="module" src="/js/page-lobby.js"></script>
 </head>
 <body>
     <div class="container">
@@ -68,6 +68,10 @@
                         <div id="player-racers" class="d-flex flex-column gap-3">
                             <div id="player-racers-header" class="mb-1">
                                 <b id="player-racers-label">Player Racers (0)</b>
+                                <button id="player-racers-add" class="btn btn-primary p-1"
+                                    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Player Racer">
+                                    <i data-lucide="circle-plus"></i>
+                                </button>
                             </div>
                             <div id="player-racers-body">
                                 <span class="empty-list" hidden>No player racers</span>

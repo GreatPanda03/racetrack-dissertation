@@ -164,8 +164,6 @@ function loadTrack(track, race) {
         }
     };
 
-    console.log(racecars);
-
     // instance creation
     raceInstance = new RaceInstance(track, racecars, spacing);
     timeElapsed = 0;
@@ -262,6 +260,8 @@ function determineRobotMove(racecar) {
     
     let racecars = raceInstance.getRacecars();
     let level = race.getPlayerDetail(racecar.getPlayerId(), "level");
+
+    console.log(race.getPlayerDetails());
 
     function getClosestSegmentIndex(position) {
         let closest = -1;

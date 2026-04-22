@@ -723,13 +723,13 @@ app.get("/lobbies/:lobbyId", async (request, response) => {
 
         // non-existing lobby
         if (lobby) {
-            return response.render("lobby-online", { title: "Lobby (Online)", lobby });
+            return response.render("lobby", { title: "Lobby (Online)", lobby });
         
         } else {
             lobby = await getOfflineLobbyById(lobbyId);
 
             if (lobby) {
-                return response.render("lobby-offline", { title: "Lobby (Offline)", lobby });   
+                return response.render("lobby", { title: "Lobby (Offline)", lobby });   
             }
         }
 

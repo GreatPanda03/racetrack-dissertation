@@ -14,13 +14,8 @@ export default class Player {
         Validator.isPrimitive(id, "string");
         Validator.valuePresence(PLAYER_TYPE, playerType);
 
-        let prefix = Object.keys(PLAYER_TYPE).find(
-            k => PLAYER_TYPE[k] == playerType);
-
-        let tempName = `${prefix} ${id}`;
-
         this.#id = id;
-        this.#name = tempName;
+        this.#name = name;
         this.#playerType = playerType;
     }
 
