@@ -16,7 +16,6 @@ export default class RaceCar {
     #playerType;
     #carType;
     #colour;
-    #style;
 
     constructor(
         position = new Vector2(),
@@ -31,7 +30,6 @@ export default class RaceCar {
         this.setMaxAcceleration(maxAcceleration);
         this.setCarType("The Race Car");
         this.setColour(colour);
-        this.style = null;
     }
 
 
@@ -89,9 +87,6 @@ export default class RaceCar {
         this.#colour = colour;
     }
 
-    getStyle() { return this.#style; }
-    setStyle(style) { this.#style = style; }
-
     
     // methods
     getClampedSpeedup(speedup) {
@@ -112,5 +107,39 @@ export default class RaceCar {
 
     move() {
         this.#position = this.#position.add(this.#velocity);
+    }
+
+
+    // serialisation
+    toObject() {
+        return {
+            playerId: this.#playerId,
+            position: this.#position.toObject(),
+            velocity: this.#velocity.toObject(),
+            maxSpeed: this.#maxSpeed.toObject(),
+            maxAcceleration: this.#maxAcceleration.toObject(),
+            playerType: this.#playerType,
+            carType: this.#carType,
+            colour: this.#colour,
+        }
+    }
+
+    static toInstance(object) {
+        let racecar = new RaceCar();
+
+        racecar.#playerId = object.playerId;
+        racecar.#position = Vector2.toInstance(object.position);
+        racecar.#velocity = Vector2.toInstance(object.velocity);
+        racecar.#maxSpeed = Vector2.toInstance(object.maxSpeed);
+        racecar.#maxAcceleration = Vector2.toInstance(object.maxAcceleration);
+        racecar.#playerType = object.playerType;
+        racecar.#carType = object.carType;
+        racecar.#colour = object.colour;
+
+        return racecar;
+    }
+
+    toJSON() {
+        return this.toObject();
     }
 }

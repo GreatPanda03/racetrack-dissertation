@@ -15,14 +15,19 @@ import TrackModel from "./models/track.js";
 import LeaderboardModel from "./models/leaderboard.js";
 
 import { gameTracks } from "./src/track-repository.js";
-import PLAYER_TYPE from "./src/core/enums/player-type.js";
-import Validator from "./src/core/utilities/validator.js";
 
 import { db } from "./services/firebase-admin.js";
 const firebaseDb = db;
 
 import Player from "./src/core/classes/gameplay/player.js";
 import Lobby from "./src/core/classes/gameplay/lobby.js";
+import Vector2 from "./src/core/classes/geometry/vector2.js";
+import Track from "./src/core/classes/track/track.js";
+import RaceInstance from "./src/core/classes/gameplay/race-instance.js";
+import RobotDeterminer from "./src/core/classes/gameplay/robot-determiner.js";
+import PLAYER_TYPE from "./src/core/enums/player-type.js";
+import Validator from "./src/core/utilities/validator.js";
+
 
 let offlineLobbies = [];
 let offlineRaces = [];
@@ -226,11 +231,12 @@ async function getLeaderboardByTrackId(trackId) {
 
 // races
 async function getOnlineRaceById(raceId) {
-    let snapshot = await firebaseDb.ref(`/races/${raceId}`);
+    let snapshot = await firebaseDb.ref(`/races/${raceId}`).once("value");;
+
     let raceData = snapshot.val() || null;
 
     if (raceData) {
-        return RaceInstance.toInstance( JSON.parse(raceData) );
+        return RaceInstance.toInstance( raceData );
     }
 
     return raceData;
@@ -239,6 +245,37 @@ async function getOnlineRaceById(raceId) {
 function getOfflineRaceById(raceId) {
     let race = offlineRaces.find(r => r.getId() == raceId);
     return race;
+}
+
+function processRaceMove(raceInstance, racecar, move) {
+    let playerType = racecar.getPlayerType();
+    // "move" is technically acceleration
+
+    if (playerType == PLAYER_TYPE.Player) {
+        raceInstance.addPendingMove(racecar, move);
+
+    } else if (playerType == PLAYER_TYPE.Robot) {
+        move = determineRobotMove(racecar);
+    
+    } else if (playerType == PLAYER_TYPE.Ghost) {
+        let playerId = racecar.getPlayerId();
+        let carType = racecar.getCarType();
+        let moves = leaderboard.scores[playerId][carType].moves;
+        let move = moves[timeElapsed];
+
+        let oldVel = racecar.getVelocity()
+        let newVel = Vector2.toInstance(move.Velocity);
+        let acc = newVel.sub(oldVel);
+
+        move = acc;
+    }
+
+    raceInstance.addPendingMove(racecar, move);
+    raceInstance.findNextTurn();
+}
+
+async function updateRace(raceId, race) {
+    await db.ref(`/races/${raceId}`).update( race.toObject() );
 }
 
 
@@ -411,9 +448,12 @@ app.post("/api/lobbies/start/:lobbyId", async (request, response) => {
             return response.status(403).json({ success: false, error: "Only the host can start the lobby" });
         }
 
+        let trackData = await getTrackById(lobby.getTrackId());
+        let track = Track.toInstance(trackData);
+
         // success
-        let track = await getTrackById(lobby.getTrackId()); 
-        let race = new RaceInstance(lobby, track, 25);
+        let players = Object.values(lobby.getPlayers());
+        let race = new RaceInstance(lobby, track, 25, players);
 
         if (online) {
             await firebaseDb.ref(`races/${lobbyId}`).set( race.toObject() );
@@ -664,18 +704,24 @@ app.post("/api/races/:raceId/move", async (request, response) => {
             return response.status(400).json({ success: false, error: "Missing data" });
         }
 
+        try {
+            move = Vector2.toInstance(move);
+
+        } catch (error) {
+            return response.status(400).json({ success: false, error: `"${move}" is not in valid Vector2 format`});
+        }
+
         let race = await getOnlineRaceById(raceId);
         let target = race.getCurrentPlayer();
-        let targetId = target.getId();
+        let targetId = target.getPlayerId();
 
         if (targetId != playerId) {
             return response.status(403).json({ success: false, error: `Player "${playerId}" cannot take the turn of Player "${targetId}"`})
         }
 
-        let racecar = race.getRacecars()[race.getTurn()];
-        race.moveRacecar(racecar, move);
+        processRaceMove(race, target, move);
 
-        // ...
+        updateRace(raceId, race);
 
         response.status(200).json({ success: true });
 
@@ -783,7 +829,7 @@ app.get("/lobbies/:lobbyId", async (request, response) => {
     }
 });
 
-app.get("/race/:raceId", async (request, response) => {
+app.get("/races/:raceId", async (request, response) => {
     try {
         let raceId = request.params.raceId;
         

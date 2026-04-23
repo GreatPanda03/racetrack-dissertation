@@ -8,10 +8,12 @@ import Vector2 from "../geometry/vector2.js";
 import Line from "../geometry/line.js";
 import Track from "../track/track.js";
 import TrackForm from "../track/track-form.js";
+import Player from "./player.js";
 import RaceCar from "./racecar.js";
 import RaceStats from "./race-stats.js";
 import Lobby from "./lobby.js";
 import Validator from "../../utilities/validator.js";
+import PLAYER_TYPE from "../../enums/player-type.js";
 import RACECAR_STATE from "../../enums/racecar-state.js";
 import MATERIAL_INFO from "../../enums/material-info.js";
 
@@ -27,47 +29,47 @@ export default class RaceInstance {
     #elapsedTime;   // float
     #pendingMoves;  // Vector2[][]
 
-    constructor(lobby, track, spacing = 10) {
+    constructor(lobby, track, spacing = 10, players = []) {
+        if (!lobby && !track) {
+            return; // assume empty
+        }
+
         Validator.isInstance(lobby, Lobby);
         Validator.isInstance(track, Track);
         Validator.isNumeric(spacing);
+        Validator.isInstanceList(players, Player);
 
-        // racecar gathering
-        let racecars = [];
+        // main set up
+        this.#lobby = lobby;
+        this.#track = track;
+        this.#form = new TrackForm(track);
+        this.#racecars = [];
+        this.#raceStats = [];
+        this.#spacing = spacing;
+        this.#turn = 0;
+        this.#elapsedTime = 0;
+        this.#pendingMoves = [];
 
-        for (let [id, player] of Object.entries(players)) {
+        // player additions
+        for (let player of players) {
+            let id = player.getId();
             let playerType = player.getPlayerType();
-            let colour = race.getPlayerDetail(id, "colour");
-            let carType = race.getPlayerDetail(id, "carType");
+            let colour = lobby.getPlayerDetail(id, "colour");
+            let carType = lobby.getPlayerDetail(id, "carType");
 
             let racecar = new RaceCar();
             racecar.setPlayerId(id);
             racecar.setPlayerType(playerType);
             racecar.setColour(colour);
             racecar.setCarType(carType);
-            racecars.push(racecar);
+            
+            this.addRacecar(racecar);
+            this.moveRacecarToStart(racecar);
         };
-
-        // main set up
-        this.#lobby = lobby;
-        this.#track = track;
-        this.#form = new TrackForm(track);
-        this.#racecars = racecars;
-        this.#raceStats = [];
-        this.#spacing = spacing;
-        this.#turn = -1;
-        this.#elapsedTime = 0;
-        this.#pendingMoves = [];
-
-        if (racecars.length > 0) {
-            for (let racecar of racecars) {
-                this.addRacecar(racecar);
-                this.moveRacecarToStart(racecar);
-            }
-        }
     }
 
     // getters / setters
+    getLobby() { return this.#lobby; }
     getTrack() { return this.#track; }
     getForm() { return this.#form; }
     getRacecars() { return this.#racecars; }
@@ -94,7 +96,7 @@ export default class RaceInstance {
         Validator.listAbsence(racecars, racecar);
 
         racecars.push(racecar);
-        raceStats.push(new RaceStats(track, racecar));
+        raceStats.push(new RaceStats(track, racecar.getPlayerId()));
     }
 
     moveRacecarToStart(racecar) {
@@ -118,7 +120,7 @@ export default class RaceInstance {
     // [[ Querying ]] //
     getRacecarStats(racecar) {
         let raceStats = this.#raceStats;
-        let stats = raceStats.find(s => s.getRacecar() == racecar);
+        let stats = raceStats.find(s => s.getPlayerId() == racecar.getPlayerId());
     
         if (!stats) throw new Error("[RaceInstance] No stats associated with the given racecar");
 
@@ -135,10 +137,13 @@ export default class RaceInstance {
 
     // [[ Turn Handling ]] //
     findNextTurn() {
-        turn += 1;
+        this.#turn += 1;
 
-        if (turn > this.#racecars.length) {
-            this.runPendingMoves();
+        console.log("Turn:", this.#turn);
+
+        if (this.#turn >= this.#racecars.length) {
+            console.log("Applying all moves");
+            this.applyPendingMoves();
         }
     }
 
@@ -240,6 +245,11 @@ export default class RaceInstance {
 
     isMoveLegal(racecar, move) {
         // TODO...
+    }
+
+    addPendingMove(racecar, move) {
+        let index = this.getRacecars().findIndex(r => r == racecar);
+        this.#pendingMoves[index] = move;
     }
     
     predictMove(racecar, acceleration) { // [source 1] - collisions
@@ -351,8 +361,8 @@ export default class RaceInstance {
         }
     }
 
-    applyAllMoves() {
-        let racecars = raceInstance.getRacecars();
+    applyPendingMoves() {
+        let racecars = this.#racecars;
         let pendingMoves = this.#pendingMoves;
         let crashed = [];
     
@@ -361,9 +371,9 @@ export default class RaceInstance {
             if (!move) continue;
             
             let racecar = racecars[r];
-            let stats = getRacecarStats(racecar);
+            let stats = this.getRacecarStats(racecar);
     
-            moveRacecar(racecar, move);
+            this.moveRacecar(racecar, move);
             
             if (stats.getState() == RACECAR_STATE.Crashed) {
                 crashed.push(racecar);
@@ -379,14 +389,17 @@ export default class RaceInstance {
             let robotsCrashed = crashed.some(
                 r => r.getPlayerType() == PLAYER_TYPE.Robot);
     
+            let lobbyOptions = this.getLobby().getOptions();
             let autoPlayers = !playersCrashed || (playersCrashed && lobbyOptions["Auto-retry Players"]);
             let autoRobots = !robotsCrashed || (robotsCrashed && lobbyOptions["Auto-retry Robots"]);
     
+            /*
             if (autoPlayers && autoRobots) {
-                retryRacecars(crashed);
-            } else {
-                endRace(RACECAR_STATE.Crashed);
+                this.retryCrashedRacecars(crashed);
             }
+            */
+
+            this.retryCrashedRacecars(crashed);
         }
     
         this.#pendingMoves = [];
@@ -401,7 +414,7 @@ export default class RaceInstance {
         let racecars = this.#racecars;
 
         for (let racecar of racecars) {
-            let stats = raceInstance.getRacecarStats(racecar);
+            let stats = this.getRacecarStats(racecar);
 
             if (stats.getState() == RACECAR_STATE.Crashed) {
                 stats.setState(RACECAR_STATE.Racing);
@@ -421,7 +434,7 @@ export default class RaceInstance {
         let racecars = this.#racecars;
 
         for (let racecar of racecars) {
-            let stats = raceInstance.getRacecarStats(racecar);
+            let stats = this.getRacecarStats(racecar);
     
             if (stats.getState() == RACECAR_STATE.Crashed) {
                 stats.setState(RACECAR_STATE.Retired);
@@ -433,22 +446,30 @@ export default class RaceInstance {
     // serialisation
     toObject() {
         return {
+            lobby: this.#lobby.toObject(),
             track: this.#track.toObject(),
             form: this.#form.toObject(),
             racecars: this.#racecars.map(r => r.toObject()),
             raceStats: this.#raceStats.map(s => s.toObject()),
-            spacing: this.#spacing
+            spacing: this.#spacing,
+            turn: this.#turn,
+            elapsedTime: this.#elapsedTime,
+            pendingMoves: this.#pendingMoves.map(m => m.toObject())
         };
     }
 
     static toInstance(object) {
         let instance = new RaceInstance();
-        
+
+        instance.#lobby = Lobby.toInstance(object.lobby);
         instance.#track = Track.toInstance(object.track);
         instance.#form = TrackForm.toInstance(object.form);
-        instance.#racecars = object.racecars.map(r => RaceCar.toInstance(r));
-        instance.#raceStats = object.raceStats.map(s => RaceStats.toInstance(s));
+        instance.#racecars = object.racecars?.map(r => RaceCar.toInstance(r)) ?? [];
+        instance.#raceStats = object.raceStats?.map(s => RaceStats.toInstance(s)) ?? [];
         instance.#spacing = object.spacing;
+        instance.#turn = object.turn;
+        instance.#elapsedTime = object.elapsedTime;
+        instance.#pendingMoves = object.pendingMoves?.map(m => Vector2.toInstance(m)) ?? [];
 
         return instance;
     }

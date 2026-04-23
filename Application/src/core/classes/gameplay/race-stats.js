@@ -6,28 +6,29 @@
 import Vector2 from "../geometry/vector2.js";
 import Line from "../geometry/line.js";
 import Track from "../track/track.js";
-import RaceCar from "../gameplay/racecar.js";
 import RACECAR_STATE from "../../enums/racecar-state.js";
 import Validator from "../../utilities/validator.js";
 
 
 export default class RaceStats {
-    #track;         // Track
-    #racecar;       // RaceCar
+    #playerId;      // string
     #moves;         // [[path: Line, velocity: Velocity], ...]
     #distance;      // float
     #time;          // float
     #topSpeed;      // float
-    #checkpoints    // [{node: TrackNode, passed: boolean}, ...]
+    #checkpoints;   // [{index: int, passed: boolean}, ...]
     #state;         // RACECAR_STATE (enum)
     #crashes;       // int
 
-    constructor(track, racecar) {
+    constructor(track, playerId) {
+        if (!track && !playerId) { // assumes empty
+            return;
+        }
+
         Validator.isInstance(track, Track);
-        Validator.isInstance(racecar, RaceCar);
+        Validator.isPrimitive(playerId, "string");
         
-        this.#track = track;
-        this.#racecar = racecar;
+        this.#playerId = playerId;
         this.#moves = [];
         this.#distance = 0;
         this.#time = 0;
@@ -49,8 +50,7 @@ export default class RaceStats {
     
 
     // getters / setters
-    getTrack() { return this.#track; }
-    getRacecar() { return this.#racecar; }
+    getPlayerId() { return this.#playerId; }
     getMoves() { return this.#moves; }
     getDistance() { return this.#distance; }
     getTime() { return this.#time; }
@@ -118,5 +118,72 @@ export default class RaceStats {
 
         // TODO: should TECHNICALLY use [source 1]...
         // * velocity change isn't instantaneous! 
+    }
+
+
+    // serialisation
+    toObject() {
+        let moves = [];
+
+        for (let move of this.#moves) {
+            moves.push({
+                Path: move.Path.toObject(), 
+                Velocity: move.Velocity.toObject()
+            });
+        }
+
+        let checkpoints = [];
+        for (let checkpoint of this.#checkpoints) {
+            checkpoints.push({
+                index: checkpoint.index,
+                passed: checkpoint.passed
+            });
+        }
+
+        return {
+            playerId: this.#playerId,
+            moves: moves,
+            distance: this.#distance,
+            time: this.#time,
+            topSpeed: this.#topSpeed,
+            checkpoints: checkpoints,
+            state: this.#state,
+            crashes: this.#crashes
+        }
+    }
+
+    static toInstance(object) {
+        let stats = new RaceStats();
+
+        let moves = [];
+        for (let move of object.moves ?? []) {
+            moves.push({
+                Path: Line.toInstance(move.Path),
+                Velocity: Vector2.toInstance(move.Velocity)
+            });
+        }
+
+        let checkpoints = [];
+        for (let checkpoint of object.checkpoints ?? []) {
+            checkpoints.push({
+                index: checkpoint.index, 
+                passed: checkpoint.passed
+            });
+        }
+
+        stats.#playerId = object.playerId;
+        stats.#moves = moves;
+        stats.#distance = object.distance;
+        stats.#time = object.time;
+        stats.#topSpeed = object.topSpeed;
+        stats.#checkpoints = checkpoints;
+        stats.#state = object.state;
+        stats.#crashes = object.crashes;
+
+        return stats;
+    }
+
+    toJSON() {
+        return this.toObject();
     }
 }

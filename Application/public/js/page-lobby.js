@@ -318,6 +318,17 @@ function createRacerEntry(racer) {
     return entry;
 }
 
+function refreshLobbyOptions() {
+    let lobbyOptions = document.getElementById("lobby-options");
+    if (!lobbyOptions) return;
+    
+    for (let element of lobbyOptions.children) {
+        let input = element.querySelector("input[type=checkbox]");
+        let option = input.dataset.option;
+        input.checked = lobby.getOption(option);
+    }
+}
+
 function refreshRacerDetails() {
     GeneralUI.clearTooltips();
 
@@ -357,6 +368,11 @@ function refreshRacerDetails() {
     updateRacerListHeaders();
 }
 
+function refreshLobbyDetails() {
+    refreshLobbyOptions();
+    refreshRacerDetails();
+}
+
 async function handleNewDetails() {
     if (isOnline) {
         await fetch(`/api/lobbies/${lobby.getId()}/online`, {
@@ -366,7 +382,7 @@ async function handleNewDetails() {
         });
 
     } else {
-        refreshRacerDetails();
+        refreshLobbyDetails();
     }
 }
 
@@ -407,18 +423,18 @@ function prepareControls_lobbyOptions(enabled) {
     if (enabled) {
         if (isHost) {
             for (let element of lobbyOptions.children) {
-                let input = element.querySelector("input[type=checkbox");
+                let input = element.querySelector("input[type=checkbox]");
 
                 input.addEventListener("change", (e) => {
                     let option = input.dataset.option;
                     let value = input.checked;
-
                     lobby.setOption(option, value);
+                    handleNewDetails();
                 });
             }
         } else {
             for (let element of lobbyOptions.children) {
-                let input = element.querySelector("input[type=checkbox");
+                let input = element.querySelector("input[type=checkbox]");
                 input.disabled = true;
             }
         }
@@ -574,7 +590,8 @@ async function initialiseLobbyPage() {
     updateTrackDetails(track);
     updateLeaderboard(leaderboard);
     prepareControls();
-    refreshRacerDetails();
+
+    refreshLobbyDetails();
 
     GeneralUI.prepareTooltips();
 }
@@ -601,7 +618,7 @@ async function startRace() {
         let result = await startRes.json();
         let raceId = result.raceId;
 
-        window.location.href = `/race/${raceId}`;
+        window.location.href = `/races/${raceId}`;
     
     } else {
         GeneralUI.createToast("Failed to Start Race", startRes.statusText, "#A00");
@@ -623,11 +640,21 @@ if (isOnline) {
     onValue(lobbyRef, (snapshot) => {
         let lobbyObj = snapshot.val() || null;
 
-        console.log(lobbyObj);
+        if (!lobbyObj) {
+            let racePath = `races/${lobby.getId()}`
+            let raceRef = ref(db, racePath);
+            let raceObj = snapshot.val() || null;
+
+            if (raceObj) { // lobby started as race
+                window.location.href = racePath;
+            } else { // lobby no longer exists
+                window.location.href = "/tracks";
+            }
+        }
 
         lobby = Lobby.toInstance(lobbyObj)
 
-        refreshRacerDetails();
+        refreshLobbyDetails();
 
         if (!lobby.getPlayers()[playerId]) {
             window.location.href = "/tracks";

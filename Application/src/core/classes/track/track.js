@@ -219,18 +219,18 @@ export default class Track {
 
         track.#_id = object._id;
 
-        track.#name = object.name;
-        track.#description = object.description;
-        track.#authorId = object.authorId;
-        track.#author = object.author;
-        track.#tags = object.tags;
+        track.#name = object.name ?? "";
+        track.#description = object.description ?? "";
+        track.#authorId = object.authorId ?? "";
+        track.#author = object.author ?? "";
+        track.#tags = object.tags ?? [];
         
-        track.#path = object.path.map(n => TrackNode.toInstance(n));
-        track.#materials = object.materials.map(m => Material.toInstance(m));
-        track.#obstacles = object.obstacles.map(o => Obstacle.toInstance(o));
-        track.#decorations = object.decorations.map(d => Decoration.toInstance(d));
+        track.#path = object.path?.map(n => TrackNode.toInstance(n)) ?? [];
+        track.#materials = object.materials?.map(m => Material.toInstance(m)) ?? [];
+        track.#obstacles = object.obstacles?.map(o => Obstacle.toInstance(o)) ?? [];
+        track.#decorations = object.decorations?.map(d => Decoration.toInstance(d)) ?? [];
 
-        track.#looped = object.looped;
+        track.#looped = object.looped ?? true;
 
         return track;
     }

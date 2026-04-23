@@ -151,4 +151,28 @@ export default class TrackForm {
         let edgeLines = obstacleEdges.map(e => new Line(e[0], e[1]));
         this.#boundaries = this.#boundaries.concat(edgeLines);
     }
+
+
+    // serialisation
+    toObject() {
+        return {
+            nodeSpans: this.#nodeSpans.map(l => l.toObject()),
+            centre: this.#centre.map(l => l.toObject()),
+            boundaries: this.#boundaries.map(l => l.toObject())
+        }
+    }
+
+    static toInstance(object) {
+        let form = new TrackForm(new Track());
+
+        form.#nodeSpans = object.nodeSpans?.map(l => Line.toInstance(l)) ?? [];
+        form.#centre = object.centre?.map(l => Line.toInstance(l)) ?? [];
+        form.#boundaries = object.boundaries?.map(l => Line.toInstance(l)) ?? [];
+
+        return form;
+    }
+
+    toJSON() {
+        return this.toObject();
+    }
 }

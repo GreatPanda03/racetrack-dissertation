@@ -21,7 +21,10 @@ import {
     Validator
 } from "/core/index.js";
 
+import { initAuth } from "./firebase.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+import GeneralUI from "./utilities/general-ui.js";
 
 lucide.createIcons();
 
@@ -30,7 +33,9 @@ lucide.createIcons();
 // [[ Variables ]] //   
 
 const db = getDatabase();
-const lobbyRef = ref(db, `lobbies/${window.lobbyId}`);
+
+var user = await initAuth();
+var playerId = user.uid;
 
 var trackRenderer = null;
 var raceRenderer = null;
@@ -59,82 +64,7 @@ function getRelativePositionOnCanvas(canvas, x, y) {
     );
 }
 
-// server
-function findNextTurn() {
-    let racecars = raceInstance.getRacecars();
-
-    while (true) {
-        turn += 1;
-
-        if (turn >= racecars.length) applyAllMoves();
-
-        // preliminary checks (no active racers, OR active crashes)
-        let isAnyRacing = raceInstance.isAnyRacecarInState(RACECAR_STATE.Racing)
-        let isAnyCrashed = raceInstance.isAnyRacecarInState(RACECAR_STATE.Crashed)
-
-        if (!isAnyRacing && !isAnyCrashed) {
-            endRace(RACECAR_STATE.Finished);
-            break;
-        };
-
-        if (isAnyCrashed) return;
-
-        // move determination
-        let racecar = racecars[turn];
-        let stats = raceInstance.getRacecarStats(racecar);
-        let state = stats.getState();
-
-        let player = race.getPlayers()[racecar.getPlayerId()];
-        
-        if (state == RACECAR_STATE.Finished || state == RACECAR_STATE.Retired) {
-            movesToMake[turn] = undefined;
-        
-        } else {
-            let moves = raceInstance.getPossibleMoves(racecar);
-
-            if (isOnScreenMoveAvailable(racecar, moves)) {
-                updateRaceHeader();
-                updateRaceStats();
-                renderRacecars();
-                
-                let playerType = player.getPlayerType();
-
-                if (playerType == PLAYER_TYPE.Player) {
-                    let first = raceInstance.getRacecars()[turn];
-                    displayMoves(first, raceInstance.getPossibleMoves(first));
-
-                    break; // this player can actually move
-                
-                } else if (playerType == PLAYER_TYPE.Robot) {
-                    let move = determineRobotMove(racecar);
-                    movesToMake[turn] = move;
-                
-                } else if (playerType == PLAYER_TYPE.Ghost) {
-                    let playerId = racecar.getPlayerId();
-                    let carType = racecar.getCarType();
-                    let moves = leaderboard.scores[playerId][carType].moves;
-                    let move = moves[timeElapsed];
-
-                    let oldVel = racecar.getVelocity()
-                    let newVel = Vector2.toInstance(move.Velocity);
-                    let acc = newVel.sub(oldVel);
-
-                    movesToMake[turn] = acc;
-                }
-
-            } else {
-                movesToMake[turn] = new Vector2();
-            }
-        }
-    }
-}
-
-// client (turn into some kind of refresh method)
-// * load racecars in on the server
 function loadTrack(track, race) {
-    let players = race.getPlayers();
-
-    lobbyOptions = race.getOptions();
 
     // track rendering
     trackRenderer = new TrackRenderer(track, trackCanvas, spacing);
@@ -145,12 +75,16 @@ function loadTrack(track, race) {
     raceRenderer = new CanvasRenderer(playCanvas);
 }
 
-// client
 function initialisePlayCanvas() {
-    playCanvas.addEventListener("click", (e) => {
-        if (raceInstance.isAnyRacecarInState(RACECAR_STATE.Crashed)) return;
+    let debounce = false;
 
-        let racecar = raceInstance.getRacecars()[turn];
+    playCanvas.addEventListener("click", async (e) => {
+        if (debounce) return;
+
+        if (raceInstance.isAnyRacecarInState(RACECAR_STATE.Crashed)) return;
+        
+        let racecar = raceInstance.getCurrentPlayer();
+        if (racecar.getPlayerId() != playerId) return;
 
         let mousePos = getRelativePositionOnCanvas(playCanvas, e.clientX, e.clientY);
         let centre = racecar.getPosition().add(racecar.getVelocity());
@@ -169,10 +103,23 @@ function initialisePlayCanvas() {
             }
         }
 
-        if (!target) return;
+        if (target) {
+            debounce = true;
 
-        movesToMake[turn] = target;
-        findNextTurn();
+            let result = await fetch(`/api/races/${raceId}/move?playerId=${playerId}`, {
+                method: "POST",
+                headers: new Headers({ "Content-Type": "application/json"}),
+                body: JSON.stringify({ move: target })
+            }).then(r => r.json());
+
+            if (!result.success) {
+                GeneralUI.createToast("Move Failed",
+                    `Something went wrong when trying to make that move: ${result.error}`,
+                    "#A00");
+            }
+            
+            debounce = false;
+        }
     });
 }
 
@@ -202,7 +149,7 @@ function initialiseResultsPopup() {
         retireRacecars(toRetire);
 
         turn = -1; // TODO: hacky way to set turn to start
-        findNextTurn();   
+        raceInstance.findNextTurn();
     }
 
     buildBtn.addEventListener("click", (e) => {
@@ -656,8 +603,10 @@ function isOnScreenMoveAvailable(racecar, moves) {
 
 // client
 function updateRaceHeader() {
+    let elapsedTime = raceInstance.getElapsedTime();
+
     let raceTime = document.getElementById("race-time");
-    raceTime.innerHTML = `<b>Time:</b> ${timeElapsed} seconds`;
+    raceTime.innerHTML = `<b>Time:</b> ${elapsedTime} seconds`;
 }
 
 // client
@@ -762,19 +711,44 @@ function updateRaceStats() {
 }
 
 
+function onInstanceUpdate() {
+    console.log("updated", raceInstance.getTurn());
+
+    updateRaceHeader();
+    
+    updateRaceStats();
+
+    renderRacecars();
+
+    let target = raceInstance.getCurrentPlayer();
+
+    if (target && target.getPlayerId() == playerId) {
+        let racecar = target;
+        let moves = raceInstance.getPossibleMoves(racecar);
+        displayMoves(racecar, moves);
+    }
+}
+
+
 
 // [[ Set Up ]] //
 
 let raceId = raceId_;
 
 let raceJson = await fetch(`/api/races/${raceId}`).then(r => r.json());
-let race = Lobby.toInstance(raceJson.race);
+let raceInstance = RaceInstance.toInstance(raceJson.race);
 
-let trackJson = await fetch(`/api/tracks/${race.getTrackId()}`).then(r => r.json());
+let trackId = raceInstance.getLobby().getTrackId();
+let trackJson = await fetch(`/api/tracks/${trackId}`).then(r => r.json());
 let track = Track.toInstance(trackJson.track);
 
 let leaderboardJson = await fetch(`/api/leaderboards/${track.getId()}`).then(r => r.json());
 let leaderboard = leaderboardJson.leaderboard;
+
+
+if (!raceInstance.getLobby().getPlayers()[playerId]) {
+    windows.location.href = "/tracks";
+}
 
 
 racecarSprite = new Image();
@@ -785,29 +759,32 @@ racecarSprite.onload = () => { // TODO: make this independent
 
     initialiseResultsPopup();
 
-    loadTrack(track, race);
+    loadTrack(track, raceInstance);
+
+    onInstanceUpdate();
 }
 
 
 
 // [[ Firebase Connection ]] //
 
-onValue(lobbyRef, (snapshot) => {
-    const lobby = snapshot.val();
+var raceRef = ref(db, `races/${raceId}`);
 
-    if (!lobby) {
-        alert("Lobby no longer exists");
-        location.href = "/tracks/list";
+onValue(raceRef, (snapshot) => {
+    let raceData = snapshot.val();
+    if (!raceData) return;
+
+    // reconstructing race
+    raceInstance = RaceInstance.toInstance(raceData);
+
+    // getting the player of the current turn
+    let players = raceInstance.getLobby().getPlayers() 
+    
+    if (!players[playerId]) {
+        windows.location.href = "/tracks";
         return;
     }
 
-    renderLobby(lobby);
-
-    if (lobby.status === "countdown") {
-        startCountdown();
-    }
-
-    if (lobby.status === "racing") {
-        startRace();
-    }
+    // valid
+    onInstanceUpdate();
 });
