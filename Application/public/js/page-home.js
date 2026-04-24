@@ -8,8 +8,6 @@ import GeneralUI from "./utilities/general-ui.js";
 
 import { initAuth, signInWithGoogle } from "./firebase.js";
 
-lucide.createIcons();
-
 
 // [[ Variables ]] //
 var user = await initAuth();
@@ -50,6 +48,11 @@ function initialiseSignIn() {
                 "#A50");
         }
     });
+
+    if (!user.isAnonymous) {
+        signInBtn.querySelector("span").innerHTML = "Signed in with Google";
+        signInBtn.querySelector("i").dataset.lucide = "user-check";
+    } 
 }
 
 
@@ -57,3 +60,5 @@ function initialiseSignIn() {
 // [[ Set Up ]] //
 
 initialiseSignIn();
+
+lucide.createIcons();

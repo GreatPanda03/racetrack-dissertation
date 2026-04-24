@@ -1,6 +1,8 @@
 // helper class to calculate robot moves
 
+import Vector2 from "../geometry/vector2.js";
 import RaceInstance from "./race-instance.js";
+import RACECAR_STATE from "../../enums/racecar-state.js";
 import Validator from "../../utilities/validator.js";
 
 
@@ -23,22 +25,22 @@ export default class RobotDeterminer {
 
 
     // methods
-    static determineRobotMove(racecar) {
+    determineRobotMove(racecar) {
         let raceInstance = this.#raceInstance;
 
         let spacing = raceInstance.getSpacing();
         let form = raceInstance.getForm();
         let centre = form.getCentre();
-        let canvas = trackRenderer.getCanvas();
     
         let finalMove;
         
         let racecars = raceInstance.getRacecars();
-        let level = race.getPlayerDetail(racecar.getPlayerId(), "level");
+        let lobby = raceInstance.getLobby();
+        let level = lobby.getPlayerDetail(racecar.getPlayerId(), "level");
     
         function getClosestSegmentIndex(position) {
             let closest = -1;
-            let bestDistance = Math.sqrt((canvas.width ** 2) + (canvas.height ** 2));
+            let bestDistance = Math.sqrt(2 * 750**2);
     
             centre.forEach((segment, s) => {
                 let distance = segment.toPoint(position);

@@ -13,6 +13,7 @@ export default class Lobby {
     #players;
     #playerDetails;
     #options;
+    #isOnline;
 
     constructor() {
         this.#id = null;
@@ -23,6 +24,7 @@ export default class Lobby {
             "Auto-retry Players": false,
             "Auto-retry Robots": false
         };
+        this.#isOnline = false;
     }
 
 
@@ -53,6 +55,12 @@ export default class Lobby {
     }
 
     getOptions() { return this.#options; }
+
+    getIsOnline() { return this.#isOnline; }
+    setIsOnline(isOnline) {
+        Validator.isPrimitive(isOnline, "boolean");
+        this.#isOnline = isOnline;
+    }
 
 
     // methods
@@ -113,7 +121,8 @@ export default class Lobby {
             trackId: this.#trackId,
             players,
             playerDetails: this.#playerDetails,
-            options: this.#options
+            options: this.#options,
+            isOnline: this.#isOnline
         };
     }
 
@@ -125,6 +134,7 @@ export default class Lobby {
         lobby.#trackId = object.trackId;
         lobby.#playerDetails = object.playerDetails;
         lobby.#options = object.options || {};
+        lobby.#isOnline = object.isOnline;
 
         for (let [id, player] of Object.entries(object.players)) {
             lobby.#players[id] = Player.toInstance(player);

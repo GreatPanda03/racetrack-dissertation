@@ -37,6 +37,8 @@ const db = getDatabase();
 var user = await initAuth();
 var playerId = user.uid;
 
+var isOnline = false;
+
 var trackRenderer = null;
 var raceRenderer = null;
 
@@ -50,6 +52,8 @@ var pointRadius = racecarRadius * 0.35;     // path joints
 var offset = new Vector2();
 
 var racecarSprite;
+
+var moveTaken = false;
 
 
 
@@ -79,12 +83,14 @@ function initialisePlayCanvas() {
     let debounce = false;
 
     playCanvas.addEventListener("click", async (e) => {
-        if (debounce) return;
-
-        if (raceInstance.isAnyRacecarInState(RACECAR_STATE.Crashed)) return;
+        if (moveTaken || debounce) return;
+        debounce = true
         
         let racecar = raceInstance.getCurrentPlayer();
-        if (racecar.getPlayerId() != playerId) return;
+        let racecarId = racecar.getPlayerId();
+
+        // only "one client" when playing locally
+        if (isOnline && racecarId != playerId) return;
 
         let mousePos = getRelativePositionOnCanvas(playCanvas, e.clientX, e.clientY);
         let centre = racecar.getPosition().add(racecar.getVelocity());
@@ -104,26 +110,32 @@ function initialisePlayCanvas() {
         }
 
         if (target) {
-            debounce = true;
-
-            let result = await fetch(`/api/races/${raceId}/move?playerId=${playerId}`, {
-                method: "POST",
-                headers: new Headers({ "Content-Type": "application/json"}),
-                body: JSON.stringify({ move: target })
-            }).then(r => r.json());
-
-            if (!result.success) {
-                GeneralUI.createToast("Move Failed",
-                    `Something went wrong when trying to make that move: ${result.error}`,
-                    "#A00");
-            }
-            
-            debounce = false;
+            sendMoveInput(racecar, target);
         }
+
+        debounce = false;
     });
 }
 
-// client
+async function sendMoveInput(racecar, move) {
+    let racecarId = racecar.getPlayerId();
+
+    let result = await fetch(`/api/races/${raceId}/move?playerId=${racecarId}`, {
+        method: "POST",
+        headers: new Headers({ "Content-Type": "application/json"}),
+        body: JSON.stringify({ move })
+    }).then(r => r.json());
+
+    if (result.success) {
+        moveTaken = true;
+    
+    } else {
+        GeneralUI.createToast("Move Failed",
+            `Something went wrong when trying to make that move: ${result.error}`,
+            "#A00");
+    }
+}
+
 function initialiseResultsPopup() {
     let buildBtn = document.getElementById("results-build");
     let retryBtn = document.getElementById("results-retry");
@@ -172,7 +184,6 @@ function initialiseResultsPopup() {
     });
 }
 
-// server
 function endRace(state) {
     let popup = document.getElementById("modal-race-results");
     let results = popup.getElementsByClassName("results")[0];
@@ -207,8 +218,7 @@ function endRace(state) {
         let bucket = buckets[playerType];
         let number = bucket.findIndex(r => r == racecar) + 1;
         
-        let prefix = Object.keys(PLAYER_TYPE).find(k => PLAYER_TYPE[k] == playerType);
-        let name = `${prefix} ${number}`;
+        let name = raceInstance.getLobby().getPlayers()[racecar.getPlayerId()].getName();
 
         let data = [name, time, moveCount, distance, topSpeed, averageSpeed, crashes];
 
@@ -315,8 +325,7 @@ function endRace(state) {
             let bucket = buckets[playerType];
             let number = bucket.findIndex(r => r == racecar) + 1;
         
-            let prefix = Object.keys(PLAYER_TYPE).find(k => PLAYER_TYPE[k] == playerType);
-            let name = `${prefix} ${number}`;
+            let name = raceInstance.getLobby().getPlayers()[racecar.getPlayerId()].getName();
             
             let index = racecars.findIndex(r => r == racecar);
             let checkbox = `<input id="retry-racecar-${index}" class="form-check-input" type="checkbox" data-number=${index} checked>`;
@@ -405,28 +414,28 @@ function handleLeaderScore() {
     });
     if (!leader) return;
 
+    let player = raceInstance.getLobby().getPlayers()[leader.getPlayerId()];
     let stats = raceInstance.getRacecarStats(leader);
     let carType = leader.getCarType();
     let time = stats.getTime();
     let moves = stats.getMoves();
 
-    saveRecordToLeaderboard(time, carType, moves)
+    saveRecordToLeaderboard(player, time, carType, moves)
 }
 
 // server
-async function saveRecordToLeaderboard(time, carType, moves) {
+async function saveRecordToLeaderboard(player, time, carType, moves) {
     // TODO: sanitise
     
-    let track = raceInstance.getTrack();
-    let trackId = track.getId();
-    
+    // track ID defined at Set Up
+
     try {
-        let data = {time, carType, moves};
-    
+        let data = {player, time, carType, moves};
+
         let response = await fetch(`/api/leaderboards/${trackId}`, {
             method: "POST",
             headers: new Headers({ "Content-Type": "application/json"}),
-            body: JSON.stringify(data)
+            body: JSON.stringify( data )
         });
 
         let result = await response.json();
@@ -601,7 +610,6 @@ function isOnScreenMoveAvailable(racecar, moves) {
 
 // [[ Race Stats ]] //
 
-// client
 function updateRaceHeader() {
     let elapsedTime = raceInstance.getElapsedTime();
 
@@ -609,7 +617,6 @@ function updateRaceHeader() {
     raceTime.innerHTML = `<b>Time:</b> ${elapsedTime} seconds`;
 }
 
-// client
 function createRaceStatsEntry(racecar) {
     let stats = raceInstance.getRacecarStats(racecar);
 
@@ -664,18 +671,12 @@ function createRaceStatsEntry(racecar) {
     return entry;
 }
 
-// client
 function updateRaceStats() {
     let racecars = raceInstance.getRacecars();
     let statsList = document.getElementById("race-stats");
 
     statsList.innerHTML = "";
 
-    let racerInfo = Object.keys(PLAYER_TYPE).map(k => {
-        return ({Count: 0, Name: k})
-    });
-    racerInfo.unshift(undefined); // hacky: to accommodate 1-n enum numbering
-    
     racecars = racecars.toSorted((a, b) => // sorted copy
         a.getPlayerType() - b.getPlayerType());
 
@@ -687,18 +688,23 @@ function updateRaceStats() {
         let collapse = entry.querySelector(".accordion-collapse");
 
         // additional info
+        let lobby = raceInstance.getLobby();
+        let player = lobby.getPlayers()[racecar.getPlayerId()];
         let playerType = racecar.getPlayerType();
         let carType = racecar.getCarType();
         let stats = raceInstance.getRacecarStats(racecar);
         let state = stats.getState();
         
+        let level = "";
+        if (playerType == PLAYER_TYPE.Robot) {
+            let levelValue = lobby.getPlayerDetail(player.getId(), "level");
+            level = `<i>(Level ${levelValue})</i> `;
+        }
+        
         let stateName = Object.keys(RACECAR_STATE).find(s => RACECAR_STATE[s] == state);
-        let info = racerInfo[playerType];
-        info.Count += 1;
 
         header.innerHTML = `<span>
-            <b>${info.Name} ${info.Count}</b> - ${carType}
-            <br><i>(${stateName})</i>
+            <b>${player.getName()}</b> - ${carType} ${level}<i>(${stateName})</i>
         </span>`;
 
         // accordion bindings
@@ -711,8 +717,23 @@ function updateRaceStats() {
 }
 
 
+
+// [[ UI Updating ]] //
+
+function validateEligibility() {
+    
+    // must be a part of the race
+    let players = raceInstance.getLobby().getPlayers() 
+    
+    if (!players[playerId]) {
+        window.location.href = "/tracks";
+        return;
+    }
+}
+
+
 function onInstanceUpdate() {
-    console.log("updated", raceInstance.getTurn());
+    console.log("Updated - Current Turn:", raceInstance.getTurn());
 
     updateRaceHeader();
     
@@ -720,12 +741,38 @@ function onInstanceUpdate() {
 
     renderRacecars();
 
-    let target = raceInstance.getCurrentPlayer();
+    let racecar = raceInstance.getCurrentPlayer();
 
-    if (target && target.getPlayerId() == playerId) {
-        let racecar = target;
-        let moves = raceInstance.getPossibleMoves(racecar);
-        displayMoves(racecar, moves);
+    // race finished
+    if (!raceInstance.isAnyRacecarInState(RACECAR_STATE.Racing)) {
+        endRace(RACECAR_STATE.Finished);
+    }
+
+    // race ongoing
+    if (
+        !isOnline 
+        || (racecar && racecar.getPlayerId() == playerId) 
+    ) {
+        let stats = raceInstance.getRacecarStats(racecar);
+        let state = stats.getState();
+
+        if (state == RACECAR_STATE.Racing) {
+            moveTaken = false;
+
+            let moves = raceInstance.getPossibleMoves(racecar);
+
+            if (!isOnScreenMoveAvailable(racecar, moves)) {
+                sendMoveInput(racecar, moves[0]);
+                // all off screen, so any move will do
+            
+            } else {
+                displayMoves(racecar, moves);
+            }
+        }
+
+        GeneralUI.createToast("Your Turn",
+            "It's your turn to make a move!",
+            "#59F");
     }
 }
 
@@ -738,6 +785,8 @@ let raceId = raceId_;
 let raceJson = await fetch(`/api/races/${raceId}`).then(r => r.json());
 let raceInstance = RaceInstance.toInstance(raceJson.race);
 
+isOnline = raceInstance.getLobby().getIsOnline();
+
 let trackId = raceInstance.getLobby().getTrackId();
 let trackJson = await fetch(`/api/tracks/${trackId}`).then(r => r.json());
 let track = Track.toInstance(trackJson.track);
@@ -745,16 +794,16 @@ let track = Track.toInstance(trackJson.track);
 let leaderboardJson = await fetch(`/api/leaderboards/${track.getId()}`).then(r => r.json());
 let leaderboard = leaderboardJson.leaderboard;
 
-
 if (!raceInstance.getLobby().getPlayers()[playerId]) {
     windows.location.href = "/tracks";
 }
-
 
 racecarSprite = new Image();
 racecarSprite.src = "http://localhost:3000/images/race-car-sprite-nobg.png";
 
 racecarSprite.onload = () => { // TODO: make this independent
+    validateEligibility();
+    
     initialisePlayCanvas();
 
     initialiseResultsPopup();
@@ -777,14 +826,7 @@ onValue(raceRef, (snapshot) => {
     // reconstructing race
     raceInstance = RaceInstance.toInstance(raceData);
 
-    // getting the player of the current turn
-    let players = raceInstance.getLobby().getPlayers() 
-    
-    if (!players[playerId]) {
-        windows.location.href = "/tracks";
-        return;
-    }
+    validateEligibility();
 
-    // valid
     onInstanceUpdate();
 });

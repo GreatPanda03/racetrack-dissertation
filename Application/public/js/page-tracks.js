@@ -21,8 +21,6 @@ lucide.createIcons();
 var user = await initAuth();
 var playerId = user.uid;
 
-console.log(user);
-
 var spacing = 25;
 var selectedTrack = null;
 
@@ -162,7 +160,7 @@ function showTrackDetails(track) {
             let tr = document.createElement("tr");
             tr.innerHTML = `<th scope="row">${rank}</th>`;
 
-            let name = row.player;
+            let name = row.name ?? "Player";
             let time = row.time.toFixed(3);
             let carType = row.carType || Object.keys(RACECAR_INFO)[0];
             let date = new Date(row.date).toISOString().split("T")[0];
@@ -261,20 +259,26 @@ async function startLobby(track, locality) {
     Validator.isInstance(track, Track);
 
     let trackId = track.getId();
+    let isOnline = locality == "online";
 
-    let response = await fetch(`/api/lobbies/${locality}`, {
-        method: "POST",
-        headers: new Headers({ "Content-Type": "application/json"}),
-        body: JSON.stringify({ playerId, trackId })
-    });
+    try {
+        let result = await fetch(`/api/lobbies`, {
+            method: "POST",
+            headers: new Headers({ "Content-Type": "application/json"}),
+            body: JSON.stringify({ user, trackId, isOnline })
+        }).then(r => r.json());
 
-    if (response.ok) {
-        let result = await response.json();
+        if (result.success) {
+            window.location.href = `/lobbies/${result.lobbyId}`;
 
-        window.location.href = `/lobbies/${result.lobbyId}`;
+        } else {
+            throw new Error(result.error);
+        }
 
-    } else {
-        throw new Error(`Couldn't create lobby: ${response.statusText}`)
+    } catch (error) {
+        GeneralUI.createToast("Failed to Create Lobby",
+            `Something went wrong when trying to create the lobby: ${error}`,
+            "#A00");
     }
 }
 

@@ -7,7 +7,7 @@
 
 // [[ Imports ]] //
 
-console.log("Preparing App (3)");
+console.log("Preparing App");
 
 
 import express from "express";
@@ -32,11 +32,8 @@ import Track from "./src/core/classes/track/track.js";
 import RaceInstance from "./src/core/classes/gameplay/race-instance.js";
 import RobotDeterminer from "./src/core/classes/gameplay/robot-determiner.js";
 import PLAYER_TYPE from "./src/core/enums/player-type.js";
+import RACECAR_STATE from "./src/core/enums/racecar-state.js";
 import Validator from "./src/core/utilities/validator.js";
-
-
-let offlineLobbies = [];
-let offlineRaces = [];
 
 
 
@@ -99,15 +96,18 @@ async function getLobbies() {
     }
 }
 
-function createEmptyLobbyWithHost(lobbyId, hostId, trackId) {
-    // * corresponds to Lobby object
-    // * TODO: figure out how to get Lobby class in here
+function createEmptyLobbyWithHost(lobbyId, hostUser, trackId) {
+    // NOTE: "hostUser" is a Firebase User object!!!
+    // * see initAuth() in firebase.js
 
-    let host = new Player(hostId, "", PLAYER_TYPE.Player);
+    let host = new Player(
+        hostUser.uid, 
+        hostUser.displayName, 
+        PLAYER_TYPE.Player);
     
     let lobby = new Lobby();
     lobby.setId(lobbyId);
-    lobby.setHostId(hostId);
+    lobby.setHostId(host.getId());
     lobby.setTrackId(trackId);
     lobby.addPlayer(host);
 
@@ -115,7 +115,7 @@ function createEmptyLobbyWithHost(lobbyId, hostId, trackId) {
 }
 
 // online lobbies
-async function getOnlineLobbyById(lobbyId) {
+async function getLobbyById(lobbyId) {
     let snapshot = await firebaseDb.ref(`lobbies/${lobbyId}`).once("value");
     let lobbyData = snapshot.val() || null;
 
@@ -126,22 +126,23 @@ async function getOnlineLobbyById(lobbyId) {
     return null;
 }
 
-async function createOnlineLobbyForPlayer(playerId, trackId) {
+async function createLobbyForPlayer(playerId, trackId) {
     let lobbyRef = firebaseDb.ref("lobbies").push();
     let lobbyId = lobbyRef.key; // lobbyRef itself is the ID ie. {[lobbyId] = lobby}
     
     let lobby = createEmptyLobbyWithHost(lobbyId, playerId, trackId);
+    lobby.setIsOnline(true);
 
     await lobbyRef.set( lobby.toObject() );
 
     return lobby;
 }
 
-async function updateOnlineLobbyById(id, details) {
+async function updateLobbyById(id, details) {
     await firebaseDb.ref(`lobbies/${id}`).update( details );
 }
 
-async function addPlayerToOnlineLobby(lobbyId, player) {
+async function addPlayerToLobby(lobbyId, player) {
     try {
         let playerId = player.getId();
 
@@ -159,29 +160,6 @@ async function addPlayerToOnlineLobby(lobbyId, player) {
         console.log(error);
         return false
     }
-}
-
-// offline lobby
-function getOfflineLobbyById(lobbyId) {
-    let lobby = offlineLobbies.find(l => l.getId() == lobbyId);
-
-    return lobby;
-}
-
-function createOfflineLobbyForPlayer(playerId, trackId) {
-    let id = 0;
-    do {
-        let exists = offlineLobbies.find(l => l.getId() == id);
-        if (exists != undefined) id += 1; else break;
-    } while (true)
-    
-    let lobbyId = id.toString();
-
-    let lobby = createEmptyLobbyWithHost(lobbyId, playerId, trackId);
-
-    offlineLobbies.push(lobby);
-
-    return lobby;
 }
 
 // tracks
@@ -216,7 +194,7 @@ async function getLeaderboardByTrackId(trackId) {
 }
 
 // races
-async function getOnlineRaceById(raceId) {
+async function getRaceById(raceId) {
     let snapshot = await firebaseDb.ref(`/races/${raceId}`).once("value");;
 
     let raceData = snapshot.val() || null;
@@ -228,36 +206,71 @@ async function getOnlineRaceById(raceId) {
     return raceData;
 }
 
-function getOfflineRaceById(raceId) {
-    let race = offlineRaces.find(r => r.getId() == raceId);
-    return race;
-}
-
 function processRaceMove(raceInstance, racecar, move) {
-    let playerType = racecar.getPlayerType();
     // "move" is technically acceleration
 
-    if (playerType == PLAYER_TYPE.Player) {
-        raceInstance.addPendingMove(racecar, move);
+    let playerType = racecar.getPlayerType();
 
-    } else if (playerType == PLAYER_TYPE.Robot) {
-        move = determineRobotMove(racecar);
-    
-    } else if (playerType == PLAYER_TYPE.Ghost) {
-        let playerId = racecar.getPlayerId();
-        let carType = racecar.getCarType();
-        let moves = leaderboard.scores[playerId][carType].moves;
-        let move = moves[timeElapsed];
+    while (raceInstance.isAnyRacecarInState(RACECAR_STATE.Racing)) {
+        console.log("Processing for", racecar.getPlayerId());
+        console.log(raceInstance.getPendingMoves());
 
-        let oldVel = racecar.getVelocity()
-        let newVel = Vector2.toInstance(move.Velocity);
-        let acc = newVel.sub(oldVel);
+        if (playerType == PLAYER_TYPE.Player) {
+            // nothing more
 
-        move = acc;
+        } else if (playerType == PLAYER_TYPE.Robot) {
+            let stats = raceInstance.getRacecarStats(racecar);
+            
+            if (stats.getState() != RACECAR_STATE.Finished) {
+                let determiner = new RobotDeterminer(raceInstance);
+                move = determiner.determineRobotMove(racecar);
+            
+            } else {
+                move = null;
+            }
+
+        } else if (playerType == PLAYER_TYPE.Ghost) {
+            let playerId = racecar.getPlayerId();
+            let carType = racecar.getCarType();
+            let lobby = raceInstance.getLobby();
+            let ghostMoves = lobby.getPlayerDetail(playerId, "moves");
+            let elapsedTime = raceInstance.getElapsedTime();
+            
+            if (elapsedTime < ghostMoves.length) { // ie. race not yet finished
+                let ghostMove = ghostMoves[elapsedTime];
+                console.log("Ghost Move:", ghostMove);
+
+                let oldVel = racecar.getVelocity()
+                let newVel = Vector2.toInstance(ghostMove.Velocity);
+                let acc = newVel.sub(oldVel);
+
+                move = acc;
+
+            } else {
+                move = null;
+            }
+        }
+
+        if (move) {
+            raceInstance.addPendingMove(racecar, move);
+        }
+
+        raceInstance.findNextTurn();
+        
+        let nextRacecar = raceInstance.getCurrentPlayer()
+
+        if (nextRacecar.getPlayerType() == PLAYER_TYPE.Player) {
+            console.log("Next Player:", nextRacecar.getPlayerId());
+            break;
+
+        } else {
+            racecar = nextRacecar;
+            playerType = racecar.getPlayerType();
+            console.log("Next Non-Player:", racecar.getPlayerId());
+        }
     }
 
-    raceInstance.addPendingMove(racecar, move);
-    raceInstance.findNextTurn();
+    console.log(raceInstance.isAnyRacecarInState(RACECAR_STATE.Racing));
 }
 
 async function updateRace(raceId, race) {
@@ -267,56 +280,6 @@ async function updateRace(raceId, race) {
 
 
 // [[ API Endpoints ]] //
-
-// lobbies
-app.post("/api/lobbies/offline", async (request, response) => {
-    try {
-        let { playerId, trackId } = request.body;
-
-        // missing data
-        if (!playerId || !trackId) {
-            return response.status(400).json({ success: false, error: "Missing data" });
-        }
-
-        // valid
-        let lobby = await createOfflineLobbyForPlayer(playerId, trackId);
-        let lobbyId = lobby.getId();
-
-        response.status(201).json({ success: true, lobbyId });
-
-    } catch (error) {
-        console.error(error);
-        response.status(500).json({ success: false, error });
-    }
-});
-
-app.post("/api/lobbies/online", async (request, response) => {
-    try {
-        let { playerId, trackId } = request.body;
-
-        // missing data
-        if (!playerId || !trackId) {
-            return response.status(400).json({ success: false, error: "Missing data" });
-        }
-
-        let track = await getTrackById(trackId);
-
-        // non-existing track
-        if (!track) {
-            return response.status(404).json({ success: false, error: "Track not found" });
-        }
-
-        // success: lobby creation
-        let lobby = await createOnlineLobbyForPlayer(playerId, trackId);
-        let lobbyId = lobby.getId();
-
-        response.status(201).json({ success: true, lobbyId });
-    
-    } catch (error) {
-        console.error(error);
-        response.status(500).json({ success: false, error });
-    }
-});
 
 app.get("/api/lobbies", async (request, response) => {
     try {
@@ -329,29 +292,36 @@ app.get("/api/lobbies", async (request, response) => {
     }
 });
 
-app.patch("/api/lobbies/:lobbyId/online", async (request, response) => {
+app.post("/api/lobbies", async (request, response) => {
     try {
-        let lobbyId = request.params.lobbyId;
+        let { user, trackId, isOnline } = request.body;
 
         // missing data
-        if (!lobbyId) {
+        if (!user || !trackId || isOnline == null) {
             return response.status(400).json({ success: false, error: "Missing data" });
         }
 
-        // success
-        let { details } = request.body;
+        let track = await getTrackById(trackId);
 
-        await updateOnlineLobbyById(lobbyId, details);
+        // non-existing track
+        if (!track) {
+            return response.status(404).json({ success: false, error: "Track not found" });
+        }
 
-        response.status(200).json({ success: true });
+        // success: lobby creation
+        let lobby = await createLobbyForPlayer(user, trackId, isOnline);
+        let lobbyId = lobby.getId();
+        lobby.setIsOnline(isOnline);
 
+        response.status(201).json({ success: true, lobbyId });
+    
     } catch (error) {
         console.error(error);
         response.status(500).json({ success: false, error });
     }
 });
 
-app.patch("/api/lobbies/:lobbyId/offline", async (request, response) => {
+app.patch("/api/lobbies/:lobbyId", async (request, response) => {
     try {
         let lobbyId = request.params.lobbyId;
 
@@ -362,10 +332,8 @@ app.patch("/api/lobbies/:lobbyId/offline", async (request, response) => {
 
         // success
         let { details } = request.body;
-        let updated = Lobby.toInstance(details);
-
-        let index = offlineLobbies.findIndex(l => l.getId() == lobbyId);
-        offlineLobbies[index] = updated;
+        
+        await updateLobbyById(lobbyId, details);
 
         response.status(200).json({ success: true });
 
@@ -378,14 +346,14 @@ app.patch("/api/lobbies/:lobbyId/offline", async (request, response) => {
 app.post("/api/lobbies/join/:lobbyId", async (request, response) => {
     try {
         let lobbyId = request.params.lobbyId;
-        let playerId = request.body.playerId;
+        let user = request.body.user;
         
         // missing data
-        if (!lobbyId || !playerId) {
+        if (!lobbyId || !user.uid) {
             return response.status(400).json({ success: false, error: "Missing data" });;
         }
 
-        let lobby = await getOnlineLobbyById(lobbyId);
+        let lobby = await getLobbyById(lobbyId);
 
         // non-existing lobby
         if (!lobby) {
@@ -394,9 +362,9 @@ app.post("/api/lobbies/join/:lobbyId", async (request, response) => {
         
         // valid (only if they aren't already in)
         // * it's fine if not - just avoids repeat it
-        if (!lobby.getPlayers()[playerId]) {
-            let player = new Player(playerId, "", PLAYER_TYPE.Player);
-            await addPlayerToOnlineLobby(lobbyId, player);
+        if (!lobby.getPlayers()[user.uid]) {
+            let player = new Player(user.uid, user.displayName, PLAYER_TYPE.Player);
+            await addPlayerToLobby(lobbyId, player);
         }
 
         response.status(200).json({ success: true });
@@ -409,28 +377,22 @@ app.post("/api/lobbies/join/:lobbyId", async (request, response) => {
 
 app.post("/api/lobbies/start/:lobbyId", async (request, response) => {
     try {
-        let { lobbyId, playerId } = request.body;
+        let { lobbyId, user } = request.body;
 
         // missing data
-        if (!lobbyId || !playerId) {
+        if (!lobbyId || !user) {
             return response.status(400).json({ success: false, error: "Missing data" });
         }
 
-        let online = true;
-        let lobby = await getOnlineLobbyById(lobbyId);
+        let lobby = await getLobbyById(lobbyId);
 
         // non-existing lobby
         if (!lobby) {
-            online = false;
-            lobby = getOfflineLobbyById(lobbyId);
-
-            if (!lobby) {
-                return response.status(404).json({ success: false, error: `No lobby exists with ID ${lobbyId}` });
-            }
+            return response.status(404).json({ success: false, error: `No lobby exists with ID ${lobbyId}` });
         }
 
         // no start permissions
-        if (playerId != lobby.getHostId()) {
+        if (user.uid != lobby.getHostId()) {
             return response.status(403).json({ success: false, error: "Only the host can start the lobby" });
         }
 
@@ -441,15 +403,14 @@ app.post("/api/lobbies/start/:lobbyId", async (request, response) => {
         let players = Object.values(lobby.getPlayers());
         let race = new RaceInstance(lobby, track, 25, players);
 
-        if (online) {
-            await firebaseDb.ref(`races/${lobbyId}`).set( race.toObject() );
-            await firebaseDb.ref(`lobbies/${lobbyId}`).remove();
-        
-        } else {
-            let index = offlineLobbies.findIndex(l => l.getId() == lobby.getId());
-            offlineLobbies.splice(index, 1);
-            offlineRaces.push(race);
+        let first = race.getCurrentPlayer();
+
+        if (first.getPlayerType() != PLAYER_TYPE.Player) {
+            processRaceMove(race, race.getCurrentPlayer(), null);
         }
+
+        await firebaseDb.ref(`races/${lobbyId}`).set( race.toObject() );
+        await firebaseDb.ref(`lobbies/${lobbyId}`).remove();
         
         response.status(200).json({ success: true, raceId: lobbyId });
 
@@ -582,7 +543,7 @@ app.get("/api/leaderboards", async (request, response) => {
     let leaderboards = await getLeaderboards();
 
     if (leaderboards.length == 0) {
-        response.status(204).json({ success: true, leaderboards });
+        response.status(204).json({ success: true, leaderboards: [] });
 
     } else {
         response.status(200).json({ success: true, leaderboards });
@@ -606,7 +567,7 @@ app.get("/api/leaderboards/:trackId", async (request, response) => {
 
         // no existing leaderboard
         if (!leaderboard) {
-            return response.status(400).json({ success: false, error: `No leaderboard exists for Track ID ${trackId}` });
+            return response.status(200).json({ success: true, leaderboard: null });
         }
 
         // success
@@ -625,14 +586,14 @@ app.post("/api/leaderboards/:trackId", async (request, response) => {
 
     try {
         let trackId = request.params.trackId;
-        let { time, carType, moves } = request.body;
+        let { player, time, carType, moves } = request.body;
 
-        if (!trackId || !time || !carType || !moves) {
+        if (!trackId || !player || !time || !carType || !moves) {
             return response.status(400).json({ success: false, error: "Not using database" });
         }
 
-        let name = "player";
-        let scorePath = `scores.${name}.${carType}`;
+        let { id, name } = player;
+        let scorePath = `scores.${id}.${carType}`;
 
         let filter = { _id: trackId };
 
@@ -647,7 +608,7 @@ app.post("/api/leaderboards/:trackId", async (request, response) => {
                             ]
                         },
                         {
-                            time, moves, date: new Date()
+                            name, time, moves, date: new Date()
                         },
                         `$${scorePath}`
                     ]
@@ -660,7 +621,7 @@ app.post("/api/leaderboards/:trackId", async (request, response) => {
         let lbBefore = await LeaderboardModel.findOneAndUpdate(
             filter, update, options);
 
-        let oldTime = lbBefore?.scores?.get(name)?.get(carType)?.time ?? null;
+        let oldTime = lbBefore?.scores?.get(id)?.get(carType)?.time ?? null;
 
         response.status(200).json({ success: true, oldTime, newTime: time });
 
@@ -681,15 +642,11 @@ app.get("/api/races/:raceId", async (request, response) => {
             return response.status(400).json({ success: false, error: "Missing data" });
         }
 
-        let race = await getOnlineRaceById(raceId);
+        let race = await getRaceById(raceId);
 
         // non-existing race
         if (!race) {
-            race = getOfflineRaceById(raceId);
-
-            if (!race) {
-                return response.status(404).json({ success: false, error: `No race exists with ID ${raceId}` });
-            }
+            return response.status(404).json({ success: false, error: `No race exists with ID ${raceId}` });
         }
 
         // success
@@ -718,7 +675,12 @@ app.post("/api/races/:raceId/move", async (request, response) => {
             return response.status(400).json({ success: false, error: `"${move}" is not in valid Vector2 format`});
         }
 
-        let race = await getOnlineRaceById(raceId);
+        let race = await getRaceById(raceId);
+
+        if (!race) {
+            return response.status(400).json({ success: false, error: "The race no longer exists" });
+        }
+
         let target = race.getCurrentPlayer();
         let targetId = target.getPlayerId();
 
@@ -813,23 +775,15 @@ app.get("/lobbies/:lobbyId", async (request, response) => {
             return response.status(400).json({ success: false, error: "Missing data" });
         }
 
-        let isOnline = true;
-        let lobby = await getOnlineLobbyById(lobbyId);
+        let lobby = await getLobbyById(lobbyId);
 
         // non-existing lobby
         if (lobby) {
-            return response.render("lobby", { title: "Lobby (Online)", lobby, isOnline });
+            return response.render("lobby", { title: "Lobby (Online)", lobby });
         
         } else {
-            isOnline = false;
-            lobby = await getOfflineLobbyById(lobbyId);
-
-            if (lobby) {
-                return response.render("lobby", { title: "Lobby (Offline)", lobby, isOnline });   
-            }
+            response.redirect("/lobbies");
         }
-
-        response.redirect("/lobbies");
     
     } catch (error) {
         console.error(error);
@@ -846,15 +800,11 @@ app.get("/races/:raceId", async (request, response) => {
             return response.status(400).json({ success: false, error: "Missing data" });
         }
 
-        let race = await getOnlineRaceById(raceId);
+        let race = await getRaceById(raceId);
 
         // non-existing race
         if (!race) {
-            race = getOfflineRaceById(raceId);
-
-            if (!race) {
-                return response.redirect("/tracks");
-            }
+            return response.redirect("/tracks");
         }
 
         // success

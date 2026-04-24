@@ -65,7 +65,7 @@ function sortLeaderboardScores(leaderboard) {
 
 function findFreeRacerId() {
     let targets = Object.values(lobby.getPlayers());
-    let id = 0;
+    let id = 1; // avoids "Robot 0" / "Player 0", etc.
 
     do {
         let exists = targets.find(t => t.getId() == id.toString());
@@ -111,19 +111,14 @@ function addGhost() {
 async function leaveLobby() {
     let lobbyId = lobby.getId();
 
-    if (isOnline) {
-        let lobbyRef = ref(db, `lobbies/${lobbyId}`);
-        let playerRef = ref(db, `lobbies/${lobbyId}/players/${playerId}`);
+    let lobbyRef = ref(db, `lobbies/${lobbyId}`);
+    let playerRef = ref(db, `lobbies/${lobbyId}/players/${playerId}`);
 
-        // If host → delete entire lobby
-        if (isHost) {
-            await remove(lobbyRef);
-        } else {
-            // Otherwise just remove player
-            await remove(playerRef);
-        }
+    if (isHost) {
+        await remove(lobbyRef);
+
     } else {
-        window.location.href = "/tracks";
+        await remove(playerRef);
     }
 }
 
@@ -203,7 +198,7 @@ function constructLeaderboard(scores) {
         let tr = document.createElement("tr");
         tr.innerHTML = `<th scope="row">${rank}</th>`;
 
-        let name = row.player;
+        let name = row.name;
         let time = row.time.toFixed(3);
         let carType = row.carType || Object.keys(RACECAR_INFO)[0];
         let date = new Date(row.date).toISOString().split("T")[0];
@@ -228,11 +223,13 @@ function constructLeaderboard(scores) {
         if (isHost) {
             inputBox.addEventListener("change", (e) => {
                 if (inputBox.checked) {
-                    let id = name;
-                    addedGhost = addDefaultRacer(PLAYER_TYPE.Ghost, id);
-                    
-                    lobby.setPlayerDetail(id, "colour", "#777");
-                    lobby.setPlayerDetail(id, "carType", carType)
+                    let ghostId = `${row.player}-${carType}`;
+                    addedGhost = addDefaultRacer(PLAYER_TYPE.Ghost, ghostId);
+                    addedGhost.setName(`${row.name} - Ghost`);
+
+                    lobby.setPlayerDetail(ghostId, "colour", "#777");
+                    lobby.setPlayerDetail(ghostId, "carType", carType);
+                    lobby.setPlayerDetail(ghostId, "moves", row.moves);
 
                     handleNewDetails();
 
@@ -332,32 +329,60 @@ function refreshLobbyOptions() {
 function refreshRacerDetails() {
     GeneralUI.clearTooltips();
 
-    let racers = Object.values(lobby.getPlayers());
+    let players = Object.values(lobby.getPlayers());
 
-    let lists = {};
+    let hostEntry = null;
+    let info = {lists: {}, counts: {}};
+
     for (let key in PLAYER_TYPE) { 
         let lower = key.toLowerCase();
         let value = PLAYER_TYPE[key];
         let list = document.getElementById(`${lower}-racers-list`);
-        lists[value] = list;
+        info.lists[value] = list;
         list.innerHTML = "";
+
+        info.counts[value] = 0;
     }
 
-    for (let racer of racers) {
-        let id = racer.getId();
-        let playerType = racer.getPlayerType();
-        let carType = lobby.getPlayerDetail(id, "carType")
+    for (let player of players) {
+        let id = player.getId();
+        let playerType = player.getPlayerType();
+        let carType = lobby.getPlayerDetail(id, "carType");
 
-        let entry = createRacerEntry(racer);
+        let entry = createRacerEntry(player);
 
         // naming
-        let name = `<b>...</b> - ${carType}`;
         let nameElement = entry.querySelector(".racer-details");
+        let name = `<b>${player.getName()}</b><br>${carType}`;
+
+        /*
+        if (id == playerId) {
+            hostEntry = entry;
+            name = user.displayName;
+        
+        } else {
+            info.counts[playerType] += 1;
+            let prefix = Object.keys(PLAYER_TYPE).find(k => PLAYER_TYPE[k] == playerType);
+            name = `${prefix} ${info.counts[playerType]}`;
+        }
+
+        name =`<b>${name}</b><br>${carType}`;
+        */
+
+        if (playerType == PLAYER_TYPE.Robot) {
+            let level = lobby.getPlayerDetail(id, "level");
+            name += ` <i>(Bot Lvl. ${level})</i>`;
+        } 
+
         nameElement.innerHTML = name;
 
-        prepareControls_racerEntry(entry, racer);
+        prepareControls_racerEntry(entry, player);
 
-        lists[playerType].appendChild(entry);
+        if (id == playerId) { // so that host is first
+            info.lists[playerType].prepend(entry);    
+        } else {
+            info.lists[playerType].appendChild(entry);
+        }
     }
 
     // widgets & icons
@@ -374,16 +399,11 @@ function refreshLobbyDetails() {
 }
 
 async function handleNewDetails() {
-    if (isOnline) {
-        await fetch(`/api/lobbies/${lobby.getId()}/online`, {
-            method: "PATCH",
-            headers: new Headers({ "Content-Type": "application/json"}),
-            body: JSON.stringify({ details: lobby })
-        });
-
-    } else {
-        refreshLobbyDetails();
-    }
+    await fetch(`/api/lobbies/${lobby.getId()}`, {
+        method: "PATCH",
+        headers: new Headers({ "Content-Type": "application/json"}),
+        body: JSON.stringify({ details: lobby })
+    });
 }
 
 
@@ -508,14 +528,14 @@ function prepareControls_racerEntry(entry, targetPlayer) {
 
     // car types
     let carTypeList = entry.querySelector(".div-racer-cartype");
-    let dropdown = carTypeList.querySelector(".dropdown-menu");
+    let carTypeDropdown = carTypeList.querySelector(".dropdown-menu");
 
     if ( 
         OFFLINE 
         || (ONLINE && FOR_PLAYER)
         || (isHost && playerType != PLAYER_TYPE.Player)
     ) {
-        for (let item of dropdown.children) {
+        for (let item of carTypeDropdown.children) {
             item.addEventListener("click", (e) => {
                 let newCarType = item.querySelector(".car-type-name").innerHTML;
                 lobby.setPlayerDetail(id, "carType", newCarType);
@@ -524,7 +544,7 @@ function prepareControls_racerEntry(entry, targetPlayer) {
         }
     } else {
         carTypeList.remove();
-        dropdown.remove();
+        carTypeDropdown.remove();
     }
 
     // deletion
@@ -540,26 +560,47 @@ function prepareControls_racerEntry(entry, targetPlayer) {
     }
 
     // player type specific
-    let levelDiv = entry.querySelector(".div-robot-level");
+    let levelList = entry.querySelector(".div-robot-level");
+    let levelDropdown = levelList.querySelector(".dropdown-menu");
 
-    if (playerType == PLAYER_TYPE.Robot && isHost) {
-        let levelInput = levelDiv.querySelector(".input-robot-level");
-        levelInput.value = lobby.getPlayerDetail(id, "level");
-        
-        levelInput.addEventListener("change", (e) => {
-            let newLevel = levelInput.value;
-            newLevel = Math.min(Math.max(newLevel, 0), 4);
-            lobby.setPlayerDetail(id, "level", newLevel);
-            handleNewDetails();
-        })
+    if (playerType == PLAYER_TYPE.Robot) {
+        if (isHost) {
+            for (let item of levelDropdown.children) {
+                item.addEventListener("click", (e) => {
+                    let newLevel = item.value;
+                    lobby.setPlayerDetail(id, "level", newLevel);
+                    handleNewDetails();
+                });
+            }
+        }
+    } else {
+        levelList.remove();
+        levelDropdown.remove();
+    }
 
+    /*
+    let levelInput = levelDiv.querySelector(".input-robot-level");
+    levelInput.value = lobby.getPlayerDetail(id, "level");
+
+    if (playerType == PLAYER_TYPE.Robot) {
+        if (isHost) {
+            levelInput.addEventListener("change", (e) => {
+                let newLevel = levelInput.value;
+                newLevel = Math.min(Math.max(newLevel, 0), 4);
+                lobby.setPlayerDetail(id, "level", newLevel);
+                handleNewDetails();
+            });
+        } else {
+            levelInput.readOnly = true;
+        }
     } else {
         levelDiv.remove();
     }
+        */
 
     if (playerType == PLAYER_TYPE.Ghost) {
         carTypeList.remove();
-        dropdown.remove();
+        carTypeDropdown.remove();
         deleteBtn.remove() // TODO: re-enable; uncheck relevant LB entry
 
         if (!isHost) {
@@ -598,20 +639,11 @@ async function initialiseLobbyPage() {
 
 async function startRace() {
     let lobbyId = lobby.getId();
-
-    // update server data
-    if (!isOnline) {
-        await fetch(`/api/lobbies/${lobby.getId()}/offline`, {
-            method: "PATCH",
-            headers: new Headers({ "Content-Type": "application/json"}),
-            body: JSON.stringify({ details: lobby })
-        });
-    }
     
     let startRes = await fetch(`/api/lobbies/start/${lobbyId}`, {
         method: "POST",
         headers: new Headers({ "Content-Type": "application/json"}),
-        body: JSON.stringify({ lobbyId, playerId })
+        body: JSON.stringify({ lobbyId, user })
     });
 
     if (startRes.ok) {
@@ -628,29 +660,27 @@ async function startRace() {
 
 lobby = Lobby.toInstance( lobby_ );
 isHost = playerId == lobby.getHostId();
-isOnline = isOnline_;
+isOnline = lobby.getIsOnline();
 
 initialiseLobbyPage(lobby);
 
 
 // update connection
-if (isOnline) {
-    let lobbyRef = ref(db, `lobbies/${lobby.getId()}`);
+let lobbyRef = ref(db, `lobbies/${lobby.getId()}`);
 
-    onValue(lobbyRef, (snapshot) => {
-        let lobbyObj = snapshot.val() || null;
+onValue(lobbyRef, (snapshot) => {
+    let lobbyObj = snapshot.val() || null;
 
-        if (!lobbyObj) {
-            // redirect to race - if no race, will go back
-            window.location.href = `/races/${lobby.getId()}`;
-        }
+    if (!lobbyObj) {
+        // redirect to race - if no race, will go back
+        window.location.href = `/races/${lobby.getId()}`;
+    }
 
-        lobby = Lobby.toInstance(lobbyObj)
+    lobby = Lobby.toInstance(lobbyObj)
 
-        refreshLobbyDetails();
+    refreshLobbyDetails();
 
-        if (!lobby.getPlayers()[playerId]) {
-            window.location.href = "/tracks";
-        }
-    });
-}
+    if (!lobby.getPlayers()[playerId]) {
+        window.location.href = "/tracks";
+    }
+});

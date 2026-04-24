@@ -19,14 +19,13 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 <summary>V3 Online Lobby System</summary>
 
 **Additions / Changes**
-1. [TODO] Online Lobbies - join other players!
+1. Online Lobbies - join other players!
     * **How it works:** select a track, then choose whether to create an online or offline lobby
     * Online lobbies appear in a public list for other players to see
-2. (DEV) Big introduction of Firebase functionality to support online play
+2. (DEV) HUGE introduction of Firebase functionality to support online play
     * May still be buggy in some places!
 3. (DEV) Refactored endpoints to be more readable and consistent
-4. Adjusted Track Builder
-    * Expanded node "checkpoint" checkbox selection to include label
+4. Other relatively small changes to styling, UX, etc.
 
 </details>
 

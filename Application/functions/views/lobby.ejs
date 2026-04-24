@@ -122,7 +122,7 @@
     
     <!-- racer entry template -->
     <template id="racer-entry-template">
-        <div class="racer-entry container border border-secondary rounded" style="width: 285px;">
+        <div class="racer-entry container border border-secondary rounded" style="width: 315px;">
             <div class="racer-header d-flex gap-1">
                 <i data-lucide="circle" class="racer-colour p-1"></i>
                 <div class="racer-details">
@@ -144,9 +144,23 @@
                         <!-- script generated -->
                     </ul>
                 </div>
-                <div class="div-robot-level mr-4" style="width: 50px;">
+                <div class="div-robot-level btn-group dropend p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Set Robot Level">
+                    <button class="btn-robot-level btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i data-lucide="brain"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-item" value="1">Level 1</li>
+                        <li class="dropdown-item" value="2">Level 2</li>
+                        <li class="dropdown-item" value="3">Level 3</li>
+                        <li class="dropdown-item" value="4">Level 4</li>
+                    </ul>
+                </div>
+                <!--
+                <div class="div-robot-level d-flex flex-row gap-3">
+                    <i data-lucide="brain"></i>
                     <input class="input-robot-level form-control" type="number" min="0" max="4" value="1" style="width: 50px;">
                 </div>
+                -->
                 <button class="btn-racer-remove btn btn-danger p-1" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Remove Player">
                     <i data-lucide="x"></i>
                 </button>
@@ -168,7 +182,6 @@
 
     <script>
         window.lobby_ = <%- JSON.stringify(lobby) %>;
-        window.isOnline_ = <%- JSON.stringify(isOnline) %>;
     </script>
 </body>
 </html>

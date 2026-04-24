@@ -58,9 +58,12 @@ function createLobbyEntry(lobby, track) {
     let playerCount = players.filter(p => p.getPlayerType() == PLAYER_TYPE.Player).length;
     let robotCount = players.filter(p => p.getPlayerType() == PLAYER_TYPE.Robot).length;
 
+    let host = lobby.getPlayers()[lobby.getHostId()];
+    let hostName = host.getName();
+
     title.innerHTML = `Lobby (ID: ${lobby.getId()})`;
     details.innerHTML = `
-        <b>Host:</b> Player ${lobby.getHostId()}
+        <b>Host:</b> ${hostName}
         <br><b>Players:</b> ${playerCount}
         <br><b>Robots:</b> ${robotCount}`;
 
@@ -108,7 +111,7 @@ async function refreshLobbies() {
             let joinJson = await fetch(`/api/lobbies/join/${lobbyId}`, {
                 method: "POST",
                 headers: new Headers({ "Content-Type": "application/json"}),
-                body: JSON.stringify({ playerId })
+                body: JSON.stringify({ user })
             }).then(r => r.json());
 
             if (joinJson.success) {
@@ -134,7 +137,7 @@ function initialiseInterface() {
     let refreshBtn = document.getElementById("refresh-lobbies");
 
     refreshBtn.addEventListener("click", (e) => {
-        refreshLobbies();
+        window.location.reload();
     });
 }
 

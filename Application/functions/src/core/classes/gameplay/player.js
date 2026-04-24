@@ -12,6 +12,7 @@ export default class Player {
 
     constructor(id, name, playerType) {
         Validator.isPrimitive(id, "string");
+        Validator.isPrimitive(name, "string");
         Validator.valuePresence(PLAYER_TYPE, playerType);
 
         this.#id = id;
@@ -22,7 +23,13 @@ export default class Player {
 
     // getters / setters
     getId() { return this.#id; }
+
     getName() { return this.#name; }
+    setName(name) {
+        Validator.isPrimitive(name, "string");
+        this.#name = name;
+    }
+
     getPlayerType() { return this.#playerType; }
 
 
