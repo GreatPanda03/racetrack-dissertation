@@ -1,21 +1,27 @@
 // main application starting point
 
 // SOURCES:
-// * [source 1]: Net Ninja, (Jun 23, 2020). "Node.js Crash Course Tutorial #8 - Middleware", [Online Video]. Available at: https://www.youtube.com/watch?v=_GJKAs7A0_4. Accessed: Dec. 18, 2025.
+// [1]: Net Ninja, (Jun 23, 2020). "Node.js Crash Course Tutorial #8 - Middleware", [Online Video]. Available at: https://www.youtube.com/watch?v=_GJKAs7A0_4. Accessed: Dec. 18, 2025.
+// [2] R. Kapadia, "How to deploy NodeJS application on Firebase | Firebase Functions NodeJS Tutorial | GCP Firebase", YouTube, youtube.com, [Online Video]. Available: https://www.youtube.com/watch?v=WaYPrpOvsZE. Accessed: Apr. 23, 2026.
 
 
 // [[ Imports ]] //
 
+console.log("Preparing App (3)");
+
+
 import express from "express";
-import pkg from "./package.json" with { type: "json" };
-const { version } = pkg;
+import pkg from "../package.json" with { type: "json" };
+import cors from "cors";
+
+import path from "path";
+import { fileURLToPath } from "url";
 
 import mongoose from "mongoose";
 import TrackModel from "./models/track.js";
 import LeaderboardModel from "./models/leaderboard.js";
 
-import { gameTracks } from "./src/track-repository.js";
-
+import { debug } from "firebase-functions/logger";
 import { db } from "./services/firebase-admin.js";
 const firebaseDb = db;
 
@@ -36,18 +42,20 @@ let offlineRaces = [];
 
 // [[ App Set Up ]] //
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
+app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
+app.use(cors());
 app.use(express.json());
-app.use(express.static("public")); // static resources
-app.use("/core", express.static("src/core")); // core classes etc.
+app.use(express.static(path.join(__dirname, "../public"))); // pages, styles, etc.
+app.use("/core", express.static(path.join(__dirname, "/src/core"))); // core classes etc.
 
-// environment variables
-app.use((request, response, next) => {
-    response.locals.version = version;
-    next();
-});
+const { version } = pkg;
+app.locals.version = version;
 
 var usingFirebase = true;
 
@@ -55,23 +63,24 @@ var usingFirebase = true;
 
 // [[ MongoDB Set Up ]] //
 
-var usingDb = true;
+var mongodbReady = false;
 
-if (usingDb) {
-    const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
-    mongoose.connect(uri)
-        .then((result) => app.listen(3000))
-        .catch((error) => {
-            console.log(error);
-            console.log("[CONNECTING WITHOUT DATABASE!]");
-            usingDb = false;
-            app.listen(3000);
-        });
+const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
+mongoose.connect(uri)
+    .then((result) => { 
+        console.log("MongoDB Starting"); // note: "1" = connected
+        console.log("MongoDB State:", mongoose.connection.readyState); 
+        mongodbReady = true;
+    })
+    .catch((error) => {
+        console.log(error);
+        console.log("[CONNECTING WITHOUT DATABASE!]");
+    });
 
-} else {
-    app.listen(3000);
-    console.log("RUNNING WITHOUT DATABASE!");
-}
+// NB: only use "app.listen" when running without firebase
+// * see "Application/server.js" for local running
+// * firebase will make its own front end link
+// * use module.exports = app when using firebase (see bottom)
 
 
 
@@ -177,28 +186,13 @@ function createOfflineLobbyForPlayer(playerId, trackId) {
 
 // tracks
 async function getTracks() {
-    if (usingDb) {
-        let tracks = await TrackModel.find();
-        return tracks;
-    
-    } else {
-        let tracks = gameTracks;
-        return tracks;
-    }
+    let tracks = await TrackModel.find();
+    return tracks;
 }
 
 async function getTrackById(id) {
-    if (usingDb) {
-        let track = await TrackModel.findById( id );
-        return track;
-    
-    } else {
-        let track = gameTracks.find(t => JSON.parse(t)._id == id );
-
-        if (track) {
-            return track;
-        }
-    }
+    let track = await TrackModel.findById( id );
+    return track;
 }
 
 async function saveTrackById(id, trackDetails) {
@@ -212,21 +206,13 @@ async function saveTrackById(id, trackDetails) {
 
 // leaderboards
 async function getLeaderboards() {
-    if (usingDb) {
-        return await LeaderboardModel.find();
-    
-    } else {
-        return null;
-    }
+    let leaderboards = await LeaderboardModel.find();
+    return leaderboards;
 }
 
 async function getLeaderboardByTrackId(trackId) {
-    if (usingDb) {
-        return await LeaderboardModel.findById(trackId);
-    
-    } else {
-        return null;
-    }
+    let leaderboard = await LeaderboardModel.findById(trackId);
+    return leaderboard;
 }
 
 // races
@@ -475,7 +461,28 @@ app.post("/api/lobbies/start/:lobbyId", async (request, response) => {
 
 
 // tracks
+app.get("/api/tracks", async (request, response) => {
+    debug(mongodbReady, request.path);
+
+    if (!mongodbReady) {
+        return response.status(503).json({ success: false, error: "Database is unavailable" });
+    }
+
+    try {
+        let tracks = await getTracks();
+        response.status(200).json({ success: true, tracks });
+
+    } catch (error) {
+        console.log(error);
+        response.status(500).json({ success: false, error });
+    }
+});
+
 app.get("/api/tracks/:trackId", async (request, response) => {
+    if (!mongodbReady) {
+        return response.status(503).json({ success: false, error: "Database is unavailable" });
+    }
+    
     try {
         let trackId = request.params.trackId;
 
@@ -501,9 +508,8 @@ app.get("/api/tracks/:trackId", async (request, response) => {
 });
 
 app.patch("/api/tracks/:trackId", async (request, response) => {
-    if (!usingDb) {
-        console.log("Couldn't save - not using database");
-        response.status(404).json({ success: false, error: "Not using database" });
+    if (!mongodbReady) {
+        return response.status(503).json({ success: false, error: "Database is unavailable" });
     }
 
     try {
@@ -530,6 +536,10 @@ app.patch("/api/tracks/:trackId", async (request, response) => {
 });
 
 app.delete("/api/tracks/:trackId", async (request, response) => {
+    if (!mongodbReady) {
+        return response.status(503).json({ success: false, error: "Database is unavailable" });
+    }
+    
     try {
         let trackId = request.params.trackId;
 
@@ -565,9 +575,8 @@ app.delete("/api/tracks/:trackId", async (request, response) => {
 
 // leaderboards
 app.get("/api/leaderboards", async (request, response) => {
-    if (!usingDb) {
-        console.log("Couldn't get leaderboards - not using database");
-        return response.status(400).json({ success: false, error: "Not using database" });
+    if (!mongodbReady) {
+        return response.status(503).json({ success: false, error: "Database is unavailable" });
     }
 
     let leaderboards = await getLeaderboards();
@@ -581,9 +590,8 @@ app.get("/api/leaderboards", async (request, response) => {
 });
 
 app.get("/api/leaderboards/:trackId", async (request, response) => {
-    if (!usingDb) {
-        console.log("Couldn't get leaderboard - not using database");
-        return response.status(400).json({ success: false, error: "Not using database" });
+    if (!mongodbReady) {
+        return response.status(503).json({ success: false, error: "Database is unavailable" });
     }
 
     try {
@@ -611,9 +619,8 @@ app.get("/api/leaderboards/:trackId", async (request, response) => {
 });
 
 app.post("/api/leaderboards/:trackId", async (request, response) => {
-    if (!usingDb) {
-        console.log("Couldn't update leaderboard - not using database");
-        return response.status(400).json({ success: false, error: "Not using database" });
+    if (!mongodbReady) {
+        return response.status(503).json({ success: false, error: "Database is unavailable" });
     }
 
     try {
@@ -777,6 +784,7 @@ app.get("/tracks", async (request, response) => {
     try {
         let tracks = await getTracks();
         let leaderboards = await getLeaderboards();
+
         response.render("tracks", { title: "Tracks List", tracks, leaderboards });
     
     } catch (error) {
@@ -865,5 +873,13 @@ app.get("/settings", (request, response) => {
 
 // missing page (404)
 app.use((request, response) => {
+    if (request.path.startsWith("/api")) {
+        return response.status(404).json({ success: false, error: `"${request.path}" is not an endpoint`});
+    }
+
     response.render("error-404", { title: "404 Not Found" });
 });
+
+
+export const appExpress = app;  // firebase
+export default app;             // basic node

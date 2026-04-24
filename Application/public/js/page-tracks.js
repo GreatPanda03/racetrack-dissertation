@@ -12,7 +12,7 @@ import {
 import GeneralUI from "./utilities/general-ui.js";
 
 import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-import { initAuth } from "./firebase.js";
+import { initAuth, signInWithGoogle } from "./firebase.js";
 
 lucide.createIcons();
 
@@ -20,6 +20,8 @@ lucide.createIcons();
 // [[ Variables ]] //
 var user = await initAuth();
 var playerId = user.uid;
+
+console.log(user);
 
 var spacing = 25;
 var selectedTrack = null;
@@ -246,8 +248,10 @@ function loadAllTracks(tracks) {
             createEntryForList(gameTracks, track);
 
         } else {
-            createEntryForList(playerTracks, track);
-            createEntryForList(personalTracks, track);
+            if (track.getAuthorId() == playerId) {
+                createEntryForList(playerTracks, track);
+                createEntryForList(personalTracks, track);
+            }
         }
     }
 }
@@ -280,6 +284,7 @@ async function startLobby(track, locality) {
 
 let tracks = tracks_.map(t => Track.toInstance(t));
 let leaderboards = leaderboards_;
+
 
 loadAllTracks(tracks);
 

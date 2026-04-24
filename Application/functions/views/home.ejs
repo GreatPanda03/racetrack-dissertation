@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
     <%- include("./partials/head.ejs") %>
+    <script type="module" src="/js/page-home.js"></script>
 </head>
 <body>
     <div class="container">
@@ -15,13 +16,24 @@
                 <p>
                     Welcome to <b>Tracer Racers</b>, a turn-based 2D racing game! 
                 </p>
+                <hr>
                 <p>
                     In a typical racing game, you might race around tracks in 3D and full controls. This game is a little more laid back with some maths involved!
                     Your goal is to race around tracks using <b>vectors</b>. Just how vectors have a horizontal and vertical component, your velocity also has a horizontal and vertical velocity.
                     However, you can only move at most 1 unit vertically, 1 unit horizontally, or both!
-                </p>    
+                </p>
                 <p style="text-align: center; font-weight: bold;">
                     Can you keep your speed in line to be the fastest racer around?
+                </p>
+                <hr>
+                <p>
+                    You can play the game without an account. However, you'll need to sign in to save your scores and built tracks.
+                </p>
+                <p style="text-align: center;">
+                    <button id="sign-in-google" class="btn btn-primary">
+                        <i data-lucide="log-in"></i> &nbsp;
+                        Sign In with Google
+                    </button>
                 </p>
             </div>
         </div>

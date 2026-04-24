@@ -1,7 +1,7 @@
 {
   "name": "application",
   "version": "3.0.0",
-  "main": "src/app.js",
+  "main": "service.js",
   "type": "module",
   "scripts": {
     "test": "vitest"

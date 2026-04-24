@@ -641,15 +641,8 @@ if (isOnline) {
         let lobbyObj = snapshot.val() || null;
 
         if (!lobbyObj) {
-            let racePath = `races/${lobby.getId()}`
-            let raceRef = ref(db, racePath);
-            let raceObj = snapshot.val() || null;
-
-            if (raceObj) { // lobby started as race
-                window.location.href = racePath;
-            } else { // lobby no longer exists
-                window.location.href = "/tracks";
-            }
+            // redirect to race - if no race, will go back
+            window.location.href = `/races/${lobby.getId()}`;
         }
 
         lobby = Lobby.toInstance(lobbyObj)

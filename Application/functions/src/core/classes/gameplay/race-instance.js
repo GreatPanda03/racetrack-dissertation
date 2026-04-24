@@ -8,45 +8,76 @@ import Vector2 from "../geometry/vector2.js";
 import Line from "../geometry/line.js";
 import Track from "../track/track.js";
 import TrackForm from "../track/track-form.js";
-import RaceCar from "../gameplay/racecar.js";
-import RaceStats from "../gameplay/race-stats.js";
+import Player from "./player.js";
+import RaceCar from "./racecar.js";
+import RaceStats from "./race-stats.js";
+import Lobby from "./lobby.js";
 import Validator from "../../utilities/validator.js";
+import PLAYER_TYPE from "../../enums/player-type.js";
 import RACECAR_STATE from "../../enums/racecar-state.js";
 import MATERIAL_INFO from "../../enums/material-info.js";
 
 
 export default class RaceInstance {
+    #lobby;         // Lobby
     #track;         // Track
     #form;          // TrackForm
     #racecars;      // RaceCar[]
     #raceStats;     // RaceStats[]
     #spacing;       // float
+    #turn;          // int
+    #elapsedTime;   // float
+    #pendingMoves;  // Vector2[][]
 
-    constructor(track, racecars = [], spacing = 10) {
+    constructor(lobby, track, spacing = 10, players = []) {
+        if (!lobby && !track) {
+            return; // assume empty
+        }
+
+        Validator.isInstance(lobby, Lobby);
         Validator.isInstance(track, Track);
-        Validator.isInstanceList(racecars, RaceCar);
         Validator.isNumeric(spacing);
+        Validator.isInstanceList(players, Player);
 
+        // main set up
+        this.#lobby = lobby;
         this.#track = track;
         this.#form = new TrackForm(track);
         this.#racecars = [];
         this.#raceStats = [];
-        this.setSpacing(spacing);
+        this.#spacing = spacing;
+        this.#turn = 0;
+        this.#elapsedTime = 0;
+        this.#pendingMoves = [];
 
-        if (racecars.length > 0) {
-            for (let racecar of racecars) {
-                this.addRacecar(racecar);
-                this.moveRacecarToStart(racecar);
-            }
-        }
+        // player additions
+        for (let player of players) {
+            let id = player.getId();
+            let playerType = player.getPlayerType();
+            let colour = lobby.getPlayerDetail(id, "colour");
+            let carType = lobby.getPlayerDetail(id, "carType");
+
+            let racecar = new RaceCar();
+            racecar.setPlayerId(id);
+            racecar.setPlayerType(playerType);
+            racecar.setColour(colour);
+            racecar.setCarType(carType);
+            
+            this.addRacecar(racecar);
+            this.moveRacecarToStart(racecar);
+        };
     }
 
     // getters / setters
+    getLobby() { return this.#lobby; }
     getTrack() { return this.#track; }
     getForm() { return this.#form; }
     getRacecars() { return this.#racecars; }
     getRaceStats() { return this.#raceStats; }
     getSpacing() { return this.#spacing; }
+    getTurn() { return this.#turn; }
+    getElapsedTime() { return this.#elapsedTime; }
+    getPendingMoves() { return this.#pendingMoves; }
 
     setSpacing(spacing) {
         Validator.isNumeric(spacing);
@@ -54,7 +85,8 @@ export default class RaceInstance {
     }
 
 
-    // methods
+    
+    // [[ Preparation ]] //
     addRacecar(racecar) {
         let track = this.#track;
         let racecars = this.#racecars;
@@ -64,22 +96,7 @@ export default class RaceInstance {
         Validator.listAbsence(racecars, racecar);
 
         racecars.push(racecar);
-        raceStats.push(new RaceStats(track, racecar));
-    }
-
-    getRacecarStats(racecar) {
-        let raceStats = this.#raceStats;
-        let stats = raceStats.find(s => s.getRacecar() == racecar);
-    
-        if (!stats) throw new Error("[RaceInstance] No stats associated with the given racecar");
-
-        return stats;
-    }
-
-    isAnyRacecarInState(state) {
-        Validator.valuePresence(RACECAR_STATE, state);
-
-        return this.#raceStats.some(rs => rs.getState() == state);
+        raceStats.push(new RaceStats(track, racecar.getPlayerId()));
     }
 
     moveRacecarToStart(racecar) {
@@ -98,8 +115,46 @@ export default class RaceInstance {
         racecar.setPosition(startPos.scale(1 / spacing).round());
     }
 
-    // [source 1] - containment
-    getPossibleMoves(racecar) {
+
+
+    // [[ Querying ]] //
+    getRacecarStats(racecar) {
+        let raceStats = this.#raceStats;
+        let stats = raceStats.find(s => s.getPlayerId() == racecar.getPlayerId());
+    
+        if (!stats) throw new Error("[RaceInstance] No stats associated with the given racecar");
+
+        return stats;
+    }
+
+    isAnyRacecarInState(state) {
+        Validator.valuePresence(RACECAR_STATE, state);
+
+        return this.#raceStats.some(rs => rs.getState() == state);
+    }
+
+
+
+    // [[ Turn Handling ]] //
+    findNextTurn() {
+        this.#turn += 1;
+
+        console.log("Turn:", this.#turn);
+
+        if (this.#turn >= this.#racecars.length) {
+            console.log("Applying all moves");
+            this.applyPendingMoves();
+        }
+    }
+
+    getCurrentPlayer() {
+        return this.#racecars[this.#turn];
+    }
+
+
+    
+    // [[ Move Handling ]] //
+    getPossibleMoves(racecar) { // [source 1] - containment
 
         /*
             * TODO: MAYBE rework this so that ALL INDIVIDUAL MOVE LINES are considered
@@ -188,8 +243,16 @@ export default class RaceInstance {
         return moves;
     }
 
-    // [source 1] - collisions
-    predictMove(racecar, acceleration) {
+    isMoveLegal(racecar, move) {
+        // TODO...
+    }
+
+    addPendingMove(racecar, move) {
+        let index = this.getRacecars().findIndex(r => r == racecar);
+        this.#pendingMoves[index] = move;
+    }
+    
+    predictMove(racecar, acceleration) { // [source 1] - collisions
         Validator.isInstance(racecar, RaceCar);
         Validator.isInstance(acceleration, Vector2);
 
@@ -298,26 +361,115 @@ export default class RaceInstance {
         }
     }
 
+    applyPendingMoves() {
+        let racecars = this.#racecars;
+        let pendingMoves = this.#pendingMoves;
+        let crashed = [];
+    
+        for (let r = 0; r < racecars.length; r++) {
+            let move = pendingMoves[r];
+            if (!move) continue;
+            
+            let racecar = racecars[r];
+            let stats = this.getRacecarStats(racecar);
+    
+            this.moveRacecar(racecar, move);
+            
+            if (stats.getState() == RACECAR_STATE.Crashed) {
+                crashed.push(racecar);
+                stats.addCrash();
+            }
+        }
+    
+        // TODO: propagate option to host
+        if (crashed.length > 0) {
+            let playersCrashed = crashed.some(
+                r => r.getPlayerType() == PLAYER_TYPE.Player);
+    
+            let robotsCrashed = crashed.some(
+                r => r.getPlayerType() == PLAYER_TYPE.Robot);
+    
+            let lobbyOptions = this.getLobby().getOptions();
+            let autoPlayers = !playersCrashed || (playersCrashed && lobbyOptions["Auto-retry Players"]);
+            let autoRobots = !robotsCrashed || (robotsCrashed && lobbyOptions["Auto-retry Robots"]);
+    
+            /*
+            if (autoPlayers && autoRobots) {
+                this.retryCrashedRacecars(crashed);
+            }
+            */
+
+            this.retryCrashedRacecars(crashed);
+        }
+    
+        this.#pendingMoves = [];
+        this.#elapsedTime += 1;
+        this.#turn = 0;
+    }
+
+
+
+    // [[ Crash Handling ]] //
+    retryCrashedRacecars() {
+        let racecars = this.#racecars;
+
+        for (let racecar of racecars) {
+            let stats = this.getRacecarStats(racecar);
+
+            if (stats.getState() == RACECAR_STATE.Crashed) {
+                stats.setState(RACECAR_STATE.Racing);
+                
+                // restart from the last move
+                let moves = stats.getMoves();
+                let lastPath = moves[moves.length - 1].Path;
+                let lastPos = lastPath.start;
+
+                racecar.setPosition(lastPos);
+                racecar.setVelocity(new Vector2());
+            }
+        }
+    }
+
+    retireCrashedRacecars() {
+        let racecars = this.#racecars;
+
+        for (let racecar of racecars) {
+            let stats = this.getRacecarStats(racecar);
+    
+            if (stats.getState() == RACECAR_STATE.Crashed) {
+                stats.setState(RACECAR_STATE.Retired);
+            }
+        }
+    }
+
 
     // serialisation
     toObject() {
         return {
+            lobby: this.#lobby.toObject(),
             track: this.#track.toObject(),
-            form: this.#form.toObject(),
+            // form is expensive to save - reconstructed
             racecars: this.#racecars.map(r => r.toObject()),
             raceStats: this.#raceStats.map(s => s.toObject()),
-            spacing: this.#spacing
+            spacing: this.#spacing,
+            turn: this.#turn,
+            elapsedTime: this.#elapsedTime,
+            pendingMoves: this.#pendingMoves.map(m => m.toObject())
         };
     }
 
     static toInstance(object) {
         let instance = new RaceInstance();
-        
+
+        instance.#lobby = Lobby.toInstance(object.lobby);
         instance.#track = Track.toInstance(object.track);
-        instance.#form = TrackForm.toInstance(object.form);
-        instance.#racecars = object.racecars.map(r => RaceCar.toInstance(r));
-        instance.#raceStats = object.raceStats.map(s => RaceStats.toInstance(s));
+        instance.#form = new TrackForm(instance.#track);
+        instance.#racecars = object.racecars?.map(r => RaceCar.toInstance(r)) ?? [];
+        instance.#raceStats = object.raceStats?.map(s => RaceStats.toInstance(s)) ?? [];
         instance.#spacing = object.spacing;
+        instance.#turn = object.turn;
+        instance.#elapsedTime = object.elapsedTime;
+        instance.#pendingMoves = object.pendingMoves?.map(m => Vector2.toInstance(m)) ?? [];
 
         return instance;
     }

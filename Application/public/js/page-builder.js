@@ -11,12 +11,17 @@ import {
     SplineUtil, Validator
 } from "/core/index.js";
 
+import { initAuth, signInWithGoogle } from "./firebase.js";
+
 import GeneralUI from "./utilities/general-ui.js";
 
 lucide.createIcons();
 
 
 // [[ Variables ]] //
+var user = await initAuth();
+var playerId = user.uid;
+
 var canvas = document.getElementById("build-canvas");
 var ctx = canvas.getContext("2d");
 
@@ -64,6 +69,15 @@ function recordAction(action) {
 
 async function saveTrack(trackJson) {
     Validator.isPrimitive(trackJson, "string");
+
+    if (user.isAnonymous) {
+        user = await signInWithGoogle();
+        if (!user) {
+            console.log("Login failed");
+            return false;
+        }
+        playerId = user.uid;
+    }
 
     try {
         let trackId = trackJson.id_;
@@ -364,6 +378,7 @@ function initialiseOptions_Save() {
         setTimeout(() => {
             saveBtn.classList.add("btn-primary");
             saveBtn.classList.remove("btn-success");
+            saveBtn.classList.remove("btn-danger");
         }, 500);
     });
 }
