@@ -51,10 +51,15 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public"))); // pages, styles, etc.
 app.use("/core", express.static(path.join(__dirname, "/src/core"))); // core classes etc.
 
+app.set("view cache", false); // so firebase doesn't show old pages
+app.disable("view cache");
+
 const { version } = pkg;
 app.locals.version = version;
 
 var usingFirebase = true;
+
+console.log("Directory:", __dirname);
 
 
 
@@ -102,7 +107,7 @@ function createEmptyLobbyWithHost(lobbyId, hostUser, trackId) {
 
     let host = new Player(
         hostUser.uid, 
-        hostUser.displayName, 
+        hostUser.displayName ?? "", 
         PLAYER_TYPE.Player);
     
     let lobby = new Lobby();
@@ -704,7 +709,13 @@ app.post("/api/races/:raceId/move", async (request, response) => {
 
 // [[ App Webpage Views ]] //
 
+import fs from "fs";
+
 app.get("/", (request, response) => {
+    const viewPath = path.join(__dirname, "views", "home.ejs");
+    const contents = fs.readFileSync(viewPath, "utf8");
+    console.log("Content:", contents.slice(0, 500));
+
     response.render("home", { title: "Home" });
 });
 

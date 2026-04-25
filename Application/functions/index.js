@@ -32,10 +32,11 @@ export const app = onRequest(
     { invoker: "public" },
     (req, res) => {
         try {
+            console.log("Returning Express App");
             return appExpress(req, res);
         
         } catch (err) {
-            console.error("FUNCTION CRASH:", err);
+            console.error("Function crashed:", err);
             res.status(500).send(err.message);
         }
     }

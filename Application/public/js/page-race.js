@@ -21,7 +21,7 @@ import {
     Validator
 } from "/core/index.js";
 
-import { initAuth } from "./firebase.js";
+import { initAuth, signInWithGoogle } from "./firebase.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
 import GeneralUI from "./utilities/general-ui.js";
@@ -428,50 +428,89 @@ async function saveRecordToLeaderboard(player, time, carType, moves) {
     // TODO: sanitise
     
     // track ID defined at Set Up
+    async function saveScore() {
+        try {
+            let data = {player, time, carType, moves};
 
-    try {
-        let data = {player, time, carType, moves};
+            let response = await fetch(`/api/leaderboards/${trackId}`, {
+                method: "POST",
+                headers: new Headers({ "Content-Type": "application/json"}),
+                body: JSON.stringify( data )
+            });
 
-        let response = await fetch(`/api/leaderboards/${trackId}`, {
-            method: "POST",
-            headers: new Headers({ "Content-Type": "application/json"}),
-            body: JSON.stringify( data )
-        });
+            let result = await response.json();
 
-        let result = await response.json();
+            let oldTime = result.oldTime ?? null;
+            let newTime = result.newTime;
+            let better = !oldTime || newTime < oldTime;
 
-        let oldTime = result.oldTime ?? null;
-        let newTime = result.newTime;
-        let better = !oldTime || newTime < oldTime;
+            let oldTimeF = oldTime ? oldTime.toFixed(3) : null;
+            let newTimeF = newTime.toFixed(3);
 
-        let oldTimeF = oldTime ? oldTime.toFixed(3) : null;
-        let newTimeF = newTime.toFixed(3);
+            if (better) {
+                let popup = document.getElementById("modal-race-results");
+                let results = popup.getElementsByClassName("results")[0];
+                let text = "";
 
-        if (better) {
-            let popup = document.getElementById("modal-race-results");
-            let results = popup.getElementsByClassName("results")[0];
-            let text = "";
+                if (oldTimeF) {
+                    let diff = (oldTime - newTime).toFixed(3);
+                    text = `<b>New Record (${carType}):</b> ${newTimeF} s <i>(${diff} s faster, from ${oldTimeF} s)</i>`;
 
-            if (oldTimeF) {
-                let diff = (oldTime - newTime).toFixed(3);
-                text = `<b>New Record (${carType}):</b> ${newTimeF} s <i>(${diff} s faster, from ${oldTimeF} s)</i>`;
+                } else {
+                    text = `<b>New Record (${carType}):</b> ${newTimeF} s`;
+                }
+                
+                let span = document.createElement("span");
+                span.innerHTML = text
+                span.style.color = "#0A0";
 
-            } else {
-                text = `<b>New Record (${carType}):</b> ${newTimeF} s`;
+                results.appendChild(span);
             }
-            
-            let span = document.createElement("span");
-            span.innerHTML = text
-            span.style.color = "#0A0";
 
-            results.appendChild(span);
+            return true;
+
+        } catch(error) {
+            console.log(error);
+            return false;
         }
+    }
 
-        return true;
+    if (user.isAnonymous) {
+        GeneralUI.createToast("Unsaved Score",
+            "You earned yourself a new record, sign in to save it!",
+            "#0A0");
 
-    } catch(error) {
-        console.log(error);
-        return false;
+        let debounce = false;
+        let signInBtn = document.getElementById("results-sign-in-google");
+        signInBtn.hidden = false;
+
+        signInBtn.addEventListener("click", async (e) => {
+            if (debounce || !user.isAnonymous) return;
+            debounce = true;
+
+            let userResult = await signInWithGoogle();
+            
+            if (userResult) {
+                user = userResult;
+                playerId = userResult.uid;
+                saveScore();
+
+                signInBtn.classList.add("btn-success");
+                signInBtn.classList.remove("btn-primary");
+                signInBtn.querySelector("span").innerHTML =
+                    `Signed in as "${user.displayName}"`;
+            
+            } else {
+                GeneralUI.createToast("Failed Sign In",
+                    "Something went wrong when trying to sign in.",
+                    "#A00");
+            }
+
+            debounce = false;
+        });
+        
+    } else {
+        saveScore();
     }
 }
 
@@ -771,7 +810,7 @@ function onInstanceUpdate() {
         }
 
         GeneralUI.createToast("Your Turn",
-            "It's your turn to make a move!",
+            `<b>${user.displayName}</b>, it's your turn to make a move!`,
             "#59F");
     }
 }
@@ -799,16 +838,16 @@ if (!raceInstance.getLobby().getPlayers()[playerId]) {
 }
 
 racecarSprite = new Image();
-racecarSprite.src = "http://localhost:3000/images/race-car-sprite-nobg.png";
+racecarSprite.src = "/images/race-car-sprite-nobg.png";
 
 racecarSprite.onload = () => { // TODO: make this independent
     validateEligibility();
     
+    loadTrack(track, raceInstance);
+
     initialisePlayCanvas();
 
     initialiseResultsPopup();
-
-    loadTrack(track, raceInstance);
 
     onInstanceUpdate();
 }

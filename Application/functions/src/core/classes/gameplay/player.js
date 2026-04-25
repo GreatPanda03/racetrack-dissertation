@@ -44,7 +44,7 @@ export default class Player {
 
     static toInstance(object) {
         let player = new Player(
-            object.id, object.name, object.playerType);
+            object.id, object.name ?? "", object.playerType);
 
         return player;
     }
