@@ -345,7 +345,20 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - As of the last entry:
     - Implemented v2.2.0 (see changelog)
 
-- Supervisor meeting to be held on **2026/04/02 THU**
-    - ...
+- Supervisor meeting held on **2026/04/02 THU**
+    - Discussed adjustments to mini-viva presentation
+
+---
+
+### 2026/04/27 MON
+<details>
+<summary>Final Entry</summary>
+
+- This entry marks the end of the project log.
+
+- As of the last entry:
+    - Implemented v3.0.0 & more (see changelog)
+
+- No supervisor meeting held as of the last entry
 
 </details>
