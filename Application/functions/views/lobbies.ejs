@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <%- include("./partials/head.ejs") %>
+    <script type="module" src="/js/page-lobbies.js"></script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <%- include("./partials/nav.ejs") %>
+        </nav>
+
+        <div class="content">
+            <div class="introduction">
+                <p>
+                    Welcome to the <b>Lobbies</b> section. Here, you can find all available online games other players are hosting!
+                </p>
+                <hr>
+                <div id="lobby-list">
+                    <div id="lobby-list-header" class="d-flex justify-content-between">
+                        <div id="lobby-list-description">
+                            Loading lobbies...
+                        </div>
+                        <button id="refresh-lobbies" class="btn btn-primary">
+                            <i data-lucide="list-restart"></i>
+                            Refresh Lobbies
+                        </button>
+                    </div>
+                    <br>
+                    <div id="lobby-list-body" class="d-flex flex-column gap-3">
+                        <!-- script generated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <%- include("./partials/toast.ejs") %>
+
+        <footer>
+            <%- include("./partials/footer.ejs") %>
+        </footer>
+    </div>
+
+    <template id="lobby-entry-template">
+        <div class="lobby-entry rounded p-2 d-flex gap-3">
+            <div class="entry-left">
+                <canvas class="entry-canvas" width="120" height="120"></canvas>
+                <div class="entry-track-name text-center"><b>Track Name</b></div>
+            </div>
+            <div class="entry-right" style="width: 100%;">
+                <div class="entry-header">
+                    <b class="entry-lobby-title">Lobby Title</b>
+                </div>
+                <div class="entry-body">
+                    <b>Host:</b> Player
+                    <br><b>Players:</b> 3 / 5
+                    <br><b>Robots:</b> 5
+                </div>
+                <hr class="m-1">
+                <div class="entry-footer mt-2">
+                    <button class="entry-join btn btn-success">
+                        <i data-lucide="play"></i>
+                        Join Lobby
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+</body>
+</html>

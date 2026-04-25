@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <%- include("./partials/head.ejs") %>
+    <script type="module" src="/js/page-race.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <%- include("./partials/nav.ejs") %>
+        </nav>
+
+        <div class="content">
+            <div class="introduction">
+                <p>
+                    Welcome to <b>The Oval</b>! Start your engines...
+                </p>
+                <p>
+                    Your race car moves using <b>vectors</b>. This vector affects your current velocity, determining where you can move.
+                    Each turn, you can only change your velocity by at most 1 unit horizontally, 1 unit vertically, or both.
+                    Watch out for materials: if you're in them, they can affect your next move!
+                </p>
+            </div>
+            
+            <hr/>
+
+            <div>
+                <div class="d-flex gap-3" style="margin-bottom: 10px;">
+                    <div>
+                        <i data-lucide="clock"></i>
+                        <span id="race-time">
+                            <b>Time:</b> 999 seconds
+                        </span>
+                    </div>
+                </div>
+
+                <div style="position: relative;">
+                    <div class="canvas-wrapper">
+                        <canvas id="track-canvas" width="750" height="750" style="z-index: 0;"></canvas>
+                        <canvas id="play-canvas" width="750" height="750" style="z-index: 1;"></canvas>
+                    </div>
+
+                    <div id="race-stats" class="d-flex flex-column gap-3">
+                        <!-- script generated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-race-results" class="modal fade" tabindes="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">You Win!</h5>
+                        <button id="results-close" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body results">
+                        <p></p> <!-- script generated -->
+                    </div>
+                    <div class="modal-footer d-flex justify-content-center">
+                        <button id="results-build" class="btn btn-primary" data-bs-dismiss="modal" hidden>
+                            <i data-lucide="hammer"></i>
+                            Continue Building
+                        </button>
+                        <button id="results-retry" class="btn btn-success" data-bs-dismiss="modal">
+                            <i data-lucide="wrench"></i>
+                            Retry Selected From Crash
+                        </button>
+                        <button id="results-sign-in-google" class="btn btn-primary" hidden>
+                            <i data-lucide="trophy"></i> &nbsp;
+                            <span>Sign In with Google to Save Score</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <%- include("./partials/toast.ejs") %>
+            
+        <footer>
+            <%- include("./partials/footer.ejs") %>
+        </footer>
+    </div>
+
+    <!-- race stats entry template -->
+    <template id="stats-entry-template">
+        <div class="accordion">
+            <div class="accordion-item">
+                <div class="stats-entry"></div>
+                    <div class="accordion-header p-1">
+                        <button class="stats-header accordion-button" data-bs-toggle="collapse" data-bg-target="">
+                            Your Stats
+                        </button>
+                    </div>
+                    <div id="" class="accordion-collapse collapse show">
+                        <div class="stats-body accordion-body d-flex flex-column"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        window.raceId_ = <%- JSON.stringify(raceId) %>;
+    </script>
+</body>
+</html>

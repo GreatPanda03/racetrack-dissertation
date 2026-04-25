@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
     Lobby,
-    RACER_TYPE, RACECAR_INFO
+    PLAYER_TYPE, RACECAR_INFO
 } from "../../../src/core";
 
 
@@ -18,9 +18,9 @@ describe("classes.lobby.addRacer", () => {
     it("adds the given racer details as an entry in the lobby", () => {
         let lobby = new Lobby();
 
-        let racer = lobby.addRacer(RACER_TYPE.Player, "The Race Car", "#A00");
+        let racer = lobby.addRacer(PLAYER_TYPE.Player, "The Race Car", "#A00");
 
-        expect( racer.RacerType ).toBe( RACER_TYPE.Player );
+        expect( racer.RacerType ).toBe( PLAYER_TYPE.Player );
         expect( racer.CarType ).toBe( "The Race Car" );
         expect( racer.Colour ).toBe( "#A00" );
 
@@ -34,7 +34,7 @@ describe("classes.lobby.addRacer", () => {
         let carType_bad = new Object()
         let colour_bad = new Object()
 
-        let racerType_good = RACER_TYPE.Player;
+        let racerType_good = PLAYER_TYPE.Player;
         let carType_good = "The Race Car";
         let colour_good = "#A00";
 
@@ -48,7 +48,7 @@ describe("classes.lobby.removeRacer", () => {
     it("removes the given racer object from the lobby", () => {
         let lobby = new Lobby();
 
-        let racer = lobby.addRacer(RACER_TYPE.Player, "The Race Car", "#A00");
+        let racer = lobby.addRacer(PLAYER_TYPE.Player, "The Race Car", "#A00");
 
         lobby.removeRacer(racer);
 
@@ -58,7 +58,7 @@ describe("classes.lobby.removeRacer", () => {
     it("throws an error if the racer isn't a lobby member", () => {
         let lobby = new Lobby();
 
-        let racer = lobby.addRacer(RACER_TYPE.Player, "The Race Car", "#A00");
+        let racer = lobby.addRacer(PLAYER_TYPE.Player, "The Race Car", "#A00");
 
         lobby.removeRacer(racer);
 

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <%- include("./partials/head.ejs") %>
+    <script type="module" src="/js/page-builder.js"></script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <%- include("./partials/nav.ejs") %>
+        </nav>
+
+        <div class="content">
+            <div class="introduction">
+                <p>
+                    Welcome to the <b>Track Builder</b>. You can use this section to build your own tracks.
+                </p>
+                <p>
+                    Tracks are defined as a series of points, starting from Point 1.
+                    The builder also comes with a grid, showing where race cars can drive to.
+                    Race cars can only drive to a point on top of the track path, otherwise they crash!
+                </p>
+                <p>
+                    There are a few track elements to build with:
+                    <ul>
+                        <li><b>Path:</b> defines the form of the track</li>
+                        <li><b>Materials:</b> a track element which affects racer movement</li>
+                        <li><b>Obstacles:</b> a track element which causes racers to crash when driven into</li>
+                        <li><b>Decorations:</b> a track element which is ornamental and has no effect</li>
+                    </ul>
+                </p>
+            </div>
+            
+            <hr/>
+
+            <div id="main-builder">
+                
+                <!-- builder options -->
+                <div id="builder-options" class="d-flex gap-2">
+                    <button id="options-compact" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Compact Mode">
+                        <i data-lucide="fullscreen"></i>
+                        <label><b>Compact:</b> off</label>
+                    </button>
+
+                    <button id="options-details" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Track Details">
+                        <i data-lucide="notebook-pen"></i>
+                        <span><br>Details</span>
+                    </button>
+                    
+                    <button id="options-save" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save Track">
+                        <i data-lucide="save"></i>
+                        <span><br>Save</span>
+                    </button>
+                    
+                    <button id="options-save-as" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Save As Copy">
+                        <i data-lucide="save-all"></i>
+                        <span><br>Save As Copy</span>
+                    </button>
+
+                    <button id="options-undo" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Undo">
+                        <i data-lucide="undo"></i>
+                        <span><br>Undo</span>
+                    </button>
+
+                    <button id="options-redo" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Redo">
+                        <i data-lucide="redo"></i>
+                        <span><br>Redo</span>
+                    </button>
+
+                    <button id="options-test" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Test Track">
+                        <i data-lucide="play"></i>
+                        <span><br>Test</span>
+                    </button>
+
+                    <button id="options-import" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Import Track">
+                        <i data-lucide="download"></i>
+                        <span><br>Import</span>
+                    </button>
+
+                    <button id="options-export" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Export Track">
+                        <i data-lucide="share"></i>
+                        <span><br>Export</span>
+                    </button>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <div>
+                        <div class="d-flex gap-2">
+
+                            <!-- track visuals -->
+                            <div id="visual-tools" class="options-list d-flex flex-column align-items-center gap-3">
+                                <i data-lucide="eye"></i>
+
+                                <button id="visuals-nodes" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Nodes">
+                                    <i class="button-on" data-lucide="circle"></i>
+                                    <i class="button-off hidden" data-lucide="circle-off"></i>
+                                    <span><br>Node</span>
+                                </button>
+
+                                <button id="visuals-wires" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Wireframe">
+                                    <i class="button-on" data-lucide="pen"></i>
+                                    <i class="button-off hidden" data-lucide="pen-off"></i>
+                                    <span><br>Wires</span>
+                                </button>
+                                
+                                <button id="visuals-path" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Path">
+                                    <i class="button-on" data-lucide="route"></i>
+                                    <i class="button-off hidden" data-lucide="route-off"></i>
+                                    <span><br>Path</span>
+                                </button>
+
+                                <button id="visuals-materials" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Materials">
+                                    <i class="button-on" data-lucide="droplet"></i>
+                                    <i class="button-off hidden" data-lucide="droplet-off"></i>
+                                    <span><br>Materials</span>
+                                </button>
+
+                                <button id="visuals-obstacles" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Obstacles">
+                                    <i class="button-on" data-lucide="brick-wall"></i>
+                                    <i class="button-off hidden" style="position: relative">
+                                        <i data-lucide="brick-wall"></i>
+                                        <i data-lucide="slash" style="position: absolute; top: 0; left: 0;  rotate: -90deg;"></i>
+                                    </i>
+                                    <span><br>Walls</span>
+                                </button>
+
+                                <button id="visuals-decorations" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Decorations">
+                                    <i class="button-on" data-lucide="sprout"></i>
+                                    <i class="button-off hidden" style="position: relative">
+                                        <i data-lucide="sprout"></i>
+                                        <i data-lucide="slash" style="position: absolute; top: 0; left: 0; rotate: -90deg;"></i>
+                                    </i>
+                                    <span><br>Decor</span>
+                                </button>
+                                
+                                <button id="visuals-grid" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Grid">
+                                    <i class="button-on" data-lucide="grid-3x3"></i>
+                                    <i class="button-off hidden" style="position: relative">
+                                        <i data-lucide="grid-3x3"></i>
+                                        <i data-lucide="slash" style="position: absolute; top: 0; left: 0; rotate: -90deg;"></i>
+                                    </i>
+                                    <span><br>Grid</span>
+                                </button>    
+                            </div>
+
+                            <!-- build tools -->
+                            <div id="build-tools" class="options-list d-flex flex-column align-items-center gap-3">
+                                <i data-lucide="hammer"></i>
+
+                                <button id="tools-select-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Select">
+                                    <i data-lucide="mouse-pointer-2"></i>
+                                    <span><br>Select</span>
+                                </button>
+
+                                <button id="tools-pan-btn" class="btn btn-primary disabled" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Pan Canvas">
+                                    <i data-lucide="hand"></i>
+                                    <span><br>Pan Canvas</span>
+                                </button>
+
+                                <button id="tools-path-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Place Path">
+                                    <i data-lucide="route"></i>
+                                    <span><br>Path</span>
+                                </button>
+                                
+                                <div id="tools-material-div" class="btn-group dropend" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Place Material">
+                                    <button id="tools-materials-btn" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i data-lucide="droplet"></i>
+                                        <span><br>Material</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <!-- script generated -->
+                                    </ul>
+                                </div>
+                            
+                                <button id="tools-obstacles-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Place Obstacle">
+                                    <i data-lucide="brick-wall"></i>
+                                    <span><br>Wall</span>
+                                </button>
+                                
+                                <button id="tools-decoration-btn" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Place Decoration">
+                                    <i data-lucide="sprout"></i>
+                                    <span><br>Decor</span>
+                                </button>
+                            </div>
+
+                            <!-- track manipulation -->
+                            <div id="manipulation-tools" class="options-list d-flex flex-column align-items-center gap-3">
+                                <i data-lucide="move"></i>
+
+                                <button id="nodes-anticlockwise" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Shift Nodes Backwards">
+                                    <i data-lucide="rotate-ccw-square"></i>
+                                    <span><br>Shift Nodes<br>Left</span>
+                                </button>
+
+                                <button id="nodes-clockwise" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Shift Nodes Forwards">
+                                    <i data-lucide="rotate-cw-square"></i>
+                                    <span><br>Shift Nodes<br>Right</span>
+                                </button>
+
+                                <button id="track-reverse" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Flip Track Direction">
+                                    <i data-lucide="repeat"></i>
+                                    <span><br>Flip Track</span>
+                                </button>
+
+                                <button id="track-looped" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Toggle Track Looping">
+                                    <i class="button-on" data-lucide="link-2"></i>
+                                    <i class="button-off hidden" data-lucide="link-2-off"></i>
+                                    <span><br>Looped</span>
+                                </button>
+
+                                <button id="track-recentre" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Recentre Track">
+                                    <i data-lucide="focus"></i>
+                                    <span><br>Recentre</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <hr>
+
+                            <!-- 
+                                TODO: what if there was a way to automatically generate fields for an object
+                                  depending on the fields it has?
+                                
+                                * basically like "reflection" if comparing it to CSP I Unity project...
+                                * ... or like Project Sudoku custom settings fields (kind of)
+                                * is there a JS equivalent to reflection?
+                            -->
+
+                            <!-- node details -->
+                            <div id="details-node" class="hidden">
+                                <div id="details-node-title">
+                                    <b>Node X</b>
+                                </div>
+                                
+                                <div id="details-node-width">    
+                                    <label class="form-check-label">Width:</label>
+                                    <input id="node-width-input" type="number" min=5 max=250 value=25>
+                                    px
+                                </div>
+
+                                <div id="details-node-checkpoint" class="form-check mb-2">
+                                    <input id="node-checkpoint-input" class="form-check-input" type="checkbox" name="node-checkpoint-input">
+                                    <label class="form-check-label" for="node-checkpoint-input">Checkpoint</label>
+                                </div>
+
+                                <div class="d-flex justify-content-around">
+                                    <button id="details-node-addBefore" class="btn btn-secondary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Node Before">
+                                        <i data-lucide="between-horizontal-start"></i>
+                                        <span><br>Add Before</span>
+                                    </button>
+                                    
+                                    <button id="details-node-addAfter" class="btn btn-secondary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Add Node After">
+                                        <i data-lucide="between-horizontal-end"></i>
+                                        <span><br>Add After</span>
+                                    </button>
+
+                                    <button id="details-node-delete" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete Node">
+                                        <i data-lucide="trash-2"></i>
+                                        <span><br>Delete</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- material details -->
+                            <div id="details-material" class="hidden">
+                                <div id="details-material-title">
+                                    <b>Material X</b>
+                                </div>
+
+                                <div id="details-material-type" class="mb-2">
+                                    <label>Type:</label>
+
+                                    <!-- options auto-generated in track-builder.js -->
+                                    <select id="material-type-input" class="form-select"></select>
+                                </div>
+
+                                <button id="details-material-delete" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete Material">
+                                    <i data-lucide="trash-2"></i>
+                                    <span><br>Delete Material</span>
+                                </button>
+                            </div>
+
+                            <!-- obstacle details -->
+                            <div id="details-obstacle" class="hidden">
+                                <div id="details-obstacle-title">
+                                    <b>Obstacle X</b>
+                                </div>
+
+                                <button id="details-obstacle-delete" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete Obstacle">
+                                    <i data-lucide="trash-2"></i>
+                                    <span><br>Delete Obstacle</span>
+                                </button>
+                            </div>
+
+                            <!-- decoration details -->
+                            <div id="details-decoration" class="hidden">
+                                <div id="details-decoration-title">
+                                    <b>Decoration X</b>
+                                </div>
+
+                                <div id="details-decoration-colour" class="mb-2">
+                                    <label>Colour:</label>
+
+                                    <!-- options auto-generated in track-builder.js -->
+                                    <input id="decoration-colour-input" type="color"></input>
+                                </div>
+
+                                <button id="details-decoration-delete" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete Decoration">
+                                    <i data-lucide="trash-2"></i>
+                                    <span><br>Delete Decoration</span>
+                                </button>
+                            </div>
+
+                            <!-- point details -->
+                            <div id="details-point" class="hidden mt-3">
+                                <div id="details-point-title">
+                                    <b>Point X</b>
+                                </div>
+
+                                <button id="details-point-delete" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete Point">
+                                    <i data-lucide="trash-2"></i>
+                                    <span><br>Delete Point</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- canvas -->
+                    <div class="canvas-wrapped">
+                        <canvas id="build-canvas" width="750" height="750"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- track details -->
+        <div id="modal-track-details" class="modal fade" tabindes="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Track Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <form>
+                                <div class="form-group mb-2">
+                                    <label for="details-name">Track Name</label>
+                                    <input type="text" class="form-control" id="details-name" placeholder="Enter Name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="details-description">Track Description</label>
+                                    <input type="text" class="form-control" id="details-description" placeholder="Enter Description">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="details-apply" class="btn btn-success">
+                            <i data-lucide="notebook-pen"></i>
+                            Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- track importing -->
+        <div id="modal-track-import" class="modal fade" tabindes="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Enter Track JSON</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <textarea id="import-input"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="import-submit" class="btn btn-success">
+                            <i data-lucide="download"></i>
+                            Import
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>  
+
+        <!-- track exporting -->
+        <div id="modal-track-export" class="modal fade" tabindes="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Exported Track JSON</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <textarea id="export-output" readonly></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="export-copy" class="btn btn-success">
+                            <i data-lucide="clipboard-copy"></i>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- toast notification (updated by script) -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="toast-icon p-1" data-lucide="square"></i>&nbsp;
+                    <strong class="toast-title me-auto"></strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body"></div>
+            </div>
+        </div>
+
+        <footer>
+            <%- include("./partials/footer.ejs") %>
+        </footer>
+    </div>
+
+    <script>
+        window.trackToLoad = <%- JSON.stringify(trackToLoad) %>;
+    </script>
+</body>
+</html>
