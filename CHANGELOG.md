@@ -13,10 +13,40 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 3.1.0
+**Date:** 2026/04/26
+<details>
+<summary>Bug Fixing and Clean Up</lobby>
+
+**Additions / Changes:**
+1. Added automatic lobby deletion when the host leaves by means other than the Leave button
+2. Added automatically lobby update when a player leaves by means other than the Leave button
+3. Changed default track spacing to 25 (from 10)
+4. Added track rules before saving
+    * Unlooped tracks must have at least 2 nodes
+    * Looped tracks must have at least 3 nodes and 1 checkpoint
+    * Prevents being able to "cheat" tracks
+
+**Bugs Fixed:**
+1. Fixed Tracks List not showing tracks made by other players unless made by the player themselves
+2. Fixed elements not integrated with the multiplayer system
+    * Fixed Track Builder "Save" and "Save As Copy" options
+    * Fixed Track Builder "Test" options
+    * Fixed Track List detais modal "Edit" and "Delete" options
+3. Fixed modal popups occasionally leaving a backdrop behind when closed
+4. Amended all tests which broken due to v3.0.0 changes (all fixed)
+
+**Bugs Discovered:**
+No additional bugs found.
+
+</details>
+
+---
+
 ### Version: 3.0.0
 **Date:** 2026/04/25
 <details>
-<summary>V3 Online Lobby System</summary>
+<summary>V3 - Online Multiplayer</summary>
 
 **Additions / Changes**
 1. Online Lobbies - join other players!
@@ -26,6 +56,12 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
     * May still be buggy in some places!
 3. (DEV) Refactored endpoints to be more readable and consistent
 4. Other relatively small changes to styling, UX, etc.
+
+**Bugs Fixed:**
+No existing bugs fixed.
+
+**Bugs Discovered**:
+No additional bugs found.
 
 </details>
 

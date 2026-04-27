@@ -4,7 +4,7 @@ import {
     Vector2, PathNode, Polygon,
     Material,
     MATERIAL_INFO
-} from "../../../../src/core";
+} from "../../../../functions/src/core";
 
 
 describe("classes.material.new", () => {

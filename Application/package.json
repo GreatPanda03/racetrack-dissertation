@@ -8,11 +8,9 @@
   "scripts": {
     "test": "vitest"
   },
-  "keywords": [
-    "Computer Science",
-    "MSc",
-    "Dissertation",
-    "RaceTrack"
-  ],
-  "license": "ISC"
+  "dependencies": {
+    "vitest": "^4.1.5",
+    "jsdom": "^27.0.1",
+    "canvas": "^3.2.1"
+  }
 }

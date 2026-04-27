@@ -67,26 +67,50 @@ function recordAction(action) {
     changesMade = true;
 }
 
-async function saveTrack(trackJson) {
-    Validator.isPrimitive(trackJson, "string");
+async function saveTrack(trackObj) {
+    // "trackObj" for consistency between different save uses
 
     if (user.isAnonymous) {
-        user = await signInWithGoogle();
+        let newUser = await signInWithGoogle();
         if (!user) {
             console.log("Login failed");
             return false;
         }
+        user = newUser;
         playerId = user.uid;
     }
 
-    try {
-        let trackId = trackJson.id_;
+    // final info
+    trackObj.authorId = playerId;
+    trackObj.author = user.displayName;
 
-        let saveRes = await fetch(`/api/tracks/${trackId}`, {
-            method: "PATCH",
-            headers: new Headers({ "Content-Type": "application/json"}),
-            body: trackJson
-        });
+    try {
+        let trackId = trackObj._id;
+        let saveRes;
+
+        if (!trackId) {
+            saveRes = await fetch(`/api/tracks`, {
+                method: "POST",
+                headers: new Headers({ "Content-Type": "application/json"}),
+                body: JSON.stringify(trackObj)
+            });
+
+            if (saveRes.ok) {
+                let newId = (await saveRes.json()).id;
+
+                if (!trackId) {
+                    changesMade = false;
+                    window.location.href = `/builder/${newId}`;
+                }
+            }
+        
+        } else {
+            saveRes = await fetch(`/api/tracks/${trackId}`, {
+                method: "PATCH",
+                headers: new Headers({ "Content-Type": "application/json"}),
+                body: JSON.stringify(trackObj)
+            });
+        }
 
         return saveRes.ok;
 
@@ -331,6 +355,9 @@ function initialiseOptions_Details() {
     let detailsPrompt = document.getElementById("options-details");
     let detailsApply = document.getElementById("details-apply");
 
+    let detailsPopup = document.getElementById("modal-track-details");
+    let detailsModal = new bootstrap.Modal(detailsPopup);
+
     detailsPrompt.addEventListener("click", (e) => {
         let nameInput = document.getElementById("details-name");
         let descriptionInput = document.getElementById("details-description");
@@ -338,9 +365,7 @@ function initialiseOptions_Details() {
         nameInput.value = track.getName();
         descriptionInput.value = track.getDescription();
 
-        let popup = document.getElementById("modal-track-details");
-        let modal = new bootstrap.Modal(popup);
-        modal.show();
+        detailsModal.show();
     });
 
     detailsApply.addEventListener("click", () => {
@@ -356,12 +381,36 @@ function initialiseOptions_Details() {
     });
 }
 
+function validateTrackRequirements() {
+    let path = track.getPath();
+    let pathCount = path.length;
+    let checkpointCount = path.filter(p => p.isCheckpoint()).length;
+    let looped = track.isLooped();
+
+    if (looped) {
+        if (pathCount < 3 || checkpointCount < 1) {
+            displayToast("Track Not Saved", "Looped tracks must have at least 3 nodes and 1 checkpoint!", "#C00");
+            return false;
+        }
+    } else {
+        if (pathCount < 2) {
+            displayToast("Track Not Saved", "Unlooped tracks must have at least 2!", "#C00");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function initialiseOptions_Save() {
     let saveBtn = document.getElementById("options-save");
 
     saveBtn.addEventListener("click", async () => {
-        let trackJson = JSON.stringify(track);
-        let success = await saveTrack(trackJson);
+        let validTrack = validateTrackRequirements()
+        if (!validTrack) return;
+
+        let trackObj = track.toObject();
+        let success = await saveTrack(trackObj);
 
         if (success) {
             changesMade = false;
@@ -387,12 +436,19 @@ function initialiseOptions_SaveAs() {
     let saveAsBtn = document.getElementById("options-save-as");
     
     saveAsBtn.addEventListener("click", async (e) => {
-        let object = track.toObject();
-        object._id = null;
-        object.name = object.name + " Copy";
+        let pathCount = track.getPath().length;
+        let looped = track.isLooped();
 
-        let trackJson = JSON.stringify(object);
-        let success = saveTrack(trackJson);
+        if ((looped && pathCount < 3) || (!looped && pathCount < 2)) {
+            displayToast("Track Not Saved", "Your track must have at least 2 nodes if unlooped, or at least 3 if looped!", "#C00");
+            return;
+        }
+
+        let trackObj = track.toObject();
+        trackObj._id = null;
+        trackObj.name = trackObj.name + " Copy";
+
+        let success = saveTrack(trackObj);
 
         if (success) {
             displayToast("Track Copy Saved", "Successfully saved the track as a new copy.", "#0A0");
@@ -605,15 +661,28 @@ function initialiseOptions_Test() {
 
     // TODO: add option to choose a race car
 
-    testBtn.addEventListener("click", (e) => {
-        console.log(track.getId());
+    testBtn.addEventListener("click", async (e) => {
+        let trackId = track.getId();
 
-        if (!track.getId()) {
+        if (!trackId) {
             displayToast("Cannot Test Unsaved Track", "Please save your track first to test it out.", "#C00");
             return;
         }
 
-        window.location.href = `/tracks/play/${track.getId()}/1`;
+        let testRes = await fetch(`/api/builder/test/${trackId}`, {
+            method: "POST",
+            headers: new Headers({ "Content-Type": "application/json" }),
+            body: JSON.stringify({ user })
+        }).then(r => r.json());
+
+        if (testRes.success) {
+            let raceId = testRes.raceId;
+            window.location.href = `/races/${raceId}`;
+        
+        } else {
+            displayToast("Failed to Start Test", `Something went wrong when trying to start the test race: ${testRes.error}`, "#C00");
+            return;
+        }
     });
 }
 
@@ -622,10 +691,11 @@ function initialiseOptions_Import() {
     let importSubmit = document.getElementById("import-submit");
     let importInput = document.getElementById("import-input");
 
+    let importPopup = document.getElementById("modal-track-import");
+    let importModal = new bootstrap.Modal(importPopup);
+
     importPrompt.addEventListener("click", (e) => {
-        let popup = document.getElementById("modal-track-import");
-        let modal = new bootstrap.Modal(popup);
-        modal.show();
+        importModal.show();
     });
 
     importSubmit.addEventListener("click", (e) => {
@@ -635,9 +705,7 @@ function initialiseOptions_Import() {
             track = Track.toInstance(JSON.parse(json));
             renderer.setTrack(track);
 
-            let popup = document.getElementById("modal-track-import");
-            let modal = new bootstrap.Modal(popup);
-            modal.hide();
+            importModal.hide();
 
             displayToast("Track Imported", "Successfully imported the track.", "#0A0");
 
@@ -652,11 +720,11 @@ function initialiseOptions_Export() {
     let exportCopy = document.getElementById("export-copy");
     let exportOutput = document.getElementById("export-output");
 
-    exportPrompt.addEventListener("click", (e) => {
-        let popup = document.getElementById("modal-track-export");
-        let modal = new bootstrap.Modal(popup);
-        modal.show();
+    let exportPopup = document.getElementById("modal-track-export");
+    let exportModal = new bootstrap.Modal(exportPopup);
 
+    exportPrompt.addEventListener("click", (e) => {
+        exportModal.show();
         exportOutput.value = JSON.stringify(track, null, 2);
     });
 
@@ -1348,8 +1416,16 @@ function loadAllUI() {
 }
 
 
-if (trackToLoad) {
-    track = Track.toInstance(trackToLoad);
+if (trackToLoad_) {
+    let authorId = trackToLoad_.authorId;
+    let author = trackToLoad_.author;
+
+    // forbidden access
+    if (playerId != authorId || author == "Game") {
+        window.location.href = "/builder";
+    }
+
+    track = Track.toInstance(trackToLoad_);
 } else {
     track = new Track();
 }

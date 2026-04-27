@@ -4,7 +4,7 @@ import {
     Vector2,
     TrackNode,
     SplineUtil
-} from "../../src/core";
+} from "../../functions/src/core";
 
 
 // desmos visualiser (created by Muhammad Mogra):

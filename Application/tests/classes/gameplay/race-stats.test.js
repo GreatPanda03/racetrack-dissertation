@@ -3,37 +3,37 @@ import { describe, it, expect } from "vitest";
 import {
     Vector2, Line,
     TrackNode, Track,
-    RaceCar, RaceStats,
-    RACECAR_STATE
-} from "../../../src/core";
+    RaceCar, RaceStats, Player,
+    RACECAR_STATE, PLAYER_TYPE
+} from "../../../functions/src/core"
 
 
 describe("classes.race-stats.new", () => {
     it("creates a new RaceStats instance with default values", () => {
         let track = new Track();
-        let racecar = new RaceCar();
-        let stats = new RaceStats(track, racecar);
+        let playerId = "id_123192312";
+        let stats = new RaceStats(track, playerId);
 
-        expect( stats.getTrack() ).toBe( track );
-        expect( stats.getRacecar() ).toBe( racecar );
+        expect( stats.getPlayerId() ).toBe( "id_123192312" );
         expect( stats.getMoves().length ).toBe( 0 );
         expect( stats.getDistance() ).toBe( 0 );
         expect( stats.getTime() ).toBe( 0 );
         expect( stats.getTopSpeed() ).toBe( 0 );
         expect( stats.getCheckpoints().length ).toBe( 0 );
         expect( stats.getState() ).toBe( RACECAR_STATE.Racing );
+        expect( stats.getCrashes() ).toBe( 0 );
     });
 
     it("does not include the first node as a checkpoint, regardless of its mark", () => {
         let track = new Track();
-        let racecar = new RaceCar();
+        let playerId = "id_123192312";
 
         let first = new TrackNode(new Vector2(), 25, true);
         let second = new TrackNode(new Vector2(), 25, true);
 
         track.setPath([first, second]);
 
-        let stats = new RaceStats(track, racecar);
+        let stats = new RaceStats(track, playerId);
         let index = stats.getCheckpoints()[0].index;
 
         expect( index ).toBe( 1 ); // corresponds to "second"
@@ -41,7 +41,7 @@ describe("classes.race-stats.new", () => {
     })
 
     it("throws an error if no Track is provided", () => {
-        expect( () => new RaceStats() ).toThrowError();
+        expect( () => new RaceStats(null, "1") ).toThrowError();
         expect( () => new RaceStats("a") ).toThrowError();
         expect( () => new RaceStats(new TrackNode()) ).toThrowError();
     });
@@ -50,8 +50,8 @@ describe("classes.race-stats.new", () => {
 describe("classes.race-stats.addMove", () => {
     it("adds the given path and velocity as a move", () => {
         let track = new Track();
-        let racecar = new RaceCar();
-        let stats = new RaceStats(track, racecar);
+        let playerId = "id_123192312";
+        let stats = new RaceStats(track, playerId);
 
         let path = new Line( new Vector2(3, -2), new Vector2(-5, 3) );
         let velocity = new Vector2();
@@ -65,8 +65,8 @@ describe("classes.race-stats.addMove", () => {
 
     it("throws an error when the given path isn't a Line", () => {
         let track = new Track();
-        let racecar = new RaceCar();
-        let stats = new RaceStats(track, racecar);
+        let playerId = "id_123192312";
+        let stats = new RaceStats(track, playerId);
 
         let velocity = new Vector2();
 
@@ -77,8 +77,8 @@ describe("classes.race-stats.addMove", () => {
 
     it("throws an error when the given velocity isn't a Vector2", () => {
         let track = new Track();
-        let racecar = new RaceCar();
-        let stats = new RaceStats(track, racecar);
+        let playerId = "id_123192312";
+        let stats = new RaceStats(track, playerId);
 
         let line = new Line(new Vector2(), new Vector2());
 
@@ -91,8 +91,8 @@ describe("classes.race-stats.addMove", () => {
 describe("classes.race-stats.calculateStats", () => {
     it("calculates all stats based on the path", () => {
         let track = new Track();
-        let racecar = new RaceCar();
-        let stats = new RaceStats(track, racecar);
+        let playerId = "id_123192312";
+        let stats = new RaceStats(track, playerId);
 
         let line1 = new Line( new Vector2(0, 0), new Vector2(1, 2) );
         let line2 = new Line( new Vector2(1, 2), new Vector2(3, 1) );

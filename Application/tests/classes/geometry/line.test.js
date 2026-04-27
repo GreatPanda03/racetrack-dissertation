@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
     Vector2, Line
-} from "../../../src/core";
+} from "../../../functions/src/core";
 
 
 describe("classes.line.new", () => {

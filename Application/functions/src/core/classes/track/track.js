@@ -14,7 +14,7 @@ export default class Track {
 
     #name;          // string
     #description;   // string
-    #authorId;      // int
+    #authorId;      // string
     #author;        // string
     #tags;          // string[]
     

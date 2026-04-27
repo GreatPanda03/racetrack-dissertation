@@ -24,6 +24,9 @@ var playerId = user.uid;
 var spacing = 25;
 var selectedTrack = null;
 
+let trackDetailsPopup = document.getElementById("modal-track-details");
+let trackDetailsModal = new bootstrap.Modal(trackDetailsPopup);
+
 
 
 // [[ Entry Creation ]] //
@@ -101,13 +104,28 @@ function initialiseTrackDetails() {
     });
 
     editBtn.addEventListener("click", async (e) => {
-        let id = selectedTrack.getTrackId()
-        window.location.href = `/tracks/build/${id}`;
+        let id = selectedTrack.getId();
+        window.location.href = `/builder/${id}`;
     });
 
-    deleteBtn.addEventListener("click", (e) => {
-        let id = selectedTrack.getTrackId();
-        window.location.href = `/tracks/delete/${id}`;
+    deleteBtn.addEventListener("click", async (e) => {
+        if (confirm(`Are you sure you want to delete your track "${selectedTrack.getName()}"? This cannot be undone!`)) {
+            let id = selectedTrack.getId();
+
+            let deleteRes = await fetch(`/api/tracks/${id}?playerId=${playerId}`, {
+                method: "DELETE"
+            }).then(r => r.json());
+
+            if (deleteRes.success) {
+                trackDetailsModal.hide();
+                refreshAllTracks();
+
+            } else {
+                GeneralUI.createToast("Failed to Delete Track",
+                    `${deleteRes.error}`,
+                    "#A00");
+            }
+        }
     });
 }
 
@@ -117,9 +135,7 @@ function showTrackDetails(track) {
 
     selectedTrack = track;
 
-    let popup = document.getElementById("modal-track-details");
-    let modal = new bootstrap.Modal(popup);
-    modal.show();
+    trackDetailsModal.show();
 
     // track info
     let infoBody = document.getElementById("details-info");
@@ -246,11 +262,35 @@ function loadAllTracks(tracks) {
             createEntryForList(gameTracks, track);
 
         } else {
+            createEntryForList(playerTracks, track);
+
             if (track.getAuthorId() == playerId) {
-                createEntryForList(playerTracks, track);
                 createEntryForList(personalTracks, track);
             }
         }
+    }
+}
+
+
+async function refreshAllTracks() {
+    let tracksJson = await fetch("/api/tracks").then(r => r.json());
+
+    if (tracksJson.success) {
+        let gameTracks = document.getElementById("game-tracks-list");
+        let playerTracks = document.getElementById("player-tracks-list");
+        let personalTracks = document.getElementById("personal-tracks-list");
+
+        gameTracks.innerHTML = "";
+        playerTracks.innerHTML = "";
+        personalTracks.innerHTML = "";
+
+        let tracks = tracksJson.tracks.map(t => Track.toInstance(t));
+        loadAllTracks(tracks);
+    
+    } else {
+        GeneralUI.createToast("Failed to Load Tracks", 
+            "Something went wrong when trying to reload all tracks.",
+            "#A00");
     }
 }
 

@@ -4,7 +4,7 @@ import {
     Vector2,
     RaceCar,
     MATERIAL_INFO
-} from "../../src/core";
+} from "../../functions/src/core";
 
 
 /* NOTE:

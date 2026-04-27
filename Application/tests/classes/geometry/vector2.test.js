@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
     Vector2 
-} from "../../../src/core";
+} from "../../../functions/src/core";
 
 
 describe("classes.vector2.new", () => {

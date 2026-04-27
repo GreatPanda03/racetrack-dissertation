@@ -12,7 +12,7 @@ import {
 import GeneralUI from "./utilities/general-ui.js";
 
 import { initAuth } from "./firebase.js";
-import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+import { getDatabase, ref, onValue, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
 lucide.createIcons();
 
@@ -218,14 +218,19 @@ function constructLeaderboard(scores) {
         </label>`;
 
         let inputBox = ghostBox.querySelector(".form-check-input");
-        let addedGhost = null;
 
         if (isHost) {
+            let players = lobby.getPlayers();
+            let targetId = `${row.player}-${carType}`;
+
+            inputBox.checked = players[targetId] != null;
+
             inputBox.addEventListener("change", (e) => {
+                let ghostId = `${row.player}-${carType}`;
+
                 if (inputBox.checked) {
-                    let ghostId = `${row.player}-${carType}`;
-                    addedGhost = addDefaultRacer(PLAYER_TYPE.Ghost, ghostId);
-                    addedGhost.setName(`${row.name} - Ghost`);
+                    let newGhost = addDefaultRacer(PLAYER_TYPE.Ghost, ghostId);
+                    newGhost.setName(`${row.name} - Ghost`);
 
                     lobby.setPlayerDetail(ghostId, "colour", "#777");
                     lobby.setPlayerDetail(ghostId, "carType", carType);
@@ -234,12 +239,15 @@ function constructLeaderboard(scores) {
                     handleNewDetails();
 
                 } else {
-                    if (addedGhost) {
-                        lobby.removePlayer(addedGhost)
+                    let existingGhost = lobby.getPlayers()[ghostId];
+
+                    if (existingGhost) {
+                        lobby.removePlayer(existingGhost)
                         handleNewDetails();
                     }
                 }
             });
+
         } else {
             inputBox.disabled = true;
         }
@@ -684,3 +692,15 @@ onValue(lobbyRef, (snapshot) => {
         window.location.href = "/tracks";
     }
 });
+
+
+
+// removes player / deletes lobby on disconnect
+// * STRICT: leaving / refreshing will delete
+let playerRef = ref(db, `lobbies/${lobby.getId()}/players/${playerId}`);
+
+onDisconnect(playerRef).remove();
+
+if (isHost) {
+    onDisconnect(lobbyRef).remove();
+}

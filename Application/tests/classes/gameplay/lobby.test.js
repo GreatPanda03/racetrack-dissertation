@@ -1,68 +1,70 @@
 import { describe, it, expect } from "vitest";
 
 import {
-    Lobby,
+    Lobby, Player,
     PLAYER_TYPE, RACECAR_INFO
-} from "../../../src/core";
+} from "../../../functions/src/core";
 
 
 describe("classes.lobby.new", () => {
     it("creates an empty lobby", () => {
         let lobby = new Lobby();
 
-        expect( lobby.getRacers().length ).toBe( 0 );
+        expect( lobby.getId() ).toBe( null );
+        expect( lobby.getTrackId() ).toBe( "" );
+        expect( lobby.getPlayers() ).toStrictEqual( {} );
+        expect( lobby.getPlayerDetails()).toStrictEqual( {} );
+        expect( lobby.getOptions() ).toStrictEqual( { "Auto-retry Players": false, "Auto-retry Robots": false });
+        expect( lobby.getIsOnline() ).toBe( false );
     });
 });
 
-describe("classes.lobby.addRacer", () => {
-    it("adds the given racer details as an entry in the lobby", () => {
+describe("classes.lobby.addPlayer", () => {
+    it("adds the given player to the lobby with a new details entry", () => {
         let lobby = new Lobby();
 
-        let racer = lobby.addRacer(PLAYER_TYPE.Player, "The Race Car", "#A00");
+        let playerId = "id_123";
+        let player = new Player(playerId, "Player", PLAYER_TYPE.Player);
+        let racer = lobby.addPlayer(player);
 
-        expect( racer.RacerType ).toBe( PLAYER_TYPE.Player );
-        expect( racer.CarType ).toBe( "The Race Car" );
-        expect( racer.Colour ).toBe( "#A00" );
+        expect( lobby.getPlayers()[playerId] ).toBe( player );
 
-        expect( lobby.getRacers()[0] ).toBe( racer );
+        expect( lobby.getPlayerDetail(playerId, "carType") ).toBe( "The Race Car" );
+        expect( lobby.getPlayerDetail(playerId, "colour") ).toBe( "#ff4040" );
     });
 
-    it("throws an error if any of the details provided are invalid", () => {
+    it("throws an error if not valid player is provided", () => {
         let lobby = new Lobby()
 
-        let racerType_bad = new Object()
-        let carType_bad = new Object()
-        let colour_bad = new Object()
-
-        let racerType_good = PLAYER_TYPE.Player;
-        let carType_good = "The Race Car";
-        let colour_good = "#A00";
-
-        expect( () => lobby.addRacer(racerType_bad, carType_good, colour_good) ).toThrowError();
-        expect( () => lobby.addRacer(racerType_good, carType_bad, colour_good) ).toThrowError();
-        expect( () => lobby.addRacer(racerType_good, carType_good, colour_bad) ).toThrowError();
+        expect( () => lobby.addPlayer() ).toThrowError();
+        expect( () => lobby.addPlayer("a") ).toThrowError();
+        expect( () => lobby.addPlayer(PLAYER_TYPE.Player) ).toThrowError();
     })
 });
 
-describe("classes.lobby.removeRacer", () => {
-    it("removes the given racer object from the lobby", () => {
+describe("classes.lobby.removePlayer", () => {
+    it("removes the given player from the lobby", () => {
         let lobby = new Lobby();
 
-        let racer = lobby.addRacer(PLAYER_TYPE.Player, "The Race Car", "#A00");
+        let playerId = "id_123";
+        let player = new Player(playerId, "Player", PLAYER_TYPE.Player);
+        let racer = lobby.addPlayer(player);
 
-        lobby.removeRacer(racer);
+        lobby.removePlayer(player);
 
-        expect( lobby.getRacers().length ).toBe( 0 );
+        expect( Object.keys(lobby.getPlayers()).length ).toBe( 0 );
     });
 
     it("throws an error if the racer isn't a lobby member", () => {
         let lobby = new Lobby();
 
-        let racer = lobby.addRacer(PLAYER_TYPE.Player, "The Race Car", "#A00");
+        let playerId = "id_123";
+        let player = new Player(playerId, "Player", PLAYER_TYPE.Player);
+        let racer = lobby.addPlayer(player);
 
-        lobby.removeRacer(racer);
+        lobby.removePlayer(player);
 
-        expect( () => lobby.removeRacer(racer) ).toThrowError();
+        expect( () => lobby.removeRacer(player) ).toThrowError();
         expect( () => lobby.removeRacer(null) ).toThrowError();
         expect( () => lobby.removeRacer(new Object()) ).toThrowError();
     });

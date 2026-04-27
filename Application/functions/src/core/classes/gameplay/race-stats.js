@@ -97,7 +97,7 @@ export default class RaceStats {
         }
 
         // total elapsed time
-        if (state == RACECAR_STATE.Racing) {
+        if (state == RACECAR_STATE.Racing || moves.length == 0) {
             totalTime = moves.length;
 
         } else {

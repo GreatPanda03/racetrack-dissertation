@@ -11,7 +11,7 @@ console.log("Preparing App");
 
 
 import express from "express";
-import pkg from "../package.json" with { type: "json" };
+import pkg from "./package.json" with { type: "json" };
 import cors from "cors";
 
 import path from "path";
@@ -23,6 +23,7 @@ import LeaderboardModel from "./models/leaderboard.js";
 
 import { debug } from "firebase-functions/logger";
 import { db } from "./services/firebase-admin.js";
+import { ref, onValue } from "firebase/database";
 const firebaseDb = db;
 
 import Player from "./src/core/classes/gameplay/player.js";
@@ -48,7 +49,7 @@ app.set("view engine", "ejs");
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../public"))); // pages, styles, etc.
+app.use(express.static(path.join(__dirname, "../public")));
 app.use("/core", express.static(path.join(__dirname, "/src/core"))); // core classes etc.
 
 app.set("view cache", false); // so firebase doesn't show old pages
@@ -56,8 +57,6 @@ app.disable("view cache");
 
 const { version } = pkg;
 app.locals.version = version;
-
-var usingFirebase = true;
 
 console.log("Directory:", __dirname);
 
@@ -67,38 +66,34 @@ console.log("Directory:", __dirname);
 
 var mongodbReady = false;
 
-const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
-mongoose.connect(uri)
-    .then((result) => { 
-        console.log("MongoDB Starting"); // note: "1" = connected
-        console.log("MongoDB State:", mongoose.connection.readyState); 
-        mongodbReady = true;
-    })
-    .catch((error) => {
-        console.log(error);
-        console.log("[CONNECTING WITHOUT DATABASE!]");
-    });
+function connectToMongoDB() {
+    if (mongodbReady) return;
 
-// NB: only use "app.listen" when running without firebase
-// * see "Application/server.js" for local running
-// * firebase will make its own front end link
-// * use module.exports = app when using firebase (see bottom)
+    const uri = "mongodb+srv://admin:bIL1eC1QX8D5RLvR@testcluster.r5ggsoh.mongodb.net/?appName=TestCluster";
+
+    mongoose.connect(uri)
+        .then((result) => { 
+            console.log("MongoDB Starting");
+            mongodbReady = true;
+        })
+        .catch((error) => {
+            console.log(error);
+            console.log("[CONNECTING WITHOUT DATABASE!]");
+        });
+}
+
+connectToMongoDB();
 
 
 
 // [[ API Shared Functions ]] //
 
-// general lobbies
+// lobbies
 async function getLobbies() {
-    if (usingFirebase) {
-        let snapshot = await firebaseDb.ref("lobbies").once("value");
-        let lobbies = snapshot.val() || [];
+    let snapshot = await firebaseDb.ref("lobbies").once("value");
+    let lobbies = snapshot.val() || [];
 
-        return lobbies;
-
-    } else {
-        return null;
-    }
+    return lobbies;
 }
 
 function createEmptyLobbyWithHost(lobbyId, hostUser, trackId) {
@@ -107,7 +102,7 @@ function createEmptyLobbyWithHost(lobbyId, hostUser, trackId) {
 
     let host = new Player(
         hostUser.uid, 
-        hostUser.displayName ?? "", 
+        hostUser.displayName ?? "Anonymous", 
         PLAYER_TYPE.Player);
     
     let lobby = new Lobby();
@@ -119,7 +114,6 @@ function createEmptyLobbyWithHost(lobbyId, hostUser, trackId) {
     return lobby;
 }
 
-// online lobbies
 async function getLobbyById(lobbyId) {
     let snapshot = await firebaseDb.ref(`lobbies/${lobbyId}`).once("value");
     let lobbyData = snapshot.val() || null;
@@ -131,11 +125,11 @@ async function getLobbyById(lobbyId) {
     return null;
 }
 
-async function createLobbyForPlayer(playerId, trackId) {
+async function createLobbyForPlayer(user, trackId) {
     let lobbyRef = firebaseDb.ref("lobbies").push();
     let lobbyId = lobbyRef.key; // lobbyRef itself is the ID ie. {[lobbyId] = lobby}
     
-    let lobby = createEmptyLobbyWithHost(lobbyId, playerId, trackId);
+    let lobby = createEmptyLobbyWithHost(lobbyId, user, trackId);
     lobby.setIsOnline(true);
 
     await lobbyRef.set( lobby.toObject() );
@@ -174,17 +168,21 @@ async function getTracks() {
 }
 
 async function getTrackById(id) {
-    let track = await TrackModel.findById( id );
+    let track = await TrackModel.findById(id);
     return track;
 }
 
-async function saveTrackById(id, trackDetails) {
-    if (id) { // ie. new track
-        await TrackModel.findByIdAndUpdate(id, { "$set": trackDetails });
-        
-    } else {
-        await new TrackModel(trackDetails).save(); // generates OID
-    }
+async function saveTrack(trackDetails) {
+    let result = await new TrackModel(trackDetails).save(); // generates OID
+    return result._id;
+}
+
+async function updateTrackById(id, trackDetails) {
+    await TrackModel.findByIdAndUpdate(id, { "$set": trackDetails });
+}
+
+async function deleteTrackById(id) {
+    await TrackModel.findByIdAndDelete(id);
 }
 
 // leaderboards
@@ -211,6 +209,27 @@ async function getRaceById(raceId) {
     return raceData;
 }
 
+async function createTestRace(trackData, user) {
+    // fast tracks lobby system to race 
+    
+    let raceRef = firebaseDb.ref("races").push();
+    let raceId = raceRef.key;
+
+    let track = Track.toInstance(trackData);
+    let trackId = track.getId().toString();
+    
+    let lobby = createEmptyLobbyWithHost(raceId, user, trackId);
+    lobby.setIsOnline(false);
+
+    // success
+    let players = Object.values(lobby.getPlayers());
+    let race = new RaceInstance(lobby, track, 25, players);
+
+    await firebaseDb.ref(`races/${raceId}`).set( race.toObject() );
+    
+    return raceId;
+}
+
 function processRaceMove(raceInstance, racecar, move) {
     // "move" is technically acceleration
 
@@ -222,6 +241,7 @@ function processRaceMove(raceInstance, racecar, move) {
 
         if (playerType == PLAYER_TYPE.Player) {
             // nothing more
+            console.log("Player Move:", move);
 
         } else if (playerType == PLAYER_TYPE.Robot) {
             let stats = raceInstance.getRacecarStats(racecar);
@@ -229,7 +249,8 @@ function processRaceMove(raceInstance, racecar, move) {
             if (stats.getState() != RACECAR_STATE.Finished) {
                 let determiner = new RobotDeterminer(raceInstance);
                 move = determiner.determineRobotMove(racecar);
-            
+                console.log("Robot Move:", move);
+
             } else {
                 move = null;
             }
@@ -286,6 +307,44 @@ async function updateRace(raceId, race) {
 
 // [[ API Endpoints ]] //
 
+// building
+app.post("/api/builder/test/:trackId", async (request, response) => {
+    try {
+        let trackId = request.params.trackId;
+        let user = request.body.user;
+        
+        // missing data
+        if (!trackId || !user) {
+            return response.status(400).json({ success: false, error: "Missing data" });
+        }
+
+        let track = await getTrackById(trackId);
+
+        // non-existing track
+        if (!track) {
+            return response.status(404).json({ success: false, error: `No track exists with ID ${trackId}` });
+        }
+
+        // forbidden access
+        if (track.authorId != user.uid) {
+            return response.status(403).json({ success: false, error: `Only the track author can test the track` });
+        }
+
+        // valid
+        let raceId = await createTestRace(track, user);
+
+        console.log(raceId);
+
+        return response.status(200).json({ success: true, raceId });
+    
+    } catch (error) {
+        console.log(error);
+        response.status(500).json({ success: false, error: `There was a server error, please try again: ${error}` });   
+    }
+});
+
+
+// lobbies
 app.get("/api/lobbies", async (request, response) => {
     try {
         let lobbies = await getLobbies();
@@ -368,7 +427,7 @@ app.post("/api/lobbies/join/:lobbyId", async (request, response) => {
         // valid (only if they aren't already in)
         // * it's fine if not - just avoids repeat it
         if (!lobby.getPlayers()[user.uid]) {
-            let player = new Player(user.uid, user.displayName, PLAYER_TYPE.Player);
+            let player = new Player(user.uid, user.displayName ?? "Anonymous", PLAYER_TYPE.Player);
             await addPlayerToLobby(lobbyId, player);
         }
 
@@ -406,7 +465,7 @@ app.post("/api/lobbies/start/:lobbyId", async (request, response) => {
 
         // success
         let players = Object.values(lobby.getPlayers());
-        let race = new RaceInstance(lobby, track, 25, players);
+        let race = new RaceInstance(lobby, track, 25);
 
         let first = race.getCurrentPlayer();
 
@@ -440,6 +499,30 @@ app.get("/api/tracks", async (request, response) => {
 
     } catch (error) {
         console.log(error);
+        response.status(500).json({ success: false, error });
+    }
+});
+
+app.post("/api/tracks", async (request, response) => {
+    if (!mongodbReady) {
+        return response.status(503).json({ success: false, error: "Database is unavailable" });
+    }
+
+    try {
+        let trackDetails = request.body;
+
+        // missing data
+        if (!trackDetails) {
+            return response.status(400).json({ success: false, error: "Missing data" });
+        }
+
+        // saving
+        let id = await saveTrack(trackDetails);
+
+        response.status(200).json({ success: true, id });
+
+    } catch(error) {
+        console.log(`Track save failed: "${error}"`);
         response.status(500).json({ success: false, error });
     }
 });
@@ -479,25 +562,22 @@ app.patch("/api/tracks/:trackId", async (request, response) => {
     }
 
     try {
+        let trackId = request.params.trackId;
         let trackDetails = request.body;
 
         // missing data
-        if (!trackDetails) {
+        if (!trackId || !trackDetails) {
             return response.status(400).json({ success: false, error: "Missing data" });
         }
 
-        // saving
-        let success = await saveTrackById(track._id, trackDetails);
-
-        if (!success) {
-            return response.status(500).json({ success: false, error: "Something went wrong when saving the track" });
-        }
+        // updating
+        await updateTrackById(trackId, trackDetails);
 
         response.status(200).json({ success: true });
 
     } catch(error) {
-        console.log(`[Track Builder] Track save failed: "${error}"`);
-        response.status(400).json({ success: false, error });
+        console.log(`Track save failed: "${error}"`);
+        response.status(500).json({ success: false, error });
     }
 });
 
@@ -508,33 +588,34 @@ app.delete("/api/tracks/:trackId", async (request, response) => {
     
     try {
         let trackId = request.params.trackId;
+        let playerId = request.query.playerId;
 
         // missing data
-        if (!trackId) {
+        if (!trackId || !playerId) {
             return response.status(400).json({ success: false, error: "Missing data" });
         }
 
-        let track = await getTrackById(id);
+        let track = await getTrackById(trackId);
+
+        if (!track) {
+            return response.status(404).json({ success: false, error: "The track to delete does not exist" });
+        }
+
+        let authorId = track.authorId;
         let author = track.author;
 
         // forbidden access
-        // * TODO: use Player IDs instead!
-        if (author == "" || author == "Game") {
+        if (playerId != authorId || author == "Game") {
             response.status(403).json({ success: false, error: "Only the owner of the track can delete the track" });
-            response.redirect("/tracks/list");
         }
 
-        let success = deleteTrackById(trackId);
-
-        if (!success) {
-            return response.status(500).json({ success: false, error: "Something went wrong when deleting the track" });
-        }
+        await deleteTrackById(trackId);
         
-        response.redirect("/tracks/list");
+        response.status(200).json({ success: true });
     
     } catch(error) {
         console.log(error);
-        response.status(500).json({ success: false, error: error });
+        response.status(500).json({ success: false, error });
     }
 });
 
@@ -709,13 +790,7 @@ app.post("/api/races/:raceId/move", async (request, response) => {
 
 // [[ App Webpage Views ]] //
 
-import fs from "fs";
-
 app.get("/", (request, response) => {
-    const viewPath = path.join(__dirname, "views", "home.ejs");
-    const contents = fs.readFileSync(viewPath, "utf8");
-    console.log("Content:", contents.slice(0, 500));
-
     response.render("home", { title: "Home" });
 });
 
@@ -739,14 +814,8 @@ app.get("/builder/:trackId", async (request, response) => {
             return response.status(404).json({ success: false, error: `No track exists with ID ${trackId}.` });
         }
 
-        // no permission to edit
-        // * TODO: use Player IDs instead!
-        if (track.author == "" || author == "Game") {
-            return response.status(403).json({ success: false, error: "Only the author can edit the track." });
-        }
-
         // success
-        response.render("builder", { title: "Track Builder", trackToLoad });
+        response.render("builder", { title: "Track Builder", trackToLoad: track });
     
     } catch (error) {
         response.status(500).json({ success: false, error: `There was a server error, please try again: ${error}` });
@@ -825,10 +894,6 @@ app.get("/races/:raceId", async (request, response) => {
         console.log(error);
         response.status(500).json({ success: false, error: `There was a server error: ${error}` });
     }
-});
-
-app.get("/settings", (request, response) => {
-    response.render("settings", { title: "Settings" } );
 });
 
 
