@@ -1,7 +1,14 @@
 {
   "name": "functions",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Cloud Functions for Firebase",
+  "keywords": [
+    "Computer Science",
+    "MSc",
+    "Dissertation",
+    "RaceTrack"
+  ],
+  "license": "ISC",
   "type": "module",
   "scripts": {
     "build": "",
@@ -16,13 +23,12 @@
   },
   "main": "index.js",
   "dependencies": {
-    "canvas": "^3.2.1",
-    "ejs": "^3.1.10",
+    "ejs": "^5.0.2",
     "express": "^5.2.1",
-    "firebase": "^12.12.0",
-    "mongoose": "^9.2.0",
+    "firebase": "^12.12.1",
     "firebase-admin": "^13.8.0",
-    "firebase-functions": "^7.0.0"
+    "firebase-functions": "^7.2.5",
+    "mongoose": "^9.5.0"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.4.1"

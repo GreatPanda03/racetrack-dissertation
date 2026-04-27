@@ -20,7 +20,7 @@
 //     > firebase deploy (--force)
 
 
-import { onRequest } from "firebase-functions/https";
+import { onRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions";
 import { appExpress } from "./app.js";
 

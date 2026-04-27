@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
     Track, TrackForm, TrackRenderer
-} from "../../../src/core";
+} from "../../../functions/src/core";
 
 import { JSDOM } from "jsdom";
 
@@ -12,6 +12,8 @@ describe("classes.track-renderer.new", () => {
         let track = new Track();
         let canvas = new JSDOM("<canvas></canvas>").window.document.getElementsByTagName("canvas")[0];
 
+        console.log(canvas);
+
         let renderer = new TrackRenderer(track, canvas);
 
         expect( renderer.getCanvas() ).toBe( canvas );
@@ -20,7 +22,7 @@ describe("classes.track-renderer.new", () => {
     });
 
     it("throws an error if track is not a Track", () => {
-        let canvas = new JSDOM("<canvas></canvas>");
+        let canvas = new JSDOM("<canvas></canvas>").window.document.getElementsByTagName("canvas")[0];;
         
         expect( () => new TrackRenderer(null, canvas) ).toThrowError();
         expect( () => new TrackRenderer("a", canvas) ).toThrowError();

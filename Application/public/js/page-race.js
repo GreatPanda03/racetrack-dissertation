@@ -22,7 +22,7 @@ import {
 } from "/core/index.js";
 
 import { initAuth, signInWithGoogle } from "./firebase.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+import { getDatabase, ref, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
 import GeneralUI from "./utilities/general-ui.js";
 
@@ -83,6 +83,8 @@ function initialisePlayCanvas() {
     let debounce = false;
 
     playCanvas.addEventListener("click", async (e) => {
+        console.log("cannot move!", moveTaken, debounce);
+
         if (moveTaken || debounce) return;
         debounce = true
         
@@ -147,8 +149,8 @@ function initialiseResultsPopup() {
         let toRetry = [];
         let toRetire = [];
 
-        let popup = document.getElementById("modal-race-results");
-        let results = popup.getElementsByClassName("results")[0];
+        let resultsPopup = document.getElementById("modal-race-results");
+        let results = resultsPopup.getElementsByClassName("results")[0];
         let checkboxes = results.querySelectorAll("[id*='retry-racecar-']");
 
         for (let box of checkboxes) {
@@ -164,13 +166,14 @@ function initialiseResultsPopup() {
         raceInstance.findNextTurn();
     }
 
-    buildBtn.addEventListener("click", (e) => {
-        let buildUrl = `/tracks/build/${raceInstance.getTrack().getId()}`;
+    buildBtn.addEventListener("click", async (e) => {
+        let buildUrl = `/builder/${track.getId()}`;
         let canBuild = document.referrer.includes(buildUrl);
 
         // TODO: make this more secure
 
         if (canBuild) {
+            onDisconnect(raceRef).remove();
             window.location.href = buildUrl;
         }
     });
@@ -185,9 +188,11 @@ function initialiseResultsPopup() {
 }
 
 function endRace(state) {
-    let popup = document.getElementById("modal-race-results");
-    let results = popup.getElementsByClassName("results")[0];
+    let resultsPopup = document.getElementById("modal-race-results");
+    let results = resultsPopup.getElementsByClassName("results")[0];
     let retryBtn = document.getElementById("results-retry");
+
+    var resultsModal = new bootstrap.Modal(resultsPopup, {backdrop: "static"});
 
     let racecars = raceInstance.getRacecars();
     let ranks = getRankedRacecars();
@@ -288,10 +293,8 @@ function endRace(state) {
     results.appendChild(resultsTable);
 
     if (state == RACECAR_STATE.Crashed) {
-        popup.querySelector(".modal-footer").hidden = false;
-
-        let modal = new bootstrap.Modal(popup, {backdrop: "static"});
-        modal.show();
+        resultsPopup.querySelector(".modal-footer").style.display = "block";
+        resultsModal.show();
 
         // race cars to retire / continue
         let toggleAll = document.createElement("div");
@@ -340,10 +343,8 @@ function endRace(state) {
         retryBtn.hidden = false;
 
     } else if (state == RACECAR_STATE.Finished) {
-        popup.querySelector(".modal-footer").hidden = true;
-
-        let modal = new bootstrap.Modal(popup, {backdrop: "static"});
-        modal.show();
+        resultsPopup.querySelector(".modal-footer").style.display = "block";
+        resultsModal.show();
 
         handleLeaderScore();
         
@@ -353,11 +354,11 @@ function endRace(state) {
 
     // other popup stuff
     let buildBtn = document.getElementById("results-build");
-    let buildUrl = `/tracks/build/${raceInstance.getTrack().getId()}`;
+    let buildUrl = `/builder/${track.getId()}`;
     let buildVisible = document.referrer.includes(buildUrl);
     buildBtn.hidden = !buildVisible;
 
-    let title = popup.getElementsByClassName("modal-title")[0];
+    let title = resultsPopup.getElementsByClassName("modal-title")[0];
 
     title.innerHTML = titleText;
 }
@@ -842,7 +843,7 @@ racecarSprite.src = "/images/race-car-sprite-nobg.png";
 
 racecarSprite.onload = () => { // TODO: make this independent
     validateEligibility();
-    
+
     loadTrack(track, raceInstance);
 
     initialisePlayCanvas();
@@ -869,3 +870,11 @@ onValue(raceRef, (snapshot) => {
 
     onInstanceUpdate();
 });
+
+
+let playerStatsIndex = raceInstance.getRaceStats().findIndex(rs => rs.getPlayerId() == playerId);
+
+if (playerStatsIndex > -1) { // STRICT: refresh / leaving WILL retire
+    let playerStateRef = ref(db, `/races/${raceId}/raceStats/${playerStatsIndex}/state`);
+    onDisconnect(playerStateRef).set( RACECAR_STATE.Retired );
+}

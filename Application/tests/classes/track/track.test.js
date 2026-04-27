@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
     TrackNode, Material, Obstacle, Decoration, Track,
     MATERIAL_INFO
-} from "../../../src/core";
+} from "../../../functions/src/core";
 
 
 describe("classes.track.new", () => {

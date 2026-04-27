@@ -27,7 +27,7 @@ export default class TrackRenderer extends CanvasRenderer {
             obstacles: true,
             decorations: true,
             grid: true
-        }
+        };
         
         this.setTrack(track); // also sets TrackForm
         this.setSpacing(spacing);

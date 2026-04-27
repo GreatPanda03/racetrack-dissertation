@@ -29,9 +29,7 @@ function initialiseSignIn() {
                     user = result;
                     playerId = user.uid;
 
-                    signInBtn.querySelector("span").innerHTML = "Signed in with Google";
-                    signInBtn.querySelector("i").dataset.lucide = "user-check";
-                    lucide.createIcons();
+                    window.location.reload();
                 }
 
                 GeneralUI.createToast("Sign In Successful",

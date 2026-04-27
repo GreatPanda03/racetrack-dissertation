@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import {
     UndoRedoStack
-} from "../../../src/core";
+} from "../../../functions/src/core";
 
 
 describe("classes.undo-redo-stack.new", () => {

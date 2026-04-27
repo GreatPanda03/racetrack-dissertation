@@ -29,7 +29,7 @@ export default class RaceInstance {
     #elapsedTime;   // float
     #pendingMoves;  // {id: Vector2}
 
-    constructor(lobby, track, spacing = 10, players = []) {
+    constructor(lobby, track, spacing = 25) {
         if (!lobby && !track) {
             return; // assume empty
         }
@@ -37,7 +37,6 @@ export default class RaceInstance {
         Validator.isInstance(lobby, Lobby);
         Validator.isInstance(track, Track);
         Validator.isNumeric(spacing);
-        Validator.isInstanceList(players, Player);
 
         // main set up
         this.#lobby = lobby;
@@ -51,6 +50,8 @@ export default class RaceInstance {
         this.#pendingMoves = {};
 
         // player additions
+        let players = Object.values(lobby.getPlayers());
+
         for (let player of players) {
             let id = player.getId();
             let playerType = player.getPlayerType();
@@ -166,7 +167,6 @@ export default class RaceInstance {
             if (
                    carState == RACECAR_STATE.Finished
                 || carState == RACECAR_STATE.Retired
-                || carState == RACECAR_STATE.Quit
             ) {
                 continue;
             } else {
@@ -269,10 +269,6 @@ export default class RaceInstance {
         }
 
         return moves;
-    }
-
-    isMoveLegal(racecar, move) {
-        // TODO...
     }
 
     addPendingMove(racecar, move) {

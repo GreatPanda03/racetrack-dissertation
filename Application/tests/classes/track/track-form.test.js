@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
     Vector2,
     TrackNode, Track, TrackForm
-} from "../../../src/core";
+} from "../../../functions/src/core";
 
 
 describe("classes.track-form.new", () => {
