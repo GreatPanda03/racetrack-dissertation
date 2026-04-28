@@ -5,7 +5,7 @@ import Validator from "../../utilities/validator.js";
 
 
 export default class UndoRedoStack {
-    #actions;
+    #actions;   // {UndoStack: {}, RedoStack: {}}
 
     constructor() {
         this.clearActions();

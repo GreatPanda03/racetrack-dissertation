@@ -7,13 +7,13 @@ import Validator from "../../utilities/validator.js";
 
 
 export default class Lobby {
-    #id;
-    #hostId;
-    #trackId;
-    #players;
-    #playerDetails;
-    #options;
-    #isOnline;
+    #id;                // string
+    #hostId;            // string
+    #trackId;           // string
+    #players;           // Player[]
+    #playerDetails;     // {playerId: {detail: value}}
+    #options;           // {string: string}
+    #isOnline;          // boolean
 
     constructor() {
         this.#id = null;

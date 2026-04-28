@@ -7,7 +7,7 @@ import Validator from "../../utilities/validator.js";
 
 
 export default class RobotDeterminer {
-    #raceInstance;
+    #raceInstance;  // RaceInstance
 
     constructor(raceInstance) {
         Validator.isInstance(raceInstance, RaceInstance);

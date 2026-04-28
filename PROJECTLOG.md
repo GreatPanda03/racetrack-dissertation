@@ -357,7 +357,8 @@ Other tasks include preparing this project log, a changelog, and a requirements 
 - This entry marks the end of the project log.
 
 - As of the last entry:
-    - Implemented v3.0.0 & more (see changelog)
+    - Implemented v3.0.0 - v3.1.0 (see changelog)
+    - Completed admin (README, etc.)
 
 - No supervisor meeting held as of the last entry
 

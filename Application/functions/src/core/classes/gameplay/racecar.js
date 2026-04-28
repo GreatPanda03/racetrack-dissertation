@@ -8,14 +8,14 @@ import Validator from "../../utilities/validator.js";
 
 export default class RaceCar {
     // ALL positional values in GRID units (NOT pixels)
-    #playerId;
-    #position;
-    #velocity;
-    #maxSpeed;
-    #maxAcceleration;
-    #playerType;
-    #carType;
-    #colour;
+    #playerId;          // string
+    #position;          // Vector2
+    #velocity;          // Vector2
+    #maxSpeed;          // Vector2
+    #maxAcceleration;   // Vector2
+    #playerType;        // PLAYER_TYPE
+    #carType;           // RACECAR_INFO
+    #colour;            // string
 
     constructor(
         position = new Vector2(),

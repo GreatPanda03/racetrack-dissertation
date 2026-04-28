@@ -6,9 +6,9 @@ import Validator from "../../utilities/validator.js";
 
 
 export default class Player {
-    #id;
-    #name;
-    #playerType;
+    #id;            // string
+    #name;          // string
+    #playerType;    // PLAYER_TYPE
 
     constructor(id, name, playerType) {
         Validator.isPrimitive(id, "string");

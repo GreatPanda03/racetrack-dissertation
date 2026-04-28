@@ -9,7 +9,7 @@ import Validator from "../../../utilities/validator.js";
 
 
 export default class Material extends Polygon {
-    _type;
+    _type;  // MATERIAL_INFO
 
     constructor(points = [], type = MATERIAL_INFO.Curb.Name) {
         super(points);

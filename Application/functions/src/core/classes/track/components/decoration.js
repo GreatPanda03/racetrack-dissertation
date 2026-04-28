@@ -7,7 +7,7 @@ import Validator from "../../../utilities/validator.js";
 
 
 export default class Decoration extends Polygon {
-    _colour;
+    _colour;    // string
 
     constructor(points = [], colour = "#cc77ff") {
         super(points);
