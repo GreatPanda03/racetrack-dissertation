@@ -53,8 +53,6 @@ var offset = new Vector2();
 
 var racecarSprite;
 
-var moveTaken = false;
-
 
 
 // [[ Gameplay & Controls ]] //
@@ -83,9 +81,11 @@ function initialisePlayCanvas() {
     let debounce = false;
 
     playCanvas.addEventListener("click", async (e) => {
-        console.log("cannot move!", moveTaken, debounce);
+        if (!canMakeMove() || debounce) {
+            console.log("Cannot move!");
+            return;
+        }
 
-        if (moveTaken || debounce) return;
         debounce = true
         
         let racecar = raceInstance.getCurrentPlayer();
@@ -129,9 +129,11 @@ async function sendMoveInput(racecar, move) {
     }).then(r => r.json());
 
     if (result.success) {
-        moveTaken = true;
+        console.log("Move processed");
     
     } else {
+        console.log("Move failed:", result.error);
+
         GeneralUI.createToast("Move Failed",
             `Something went wrong when trying to make that move: ${result.error}`,
             "#A00");
@@ -626,6 +628,22 @@ function displayMoves(racecar, moves) {
     }
 }
 
+function canMakeMove() {
+    let racecar = raceInstance.getCurrentPlayer();
+
+    if (
+        !isOnline 
+        || (racecar && racecar.getPlayerId() == playerId) 
+    ) {
+        let stats = raceInstance.getRacecarStats(racecar);
+        let state = stats.getState();
+
+        if (state == RACECAR_STATE.Racing) {
+            return true;
+        }
+    }
+}
+
 // client?
 function isOnScreenMoveAvailable(racecar, moves) {
     let centre = racecar.getPosition().add(racecar.getVelocity());
@@ -789,30 +807,20 @@ function onInstanceUpdate() {
     }
 
     // race ongoing
-    if (
-        !isOnline 
-        || (racecar && racecar.getPlayerId() == playerId) 
-    ) {
-        let stats = raceInstance.getRacecarStats(racecar);
-        let state = stats.getState();
+    if (canMakeMove()) {
+        let moves = raceInstance.getPossibleMoves(racecar);
 
-        if (state == RACECAR_STATE.Racing) {
-            moveTaken = false;
+        if (!isOnScreenMoveAvailable(racecar, moves)) {
+            sendMoveInput(racecar, moves[0]);
+            // all off screen, so any move will do
+        
+        } else {
+            displayMoves(racecar, moves);
 
-            let moves = raceInstance.getPossibleMoves(racecar);
-
-            if (!isOnScreenMoveAvailable(racecar, moves)) {
-                sendMoveInput(racecar, moves[0]);
-                // all off screen, so any move will do
-            
-            } else {
-                displayMoves(racecar, moves);
-            }
+            GeneralUI.createToast("Your Turn",
+                `<b>${user.displayName}</b>, it's your turn to make a move!`,
+                "#59F");
         }
-
-        GeneralUI.createToast("Your Turn",
-            `<b>${user.displayName}</b>, it's your turn to make a move!`,
-            "#59F");
     }
 }
 
@@ -830,6 +838,9 @@ isOnline = raceInstance.getLobby().getIsOnline();
 let trackId = raceInstance.getLobby().getTrackId();
 let trackJson = await fetch(`/api/tracks/${trackId}`).then(r => r.json());
 let track = Track.toInstance(trackJson.track);
+
+let introTitle = document.getElementById("intro-title");
+introTitle.innerHTML = `Welcome to <b>${track.getName()}</b>! Start your engines...`;
 
 let leaderboardJson = await fetch(`/api/leaderboards/${track.getId()}`).then(r => r.json());
 let leaderboard = leaderboardJson.leaderboard;

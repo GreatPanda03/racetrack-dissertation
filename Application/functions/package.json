@@ -1,12 +1,12 @@
 {
   "name": "functions",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Cloud Functions for Firebase",
   "keywords": [
     "Computer Science",
     "MSc",
     "Dissertation",
-    "RaceTrack"
+    "Racetrack"
   ],
   "license": "ISC",
   "type": "module",

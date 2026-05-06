@@ -1043,6 +1043,8 @@ function onDrawStart(x, y) {
         let point = new PathNode(mousePos);
         let polygon = selection.Secondary;
 
+        console.log(polygon);
+
         if ( !(polygon instanceof Polygon) ) {
             polygon = createPolygon[tool.Primary]();
             track[`add${polygon.constructor.name}`](polygon);

@@ -580,31 +580,14 @@ function prepareControls_racerEntry(entry, targetPlayer) {
                     handleNewDetails();
                 });
             }
+        } else {
+            levelList.remove();
+            levelDropdown.remove();
         }
     } else {
         levelList.remove();
         levelDropdown.remove();
     }
-
-    /*
-    let levelInput = levelDiv.querySelector(".input-robot-level");
-    levelInput.value = lobby.getPlayerDetail(id, "level");
-
-    if (playerType == PLAYER_TYPE.Robot) {
-        if (isHost) {
-            levelInput.addEventListener("change", (e) => {
-                let newLevel = levelInput.value;
-                newLevel = Math.min(Math.max(newLevel, 0), 4);
-                lobby.setPlayerDetail(id, "level", newLevel);
-                handleNewDetails();
-            });
-        } else {
-            levelInput.readOnly = true;
-        }
-    } else {
-        levelDiv.remove();
-    }
-        */
 
     if (playerType == PLAYER_TYPE.Ghost) {
         carTypeList.remove();

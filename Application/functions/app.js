@@ -78,7 +78,7 @@ function connectToMongoDB() {
         })
         .catch((error) => {
             console.log(error);
-            console.log("[CONNECTING WITHOUT DATABASE!]");
+            console.log("[WARNING] MongoDB Inactive - is this IP allowed, and is the connection active on MongoDB Atlas?");
         });
 }
 
@@ -125,12 +125,12 @@ async function getLobbyById(lobbyId) {
     return null;
 }
 
-async function createLobbyForPlayer(user, trackId) {
+async function createLobbyForPlayer(user, trackId, isOnline) {
     let lobbyRef = firebaseDb.ref("lobbies").push();
     let lobbyId = lobbyRef.key; // lobbyRef itself is the ID ie. {[lobbyId] = lobby}
     
     let lobby = createEmptyLobbyWithHost(lobbyId, user, trackId);
-    lobby.setIsOnline(true);
+    lobby.setIsOnline(isOnline);
 
     await lobbyRef.set( lobby.toObject() );
 
@@ -375,7 +375,6 @@ app.post("/api/lobbies", async (request, response) => {
         // success: lobby creation
         let lobby = await createLobbyForPlayer(user, trackId, isOnline);
         let lobbyId = lobby.getId();
-        lobby.setIsOnline(isOnline);
 
         response.status(201).json({ success: true, lobbyId });
     

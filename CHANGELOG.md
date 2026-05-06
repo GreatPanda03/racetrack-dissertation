@@ -13,6 +13,22 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 
 ---
 
+### Version: 3.1.1
+**Date:** 2026/05/06
+<details>
+<summary>Hot Fix (post-project)</summary>
+
+**Bugs Fixed:**
+1. [MAJOR] Fixed Firebase deployment application version locking solo racers out after taking one move (race condition)
+2. [MINOR] Fixed other small visual bugs 
+    * Fixed track name showing as "The Oval" when in a race by default (now adapts to track name)
+    * Fixed "Robot Level" option being available to non-host players (now hidden from non-host players)
+3. Removed superfluous console outputs
+
+</details>
+
+---
+
 ### Version: 3.1.0
 **Date:** 2026/04/26
 <details>
