@@ -1,0 +1,7 @@
+1. "Spline Visualiser" with some functions to see the actual calculated points visualised.
+
+2. Based on videos by "javidx9" on programming splines and racing lines
+
+3. This visualiser was mainly made to make verifying unit tests less painful...
+
+4. Link: https://www.desmos.com/calculator/yerscywwaf

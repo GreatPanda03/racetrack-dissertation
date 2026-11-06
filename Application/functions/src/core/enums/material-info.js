@@ -34,7 +34,7 @@ const MATERIAL_INFO = {
 
             return {
                 Offset: offset,
-                Active: (velocity.add(offset)).mag() < threshold
+                Active: (velocity.add(offset)).mag() <= threshold
             }
         }
     },

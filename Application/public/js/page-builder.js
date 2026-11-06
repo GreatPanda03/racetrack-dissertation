@@ -15,7 +15,6 @@ import { initAuth, signInWithGoogle } from "./firebase.js";
 
 import GeneralUI from "./utilities/general-ui.js";
 
-lucide.createIcons();
 
 
 // [[ Variables ]] //
@@ -1437,3 +1436,5 @@ reverter = new UndoRedoStack();
 renderer.redrawTrack();
 
 loadAllUI();
+
+lucide.createIcons();

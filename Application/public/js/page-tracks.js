@@ -228,11 +228,10 @@ function showTrackDetails(track) {
 
     GeneralUI.generateTrackPreview(canvas, track, 25);
 
-    // TODO: when "players" are a thing, only allow
-    //   editing / deleting for personal tracks
-
+    let authorId = track.getAuthorId();
     let author = track.getAuthor();
-    let modifiable = !(author != "" && author != "Game");
+    let modifiable = !(authorId == playerId && author != "Game");
+
     document.getElementById("details-edit").hidden = modifiable;
     document.getElementById("details-delete").hidden = modifiable;
 }
