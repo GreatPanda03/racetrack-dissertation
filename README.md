@@ -1,4 +1,5 @@
 # "Tracer Racers" - An Implementation of the "Racetrack" Game
+*This project was originally hosted on the University of Leicester's GitLab space.*
 
 ## 1. Introduction
 This repository tracks all development progress and documentation for the project, ***"Tracer Racers" - An Implementation of the "Racetrack" Game***. It is based on the original [Racetrack game concept](https://campus.cs.le.ac.uk/teaching/proposals/v24167.the_racetrack_game).
