@@ -32,7 +32,7 @@ and <code>Z</code> represents fixes, or build-ups to the same feature as a gradu
 ### Version: 3.1.0
 **Date:** 2026/04/26
 <details>
-<summary>Bug Fixing and Clean Up</lobby>
+<summary>Bug Fixing and Clean Up</summary>
 
 **Additions / Changes:**
 1. Added automatic lobby deletion when the host leaves by means other than the Leave button
