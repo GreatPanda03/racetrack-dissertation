@@ -8,7 +8,7 @@ All dates are in the form <code>YYYY/MM/DD</code>.
 
 Versions are in the form <code>X.Y.Z</code>: 
 <code>X</code> represents a significant version encompassing a range of unique functionalities; 
-<code>Y</code> represents single feature or set of related additions;
+<code>Y</code> represents a single feature or set of related additions;
 and <code>Z</code> represents fixes, or build-ups to the same feature as a gradual release.
 
 ---
